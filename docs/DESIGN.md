@@ -31,8 +31,12 @@ frames into tables. Anything a jamovi user can get, an R user can get.
 | `engine-fit.R` | `psw_fit()` and extraction of fit indices, loadings, reliability |
 | `engine-invariance.R` | `invarianceWiz()`, `invarianceVerdict()`, score tests |
 | `engine-multiest.R` | `cfaWiz()` |
+| `engine-scale.R` | `scaleWiz()`: reliability, tau-equivalence ladder, Guttman / Mokken |
+| `engine-esem.R` | `esemWiz()`: CFA against ESEM, correlations by scoring method |
+| `engine-robust.R` | `invarianceMultiverse()`: verdicts across estimators and rules |
+| `engine-composite.R` | `compositeWiz()`: rank-one check for formative indicators (no lavaan) |
 | `engine-parallel.R` | `psw_run_tasks()`: sequential or parallel fitting |
-| `plot.R` | `psw_diagram()`: fixed-layout model diagram (ggplot2) |
+| `plot.R` | `psw_figure()`: fixed-layout path diagram, variance tiles and comb plot (ggplot2) |
 
 Decisions:
 
@@ -128,9 +132,14 @@ comparisons (group analyses) and standardized loadings below .40
   jamovi clears the state when one of them changes. Output options and
   cutoffs are not in the list. If you add an option that changes the models,
   add it there (for the group analyses: in `tools/gen_yaml.py`).
-- **Two group analyses, one implementation.** They differ only in how the
-  model is specified, so their yaml files are generated from one template
-  (`tools/gen_yaml.py`) and both call `R/jmv-invariance.R`.
+- **Generated yaml.** All analyses except Multi-Estimator CFA get their
+  `.a/.r/.u.yaml` from `tools/gen_yaml.py`, because they share option blocks
+  (item treatment, estimator, decision criteria, figure options) and table
+  layouts. The two group analyses also share their R implementation
+  (`R/jmv-invariance.R`).
+- **Second cache.** The robustness check stores its result as the state of
+  its own summary table, cleared only by the model, the grouping variable
+  and `strict` (it spans estimators and item treatments itself).
 - **Dynamic columns** (one per group or per estimator) are added in `.init()`,
   where jamovi expects the table structure to be defined.
 

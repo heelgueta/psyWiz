@@ -1,4 +1,40 @@
-# psyWiz 0.2.0 (in development)
+# psyWiz 0.3.0 (in development)
+
+## New analyses
+
+- **Scale Check** (`scaleWiz()`): for one scale, reliability (alpha,
+  lambda-2, omega, ordinal alpha and omega, AVE), nested tests of
+  tau-equivalence and parallelism with a plain-language reading for alpha
+  and sum scores, item statistics, and Guttman / Mokken scalability
+  (Loevinger's H for binary and ordinal items; scalogram statistics on item
+  steps).
+- **CFA vs ESEM** (`esemWiz()`): the hypothesised model as a CFA and as an
+  ESEM with target or geomin rotation; loadings with cross-loadings; and each
+  factor correlation under five scoring methods (composites, corrected
+  composites, CFA, factor scores, ESEM).
+- **Composite Check** (`compositeWiz()`): do formative indicators act
+  through one composite? Rank-one test, variance retained per outcome, and a
+  cross-validated comparison of separate weights, one estimated composite and
+  the unit-weighted sum.
+- **Robustness of the verdict** (`invarianceMultiverse()`, option in the
+  group analyses): the invariance ladder under four estimator / item-treatment
+  combinations and five decision rules, with the share of specifications that
+  support each step.
+
+## New figures
+
+- Comb plot (`plot(x, type = "comb")`): every length is shared variance.
+- Path diagram with variance tiles (`type = "tiles"`).
+- Figure type is an option in the group analyses and in Scale Check.
+
+## Other
+
+- `docs/IDEAS.md`: what was built, what exists elsewhere, what was only
+  thought through (response styles, non-linear loadings, PLS, Bayesian SEM).
+- jamovi menu regrouped: Single Scale, Measurement Invariance, Model
+  Comparison, Formative Indicators.
+
+# psyWiz 0.2.0
 
 Complete rewrite. The 2024 prototype (a single `cfawiz()` function that printed
 to the console) is preserved on the `psywiz_old` branch and the

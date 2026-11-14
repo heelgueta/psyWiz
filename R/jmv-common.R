@@ -77,3 +77,36 @@ psw_jmv_time_text <- function(info) {
   sprintf("lavaan %s; fitted in %.1f s%s.", info$lavaan, info$time,
           if (info$workers > 0L) sprintf(" on %d processor cores", info$workers) else "")
 }
+
+# ---- figures ----------------------------------------------------------------
+# .run() stores what the figure needs as the image's state and sets its size;
+# the render function of every analysis (.diagram) is psw_jmv_diagram().
+psw_jmv_set_figure <- function(image, loadings, cors, panel_col, type, highlight, caption = NULL) {
+  size <- if (type == "comb") psw_comb_size(loadings, cors, panel_col)
+          else psw_diagram_size(loadings, cors, panel_col, tiles = type == "tiles")
+  image$setSize(size[["width"]], size[["height"]])
+  image$setState(list(loadings = loadings, cors = cors, panel_col = panel_col, type = type,
+                      highlight = isTRUE(highlight), caption = caption))
+}
+
+psw_jmv_diagram <- function(image) {
+  st <- image$state
+  if (is.null(st)) return(FALSE)
+  print(psw_figure(st$loadings, st$cors, st$panel_col, st$type, st$highlight, st$caption))
+  TRUE
+}
+
+# Criteria and cutoffs from the shared "Decision Criteria" options.
+psw_jmv_criteria <- function(opt) {
+  list(criteria = c("cfi", "rmsea", "srmr", "chisq")[c(opt$useCfi, opt$useRmsea, opt$useSrmr, opt$useChisq)],
+       cutoffs = list(cfi = opt$cutCfi, rmsea = opt$cutRmsea, srmr.loadings = opt$cutSrmrLoad,
+                      srmr = opt$cutSrmr, alpha = opt$alpha))
+}
+
+# Rows of a model-fit table from an engine `fit` data frame.
+psw_jmv_fit_rows <- function(f) {
+  lapply(seq_len(nrow(f)), function(i)
+    list(model = f$label[i], chisq = f$chisq[i], df = round(f$df[i]), p = f$pvalue[i],
+         cfi = f$cfi[i], tli = f$tli[i], rmsea = f$rmsea[i],
+         rmseaLo = f$rmsea.lo[i], rmseaHi = f$rmsea.hi[i], srmr = f$srmr[i]))
+}

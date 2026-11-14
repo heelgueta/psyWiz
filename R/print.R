@@ -66,7 +66,8 @@ psw_header <- function(title, colored) {
 
 #' Print psyWiz results
 #'
-#' @param x A `psw_multi` or `psw_invariance` object.
+#' @param x A psyWiz result: `psw_multi`, `psw_invariance`, `psw_scale`, `psw_esem`,
+#'   `psw_multiverse` or `psw_composite`.
 #' @param colored Colour-code fit indices and loadings on a red-to-blue ramp
 #'   (only when the terminal supports it)? Off by default.
 #' @param loadings For `psw_multi`: `"std"`, `"unstd"`, `"both"` or `"none"`.
@@ -178,6 +179,78 @@ print.psw_invariance <- function(x, colored = FALSE, culprits = 5L, ...) {
                       lab, c("chisq", "p"), cells)
     }
   }
+  psw_print_notes(x$notes)
+  invisible(x)
+}
+
+# ---- print methods for the single-scale, ESEM, multiverse and composite results ----
+
+psw_print_df <- function(title, d, digits = 3L) {
+  cat("\n", title, "\n", sep = "")
+  num <- vapply(d, is.numeric, logical(1))
+  d[num] <- lapply(d[num], function(v) ifelse(is.na(v), "", formatC(v, digits = digits, format = "f")))
+  d[!num] <- lapply(d[!num], function(v) ifelse(is.na(v), "", as.character(v)))
+  print(d, row.names = FALSE, right = FALSE)
+}
+
+#' @rdname print.psyWiz
+#' @export
+print.psw_scale <- function(x, colored = FALSE, ...) {
+  psw_header(sprintf("psyWiz: scale check for %s", x$info$name), psw_use_color(colored))
+  cat(sprintf("%d items, items are %s, estimator %s, N = %d (%d complete)\n", nrow(x$items), x$info$type,
+              x$info$estimator, x$info$n, x$info$n.complete))
+  psw_print_df("Reliability", x$reliability)
+  psw_print_df("Measurement models", x$fit[c("label", "chisq", "df", "pvalue", "cfi", "tli", "rmsea", "srmr")])
+  psw_print_df("Each model against the previous one",
+               x$comparison[c("label", "dchisq", "ddf", "p", "dcfi", "drmsea", "dsrmr", "verdict")])
+  cat(paste0("  ", psw_scale_reading(x)), sep = "\n")
+  psw_print_df("Items", x$items[c("item", "loading", "r2", "rest.r", "alpha.drop", "H")])
+  psw_print_df("Scalability", x$scalability)
+  psw_print_notes(x$notes)
+  invisible(x)
+}
+
+#' @rdname print.psyWiz
+#' @export
+print.psw_esem <- function(x, colored = FALSE, ...) {
+  psw_header("psyWiz: CFA against ESEM", psw_use_color(colored))
+  cat(sprintf("%d factors, %d items, items are %s, estimator %s, N = %d\n", length(x$info$factors),
+              length(unlist(x$info$factors)), x$info$type, x$info$estimator, x$info$n))
+  psw_print_df("Model fit", x$fit[c("label", "chisq", "df", "pvalue", "cfi", "tli", "rmsea", "srmr")])
+  psw_print_df("CFA minus ESEM", x$comparison[c("dchisq", "ddf", "p", "dcfi", "drmsea", "dsrmr")])
+  L <- x$loadings
+  fn <- names(x$info$factors)
+  items <- unique(L[c("own", "item")])
+  wide <- cbind(items, CFA = L$cfa[L$target][match(items$item, L$item[L$target])])
+  for (f in fn) wide[[paste0("ESEM:", f)]] <- L$esem[L$factor == f][match(items$item, L$item[L$factor == f])]
+  psw_print_df("Standardized loadings", wide)
+  psw_print_df("Factor correlations by method", x$correlations)
+  psw_print_notes(x$notes)
+  invisible(x)
+}
+
+#' @rdname print.psyWiz
+#' @export
+print.psw_multiverse <- function(x, colored = FALSE, ...) {
+  psw_header("psyWiz: robustness of the invariance verdict", psw_use_color(colored))
+  s <- x$summary
+  psw_print_df("How often each step is supported",
+               data.frame(step = s$label, supported = sprintf("%d of %d", s$supported, s$total),
+                          share = s$share, reading = s$reading))
+  psw_print_df("Verdict under each specification", psw_multiverse_wide(x))
+  psw_print_notes(x$notes)
+  invisible(x)
+}
+
+#' @rdname print.psyWiz
+#' @export
+print.psw_composite <- function(x, colored = FALSE, ...) {
+  psw_header("psyWiz: is one composite enough?", psw_use_color(colored))
+  cat(sprintf("%d indicators, %d outcomes, N = %d\n\n", length(x$info$indicators), length(x$info$outcomes), x$info$n))
+  cat(strwrap(x$summary, width = 0.9 * getOption("width"), prefix = "  "), sep = "\n")
+  psw_print_df("Rank-one test (Bartlett)", x$test)
+  psw_print_df(sprintf("R-squared per outcome (cv: %d folds x %d)", x$info$folds, x$info$repeats), x$r2)
+  psw_print_df("Composite weights", x$weights)
   psw_print_notes(x$notes)
   invisible(x)
 }

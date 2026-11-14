@@ -3,34 +3,44 @@
 Psychometric wizardry for confirmatory factor analysis, as an **R package** and a
 **jamovi module** in one repository. Built on [lavaan](https://lavaan.ugent.be).
 
-It does two things that are tedious to do by hand:
+What it does:
 
-1. **Measurement invariance across groups, step by step.** Give it a factor
-   model and a grouping variable. It fits the whole ladder (configural,
-   loadings, intercepts, optionally residuals; for ordinal items the
-   threshold-based ladder of Wu & Estabrook, 2016), compares each step with the
-   previous one, gives a verdict against cutoffs you can edit, and lists the
-   constraints that fit worst when a step fails.
-2. **One CFA under several estimators, side by side.** ML, MLR, MLM, ULS,
-   ULSMV, DWLS, WLSMV, WLS: fit indices, loadings, factor correlations and
-   reliability in adjacent columns, so you can see what changes when Likert
-   items are treated as continuous or as ordinal.
+1. **Scale Check.** For one scale: alpha, lambda-2 and omega side by side;
+   a test of whether the items are tau-equivalent or parallel (which is what
+   decides whether alpha and plain sum scores are justified); item
+   statistics; and Guttman / Mokken scalability, for binary and ordinal items.
+2. **Measurement invariance across groups, step by step.** The whole ladder
+   for continuous items or for ordinal items (Wu & Estabrook, 2016), a verdict
+   per step against cutoffs you can edit, the constraints that fit worst when
+   a step fails, and optionally how robust each verdict is to the choice of
+   estimator and decision rule.
+3. **Side-by-side comparisons.** One CFA under up to eight estimators; CFA
+   against ESEM; and each factor correlation as it comes out of composite
+   scores, factor scores, CFA and ESEM.
+4. **Composite Check.** For formative indicators: do they act on several
+   outcomes through one composite, and does a unit-weighted sum predict as
+   well as estimated weights out of sample?
+5. **Figures with fixed layouts**: path diagrams, variance tiles, and comb
+   plots in which every length is shared variance.
 
 Independent models are fitted on several processor cores when that saves time.
 
-> Status: version 0.2, a rewrite. It replaces the unfinished 2024 prototype
+> Status: version 0.3. A rewrite of the 2024 prototype. It replaces the unfinished 2024 prototype
 > (`cfawiz()`), which is kept on the `psywiz_old` branch. Not yet in the jamovi
 > library. Bug reports are welcome: <https://github.com/heelgueta/psywiz/issues>
 
 ## In jamovi
 
-The module adds a **psyWiz** menu with three analyses:
+The module adds a **psyWiz** menu with six analyses:
 
-| Analysis | What it does |
-|---|---|
-| One-Factor Group CFA | Invariance of a single factor across groups |
-| Correlated-Factors Group CFA | Invariance of several correlated factors across groups |
-| Multi-Estimator CFA | One model, several estimators, side by side |
+| Menu group | Analysis | What it does |
+|---|---|---|
+| Single Scale | Scale Check | Reliability, tau-equivalence, scalability of one scale |
+| Measurement Invariance | One-Factor Group CFA | Invariance of a single factor across groups |
+| | Correlated-Factors Group CFA | Invariance of several correlated factors across groups |
+| Model Comparison | Multi-Estimator CFA | One model, several estimators, side by side |
+| | CFA vs ESEM | Cross-loadings, and factor correlations by scoring method |
+| Formative Indicators | Composite Check | Do the indicators act through one composite? |
 
 The group analyses can also draw the model: a fixed-layout diagram with one
 panel per group, where the width of each arrow shows the size of the loading.
@@ -86,9 +96,22 @@ invarianceVerdict(inv, criteria = c("cfi", "chisq"), cutoffs = list(cfi = 0.005)
 multi <- cfaWiz(wizdata, model, estimators = c("MLR", "ULSMV", "WLSMV"))
 print(multi, colored = TRUE)   # colour ramp for fit and loadings, off by default
 
-# diagrams: one panel per group / per estimator
-plot(inv)
-plot(multi, highlight = TRUE)
+# figures: one panel per group / per estimator
+plot(inv)                       # path diagram
+plot(inv, type = "comb")        # comb plot: every length is shared variance
+plot(multi, type = "tiles", highlight = TRUE)
+
+# one scale: reliability, tau-equivalence, Guttman / Mokken scalability
+scaleWiz(wizdata, paste0("stress", 1:4), name = "Stress")
+
+# CFA against ESEM, and the factor correlation under five scorings
+esemWiz(wizdata, model)
+
+# does the invariance verdict survive other estimators and decision rules?
+invarianceMultiverse(wizdata, model, group = "country")
+
+# formative indicators: is one composite enough? (needs two or more outcomes)
+# compositeWiz(data, indicators = c("x1", "x2", "x3"), outcomes = c("y1", "y2"))
 ```
 
 Both functions return plain data frames (`$fit`, `$comparison`, `$culprits`,
@@ -101,8 +124,6 @@ Both functions return plain data frames (`$fit`, `$comparison`, `$culprits`,
   free-form lavaan syntax.
 - Automatic partial invariance. psyWiz shows which constraints fit worst and
   leaves the decision to you.
-- Multi-estimator comparison of the invariance ladder (the two analyses are
-  separate for now).
 - Latent mean comparisons after invariance has been established.
 
 See [NEWS.md](NEWS.md) for changes and
@@ -113,6 +134,7 @@ the verdicts are reached.
 
 - [docs/METHODS.md](docs/METHODS.md): the statistics, with references.
 - [docs/DESIGN.md](docs/DESIGN.md): how the code is organised and why.
+- [docs/IDEAS.md](docs/IDEAS.md): the ideas behind the less usual analyses, what is new and what is not.
 - [docs/DEVELOPING.md](docs/DEVELOPING.md): building, testing, contributing.
 - [docs/CRAN.md](docs/CRAN.md): what a CRAN submission needs and where psyWiz stands.
 

@@ -38,3 +38,31 @@ test_that("engine errors are shown as jamovi errors", {
   bad <- list(list(label = "A", vars = paste0("trust", 1:3)), list(label = "B", vars = c("trust1", "stress1")))
   expect_error(groupCfaCorr(wizdata, factors = bad, group = "country", run = TRUE), "one factor only")
 })
+
+test_that("scale check, CFA vs ESEM and composite check fill their tables", {
+  expect_equal(scaleCheck(wizdata, vars = paste0("trust", 1:4))$fit$rowCount, 0)
+  s <- scaleCheck(wizdata, vars = paste0("trust", 1:4), scaleName = "Trust", run = TRUE, parallel = FALSE,
+                  showDiagram = TRUE, highlight = TRUE)
+  expect_equal(s$fit$asDF$model, c("Congeneric", "Tau-equivalent"))
+  expect_equal(nrow(s$items$asDF), 4)
+  expect_equal(nrow(s$scalability$asDF), 7)
+  expect_equal(s$diagram$state$type, "comb")
+
+  e <- esemCfa(wizdata, factors = fl, run = TRUE, parallel = FALSE)
+  expect_equal(nrow(e$fit$asDF), 2)
+  expect_equal(names(e$loadings$asDF), c("own", "item", "cfa", "e1", "e2"))
+  expect_equal(nrow(e$cors$asDF), 1)
+
+  d <- data.frame(matrix(rnorm(300 * 5), 300))
+  cc <- compositeCheck(d, indicators = c("X1", "X2", "X3"), outcomes = c("X4", "X5"))
+  expect_equal(nrow(cc$r2$asDF), 2)
+  expect_equal(nrow(cc$weights$asDF), 3)
+})
+
+test_that("the robustness tables are filled on request", {
+  g <- groupCfaOne(wizdata, vars = paste0("stress", 1:4), group = "country", run = TRUE, parallel = FALSE,
+                   type = "continuous", robust = TRUE, showDiagram = TRUE, diagramStyle = "tiles")
+  expect_equal(nrow(g$robustSummary$asDF), 3)
+  expect_equal(nrow(g$robustGrid$asDF), 20)
+  expect_equal(g$diagram$state$type, "tiles")
+})

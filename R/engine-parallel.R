@@ -23,6 +23,7 @@ psw_run_task <- function(task) {
   switch(task$kind,
          inv = psw_inv_task(task),
          est = psw_est_task(task),
+         esem = psw_esem_task(task),
          stop("unknown task kind"))
 }
 

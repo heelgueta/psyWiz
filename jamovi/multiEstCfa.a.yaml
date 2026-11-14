@@ -4,7 +4,7 @@
 name: multiEstCfa
 title: Multi-Estimator CFA
 menuGroup: psyWiz
-menuSubgroup: Estimator Comparison
+menuSubgroup: Model Comparison
 version: '1.0.0'
 jas: '1.2'
 description:

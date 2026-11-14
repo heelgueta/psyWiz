@@ -10,7 +10,7 @@ psw_inv_task <- function(task) {
   est <- psw_estimates(r$fit, task$prep)
   r$loadings <- est$loadings
   r$cors <- est$cors
-  r$culprits <- if (r$converged && task$step != "configural")
+  r$culprits <- if (r$converged && task$step != "configural" && !isFALSE(task$culprits))
     psw_culprits(r$fit, task$step, task$prep) else NULL
   r
 }
@@ -120,6 +120,52 @@ psw_lrt <- function(fit0, fit1) {
   }
   list(dchisq = res[2L, "Chisq diff"], ddf = res[2L, "Df diff"], p = res[2L, "Pr(>Chisq)"],
        note = if (length(warns)) paste(unique(psw_clean_msg(warns)), collapse = " ") else NULL)
+}
+
+#' Fit and step-comparison tables for a sequence of nested models (internal)
+#'
+#' Shared by the invariance ladder and the congeneric / tau-equivalent /
+#' parallel ladder: one row of fit indices per model, and each model compared
+#' with the previous one that converged (chi-square difference test and
+#' changes in CFI, RMSEA and SRMR).
+#' @param res Named list of task results (each with `fit`, `fm`, `converged`).
+#' @return list(fit, comparison, variant, notes)
+#' @keywords internal
+#' @noRd
+psw_ladder_tables <- function(res, steps, labels, ordinal) {
+  notes <- character()
+  variant <- psw_choose_variant(lapply(res, function(r) r$fm), ordinal)
+  fit <- do.call(rbind, lapply(seq_along(steps), function(i) {
+    r <- res[[i]]
+    data.frame(step = steps[i], label = labels[i], converged = r$converged,
+               t(psw_measures(r$fm, variant)), time = r$time, stringsAsFactors = FALSE)
+  }))
+  rownames(fit) <- NULL
+  for (i in seq_along(steps)) {
+    r <- res[[i]]
+    if (!is.null(r$error)) notes <- c(notes, sprintf("%s model: %s", labels[i], r$error))
+    if (length(r$warnings)) notes <- c(notes, sprintf("%s model: %s", labels[i], r$warnings))
+  }
+  comparison <- do.call(rbind, lapply(seq_along(steps)[-1L], function(i) {
+    row <- data.frame(step = steps[i], label = labels[i], vs = NA_character_,
+                      dchisq = NA_real_, ddf = NA_real_, p = NA_real_,
+                      dcfi = NA_real_, drmsea = NA_real_, dsrmr = NA_real_,
+                      stringsAsFactors = FALSE)
+    prev <- rev(which(fit$converged[seq_len(i - 1L)]))[1L]
+    if (!fit$converged[i] || is.na(prev)) return(row)
+    row$vs <- labels[prev]
+    lrt <- psw_lrt(res[[prev]]$fit, res[[i]]$fit)
+    row$dchisq <- lrt$dchisq
+    row$ddf <- lrt$ddf
+    row$p <- lrt$p
+    if (!is.null(lrt$note)) notes <<- c(notes, sprintf("%s vs %s: %s", labels[i], labels[prev], lrt$note))
+    row$dcfi <- fit$cfi[i] - fit$cfi[prev]
+    row$drmsea <- fit$rmsea[i] - fit$rmsea[prev]
+    row$dsrmr <- fit$srmr[i] - fit$srmr[prev]
+    row
+  }))
+  rownames(comparison) <- NULL
+  list(fit = fit, comparison = comparison, variant = variant, notes = notes)
 }
 
 #' Measurement invariance across groups
@@ -232,41 +278,11 @@ invarianceWiz <- function(data, factors, group,
   run <- psw_run_tasks(tasks, parallel = parallel, ncores = ncores)
   res <- stats::setNames(run$results, steps)
 
-  # ---- fit table ----
-  variant <- psw_choose_variant(lapply(res, function(r) r$fm), ord)
-  fit <- do.call(rbind, lapply(seq_along(steps), function(i) {
-    r <- res[[i]]
-    data.frame(step = steps[i], label = labels[i], converged = r$converged,
-               t(psw_measures(r$fm, variant)), time = r$time, stringsAsFactors = FALSE)
-  }))
-  rownames(fit) <- NULL
-
-  for (i in seq_along(steps)) {
-    r <- res[[i]]
-    if (!is.null(r$error)) notes <- c(notes, sprintf("%s model: %s", labels[i], r$error))
-    if (length(r$warnings)) notes <- c(notes, sprintf("%s model: %s", labels[i], r$warnings))
-  }
-
-  # ---- step comparisons: each step against the previous one that converged ----
-  comparison <- do.call(rbind, lapply(seq_along(steps)[-1L], function(i) {
-    row <- data.frame(step = steps[i], label = labels[i], vs = NA_character_,
-                      dchisq = NA_real_, ddf = NA_real_, p = NA_real_,
-                      dcfi = NA_real_, drmsea = NA_real_, dsrmr = NA_real_,
-                      stringsAsFactors = FALSE)
-    prev <- rev(which(fit$converged[seq_len(i - 1L)]))[1L]
-    if (!fit$converged[i] || is.na(prev)) return(row)
-    row$vs <- labels[prev]
-    lrt <- psw_lrt(res[[prev]]$fit, res[[i]]$fit)
-    row$dchisq <- lrt$dchisq
-    row$ddf <- lrt$ddf
-    row$p <- lrt$p
-    if (!is.null(lrt$note)) notes <<- c(notes, sprintf("%s vs %s: %s", labels[i], labels[prev], lrt$note))
-    row$dcfi <- fit$cfi[i] - fit$cfi[prev]
-    row$drmsea <- fit$rmsea[i] - fit$rmsea[prev]
-    row$dsrmr <- fit$srmr[i] - fit$srmr[prev]
-    row
-  }))
-  rownames(comparison) <- NULL
+  lad <- psw_ladder_tables(res, steps, labels, ord)
+  fit <- lad$fit
+  comparison <- lad$comparison
+  variant <- lad$variant
+  notes <- c(notes, lad$notes)
 
   culprits <- do.call(rbind, lapply(res, function(r) r$culprits))
   if (!is.null(culprits)) {
@@ -317,7 +333,7 @@ psw_default_cutoffs <- list(cfi = 0.010, rmsea = 0.015, srmr.loadings = 0.030, s
 #' flagged, `"Not supported"` when all of them are, and `"Ambiguous"` when they
 #' disagree.
 #'
-#' @param x A `psw_invariance` object.
+#' @param x A `psw_invariance` object (or the result of [scaleWiz()]).
 #' @param criteria Any of `"cfi"`, `"rmsea"`, `"srmr"`, `"chisq"`.
 #' @param cutoffs Named list with any of `cfi` (0.010), `rmsea` (0.015),
 #'   `srmr.loadings` (0.030), `srmr` (0.010), `alpha` (0.05).
@@ -328,7 +344,7 @@ psw_default_cutoffs <- list(cfi = 0.010, rmsea = 0.015, srmr.loadings = 0.030, s
 #' measurement invariance. *Structural Equation Modeling, 14*(3), 464-504.
 #' @export
 invarianceVerdict <- function(x, criteria = c("cfi", "rmsea"), cutoffs = list()) {
-  stopifnot(inherits(x, "psw_invariance"))
+  stopifnot(inherits(x, c("psw_invariance", "psw_scale")))
   if (length(criteria))
     criteria <- match.arg(criteria, c("cfi", "rmsea", "srmr", "chisq"), several.ok = TRUE)
   cut <- utils::modifyList(psw_default_cutoffs, as.list(cutoffs))
@@ -336,7 +352,7 @@ invarianceVerdict <- function(x, criteria = c("cfi", "rmsea"), cutoffs = list())
   eps <- 1e-9
   cp$flag.cfi <- cp$dcfi < -cut$cfi - eps
   cp$flag.rmsea <- cp$drmsea > cut$rmsea + eps
-  cp$flag.srmr <- cp$dsrmr > ifelse(cp$step == "metric", cut$srmr.loadings, cut$srmr) + eps
+  cp$flag.srmr <- cp$dsrmr > ifelse(cp$step %in% c("metric", "tau"), cut$srmr.loadings, cut$srmr) + eps
   cp$flag.chisq <- cp$p < cut$alpha
   cp$verdict <- vapply(seq_len(nrow(cp)), function(i) {
     if (is.na(cp$vs[i])) return("Not estimated")

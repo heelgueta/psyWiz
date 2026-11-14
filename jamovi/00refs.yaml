@@ -42,4 +42,76 @@ refs:
         issue: 4
         pages: 1014-1045
         url: https://doi.org/10.1007/s11336-016-9506-0
+    graham2006:
+        type: 'article'
+        author: Graham, J. M.
+        year: 2006
+        title: 'Congeneric and (essentially) tau-equivalent estimates of score reliability: What they are and how to use them'
+        publisher: Educational and Psychological Measurement
+        volume: 66
+        issue: 6
+        pages: 930-944
+        url: https://doi.org/10.1177/0013164406288165
+
+    marsh2014:
+        type: 'article'
+        author: Marsh, H. W., Morin, A. J. S., Parker, P. D., & Kaur, G.
+        year: 2014
+        title: 'Exploratory structural equation modeling: An integration of the best features of exploratory and confirmatory factor analysis'
+        publisher: Annual Review of Clinical Psychology
+        volume: 10
+        issue: 1
+        pages: 85-110
+        url: https://doi.org/10.1146/annurev-clinpsy-032813-153700
+
+    steegen2016:
+        type: 'article'
+        author: Steegen, S., Tuerlinckx, F., Gelman, A., & Vanpaemel, W.
+        year: 2016
+        title: 'Increasing transparency through a multiverse analysis'
+        publisher: Perspectives on Psychological Science
+        volume: 11
+        issue: 5
+        pages: 702-712
+        url: https://doi.org/10.1177/1745691616658637
+
+    meade2008:
+        type: 'article'
+        author: Meade, A. W., Johnson, E. C., & Braddy, P. W.
+        year: 2008
+        title: 'Power and sensitivity of alternative fit indices in tests of measurement invariance'
+        publisher: Journal of Applied Psychology
+        volume: 93
+        issue: 3
+        pages: 568-592
+        url: https://doi.org/10.1037/0021-9010.93.3.568
+
+    franke2008:
+        type: 'article'
+        author: Franke, G. R., Preacher, K. J., & Rigdon, E. E.
+        year: 2008
+        title: 'Proportional structural effects of formative indicators'
+        publisher: Journal of Business Research
+        volume: 61
+        issue: 12
+        pages: 1229-1237
+        url: https://doi.org/10.1016/j.jbusres.2008.01.011
+
+    anderson1951:
+        type: 'article'
+        author: Anderson, T. W.
+        year: 1951
+        title: 'Estimating linear restrictions on regression coefficients for multivariate normal distributions'
+        publisher: Annals of Mathematical Statistics
+        volume: 22
+        issue: 3
+        pages: 327-351
+        url: https://doi.org/10.1214/aoms/1177729580
+
+    mokken1971:
+        type: 'book'
+        author: Mokken, R. J.
+        year: 1971
+        title: 'A theory and procedure of scale analysis'
+        publisher: Mouton
 ...

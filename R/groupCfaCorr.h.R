@@ -28,7 +28,9 @@ groupCfaCorrOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
             culpritsN = 5,
             showLoadings = FALSE,
             showDiagram = FALSE,
-            highlight = FALSE, ...) {
+            diagramStyle = "diagram",
+            highlight = FALSE,
+            robust = FALSE, ...) {
 
             super$initialize(
                 package="psyWiz",
@@ -174,9 +176,21 @@ groupCfaCorrOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
                 "showDiagram",
                 showDiagram,
                 default=FALSE)
+            private$..diagramStyle <- jmvcore::OptionList$new(
+                "diagramStyle",
+                diagramStyle,
+                options=list(
+                    "comb",
+                    "diagram",
+                    "tiles"),
+                default="diagram")
             private$..highlight <- jmvcore::OptionBool$new(
                 "highlight",
                 highlight,
+                default=FALSE)
+            private$..robust <- jmvcore::OptionBool$new(
+                "robust",
+                robust,
                 default=FALSE)
 
             self$.addOption(private$..factors)
@@ -200,7 +214,9 @@ groupCfaCorrOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
             self$.addOption(private$..culpritsN)
             self$.addOption(private$..showLoadings)
             self$.addOption(private$..showDiagram)
+            self$.addOption(private$..diagramStyle)
             self$.addOption(private$..highlight)
+            self$.addOption(private$..robust)
         }),
     active = list(
         factors = function() private$..factors$value,
@@ -224,7 +240,9 @@ groupCfaCorrOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
         culpritsN = function() private$..culpritsN$value,
         showLoadings = function() private$..showLoadings$value,
         showDiagram = function() private$..showDiagram$value,
-        highlight = function() private$..highlight$value),
+        diagramStyle = function() private$..diagramStyle$value,
+        highlight = function() private$..highlight$value,
+        robust = function() private$..robust$value),
     private = list(
         ..factors = NA,
         ..group = NA,
@@ -247,7 +265,9 @@ groupCfaCorrOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
         ..culpritsN = NA,
         ..showLoadings = NA,
         ..showDiagram = NA,
-        ..highlight = NA)
+        ..diagramStyle = NA,
+        ..highlight = NA,
+        ..robust = NA)
 )
 
 groupCfaCorrResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
@@ -259,6 +279,8 @@ groupCfaCorrResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
         fit = function() private$.items[["fit"]],
         comparison = function() private$.items[["comparison"]],
         culprits = function() private$.items[["culprits"]],
+        robustSummary = function() private$.items[["robustSummary"]],
+        robustGrid = function() private$.items[["robustGrid"]],
         loadings = function() private$.items[["loadings"]],
         diagram = function() private$.items[["diagram"]]),
     private = list(),
@@ -345,15 +367,15 @@ groupCfaCorrResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
                     list(
                         `name`="rmseaLo", 
                         `title`="Lower", 
-                        `superTitle`="RMSEA 90% CI", 
                         `type`="number", 
-                        `format`="zto"),
+                        `format`="zto", 
+                        `superTitle`="RMSEA 90% CI"),
                     list(
                         `name`="rmseaHi", 
                         `title`="Upper", 
-                        `superTitle`="RMSEA 90% CI", 
                         `type`="number", 
-                        `format`="zto"),
+                        `format`="zto", 
+                        `superTitle`="RMSEA 90% CI"),
                     list(
                         `name`="srmr", 
                         `title`="SRMR", 
@@ -482,6 +504,74 @@ groupCfaCorrResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
                         `format`="zto,pvalue"))))
             self$add(jmvcore::Table$new(
                 options=options,
+                name="robustSummary",
+                title="Robustness of the Verdict",
+                rows=0,
+                visible="(robust)",
+                refs=list(
+                    "steegen2016",
+                    "meade2008"),
+                clearWith=list(
+                    "factors",
+                    "group",
+                    "strict"),
+                columns=list(
+                    list(
+                        `name`="model", 
+                        `title`="Step", 
+                        `type`="text"),
+                    list(
+                        `name`="supported", 
+                        `title`="Supported in", 
+                        `type`="text"),
+                    list(
+                        `name`="share", 
+                        `title`="Share", 
+                        `type`="number", 
+                        `format`="pc"),
+                    list(
+                        `name`="reading", 
+                        `title`="Reading", 
+                        `type`="text"))))
+            self$add(jmvcore::Table$new(
+                options=options,
+                name="robustGrid",
+                title="Verdict under Each Specification",
+                rows=0,
+                visible="(robust)",
+                clearWith=list(
+                    "factors",
+                    "group",
+                    "strict"),
+                columns=list(
+                    list(
+                        `name`="specification", 
+                        `title`="Items and estimator", 
+                        `type`="text", 
+                        `combineBelow`=TRUE),
+                    list(
+                        `name`="rule", 
+                        `title`="Decision rule", 
+                        `type`="text"),
+                    list(
+                        `name`="thresholds", 
+                        `title`="Thresholds", 
+                        `type`="text"),
+                    list(
+                        `name`="metric", 
+                        `title`="Loadings", 
+                        `type`="text"),
+                    list(
+                        `name`="scalar", 
+                        `title`="Intercepts", 
+                        `type`="text"),
+                    list(
+                        `name`="strict", 
+                        `title`="Residuals", 
+                        `type`="text", 
+                        `visible`="(strict)"))))
+            self$add(jmvcore::Table$new(
+                options=options,
                 name="loadings",
                 title="Standardized Loadings (Configural Model)",
                 rows=0,
@@ -506,7 +596,7 @@ groupCfaCorrResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
             self$add(jmvcore::Image$new(
                 options=options,
                 name="diagram",
-                title="Model Diagram (Configural Model)",
+                title="Configural Model",
                 width=600,
                 height=400,
                 renderFun=".diagram",
@@ -518,7 +608,8 @@ groupCfaCorrResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Clas
                     "estimator",
                     "missing",
                     "strict",
-                    "highlight")))}))
+                    "highlight",
+                    "diagramStyle")))}))
 
 groupCfaCorrBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
     "groupCfaCorrBase",
@@ -562,7 +653,7 @@ groupCfaCorrBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #'   and \code{vars} (the names of its items)
 #' @param group a string naming the grouping variable
 #' @param run \code{TRUE} or \code{FALSE} (default), fit the models; while
-#'   \code{FALSE} only a summary of the data and of the planned models is shown
+#'   \code{FALSE} only a summary of the plan is shown
 #' @param type \code{'auto'} (default; ordinal variables are treated as
 #'   ordinal, continuous ones as continuous), \code{'ordinal'} or
 #'   \code{'continuous'}
@@ -574,8 +665,8 @@ groupCfaCorrBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #'   \code{'pairwise'}
 #' @param strict \code{TRUE} or \code{FALSE} (default), add a step
 #'   constraining the residual variances to equality
-#' @param parallel \code{TRUE} (default) or \code{FALSE}, fit the steps
-#'   concurrently when the first model takes more than a second
+#' @param parallel \code{TRUE} (default) or \code{FALSE}, fit the models
+#'   concurrently when one takes more than a second
 #' @param useCfi \code{TRUE} (default) or \code{FALSE}, use the change in CFI
 #'   for the verdict
 #' @param cutCfi a number (default 0.010), the largest acceptable drop in CFI
@@ -586,7 +677,7 @@ groupCfaCorrBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' @param useSrmr \code{TRUE} or \code{FALSE} (default), use the change in
 #'   SRMR for the verdict
 #' @param cutSrmrLoad a number (default 0.030), the largest acceptable rise in
-#'   SRMR at the loadings step
+#'   SRMR at the step that constrains loadings
 #' @param cutSrmr a number (default 0.010), the largest acceptable rise in
 #'   SRMR at the other steps
 #' @param useChisq \code{TRUE} or \code{FALSE} (default), use the chi-square
@@ -601,8 +692,16 @@ groupCfaCorrBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #'   standardized loadings of the configural model for each group
 #' @param showDiagram \code{TRUE} or \code{FALSE} (default), draw the
 #'   configural model with the standardized loadings of each group
+#' @param diagramStyle \code{'comb'} (teeth whose length is the variance an
+#'   item shares with its factor), \code{'diagram'} (path diagram, arrow width
+#'   proportional to the loading) or \code{'tiles'} (path diagram with a square
+#'   per item filled in proportion to R-squared)
 #' @param highlight \code{TRUE} or \code{FALSE} (default), show flagged
-#'   changes in fit in red and colour weak loadings (below 0.40) in the diagram
+#'   changes in fit in red and colour weak loadings (below 0.40) in the figure
+#' @param robust \code{TRUE} or \code{FALSE} (default), refit the ladder under
+#'   other estimators and item treatments, apply five decision rules to each
+#'   step and report how often each level of invariance is supported (takes
+#'   about four times as long)
 #' @return A results object containing:
 #' \tabular{llllll}{
 #'   \code{results$todo} \tab \tab \tab \tab \tab a html \cr
@@ -610,6 +709,8 @@ groupCfaCorrBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #'   \code{results$fit} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$comparison} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$culprits} \tab \tab \tab \tab \tab a table \cr
+#'   \code{results$robustSummary} \tab \tab \tab \tab \tab a table \cr
+#'   \code{results$robustGrid} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$loadings} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$diagram} \tab \tab \tab \tab \tab an image \cr
 #' }
@@ -645,7 +746,9 @@ groupCfaCorr <- function(
     culpritsN = 5,
     showLoadings = FALSE,
     showDiagram = FALSE,
-    highlight = FALSE) {
+    diagramStyle = "diagram",
+    highlight = FALSE,
+    robust = FALSE) {
 
     if ( ! requireNamespace("jmvcore", quietly=TRUE))
         stop("groupCfaCorr requires jmvcore to be installed (restart may be required)")
@@ -680,7 +783,9 @@ groupCfaCorr <- function(
         culpritsN = culpritsN,
         showLoadings = showLoadings,
         showDiagram = showDiagram,
-        highlight = highlight)
+        diagramStyle = diagramStyle,
+        highlight = highlight,
+        robust = robust)
 
     analysis <- groupCfaCorrClass$new(
         options = options,

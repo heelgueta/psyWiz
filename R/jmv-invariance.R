@@ -148,23 +148,50 @@ psw_jmv_inv_run <- function(self, factors) {
     }
   }
 
-  # ---- diagram: the render function (.diagram in the *.b.R files) draws from this state ----
+  # ---- figure: the render function (.diagram in the *.b.R files) draws from this state ----
   if (opt$showDiagram && !is.null(res$loadings)) {
     l <- res$loadings[res$loadings$step == "configural", , drop = FALSE]
     cc <- if (is.null(res$cors)) NULL else res$cors[res$cors$step == "configural", , drop = FALSE]
-    if (nrow(l)) {
-      size <- psw_diagram_size(l, cc, panel_col = "group")
-      out$diagram$setSize(size[["width"]], size[["height"]])
-      out$diagram$setState(list(loadings = l, cors = cc, highlight = opt$highlight))
+    if (nrow(l)) psw_jmv_set_figure(out$diagram, l, cc, "group", opt$diagramStyle, opt$highlight)
+  }
+
+  # ---- robustness of the verdict: its own cache, on the summary table ----
+  if (opt$robust) {
+    mv <- out$robustSummary$state
+    if (is.null(mv) && opt$run) {
+      mv <- tryCatch(invarianceMultiverse(self$data, factors, group = opt$group, strict = opt$strict,
+                                          parallel = if (opt$parallel) "auto" else FALSE),
+                     error = function(e) conditionMessage(e))
+      if (is.list(mv)) {
+        mv$ladders <- NULL
+        out$robustSummary$setState(mv)
+      }
+    }
+    if (is.null(mv)) {
+      out$robustSummary$setNote("todo", "Tick 'Run analysis' to compute the robustness check.", init = FALSE)
+    } else if (is.character(mv)) {
+      out$robustSummary$setNote("err", paste("The robustness check could not be computed:", mv), init = FALSE)
+    } else {
+      sm <- mv$summary
+      psw_jmv_fill(out$robustSummary, lapply(seq_len(nrow(sm)), function(i)
+        list(model = sm$label[i], supported = sprintf("%d of %d", sm$supported[i], sm$total[i]),
+             share = sm$share[i], reading = sm$reading[i])))
+      out$robustSummary$setNote("what", paste0(
+        "The ladder was refitted under each combination of item treatment and estimator (",
+        paste(mv$info$specifications, collapse = "; "), ") and five decision rules were applied to every step. ",
+        "A verdict that holds in nearly all specifications is robust; one that flips depends on choices ",
+        "the data cannot settle, and should be reported as uncertain."), init = FALSE)
+      psw_jmv_notes(out$robustSummary, mv$notes)
+      w <- psw_multiverse_wide(mv)
+      psw_jmv_fill(out$robustGrid, lapply(seq_len(nrow(w)), function(i) {
+        row <- list(specification = w$specification[i], rule = w$rule[i])
+        for (s in c("thresholds", "metric", "scalar", "strict"))
+          row[[s]] <- if (s %in% names(w)) w[[s]][i] else NA
+        row
+      }))
+      out$robustGrid$setNote("thr", "The thresholds step exists only when items are treated as ordinal.", init = FALSE)
     }
   }
   invisible()
 }
 
-# Render function shared by both group analyses.
-psw_jmv_diagram <- function(image) {
-  st <- image$state
-  if (is.null(st)) return(FALSE)
-  print(psw_diagram(st$loadings, st$cors, panel_col = "group", highlight = isTRUE(st$highlight)))
-  TRUE
-}
