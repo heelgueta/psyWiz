@@ -1,0 +1,45 @@
+---
+# References shown under the results when the user has references switched on.
+# Each analysis (or table) lists the keys it cites under `refs:` in its .r.yaml.
+refs:
+    psyWiz:
+        type: 'software'
+        author: Elgueta, H.
+        year: 2026
+        title: 'psyWiz: Psychometric wizardry for confirmatory factor analysis'
+        publisher: '(Version 0.2) [jamovi module and R package]. Retrieved from https://github.com/heelgueta/psywiz'
+        url: https://github.com/heelgueta/psywiz
+
+    lavaan:
+        type: 'article'
+        author: Rosseel, Y.
+        year: 2012
+        title: 'lavaan: An R package for structural equation modeling'
+        publisher: Journal of Statistical Software
+        volume: 48
+        issue: 2
+        pages: 1-36
+        url: https://doi.org/10.18637/jss.v048.i02
+
+    chen2007:
+        type: 'article'
+        author: Chen, F. F.
+        year: 2007
+        title: 'Sensitivity of goodness of fit indexes to lack of measurement invariance'
+        publisher: Structural Equation Modeling
+        volume: 14
+        issue: 3
+        pages: 464-504
+        url: https://doi.org/10.1080/10705510701301834
+
+    wu2016:
+        type: 'article'
+        author: Wu, H., & Estabrook, R.
+        year: 2016
+        title: 'Identification of confirmatory factor analysis models of different levels of invariance for ordered categorical outcomes'
+        publisher: Psychometrika
+        volume: 81
+        issue: 4
+        pages: 1014-1045
+        url: https://doi.org/10.1007/s11336-016-9506-0
+...

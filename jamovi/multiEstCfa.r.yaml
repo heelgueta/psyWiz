@@ -1,0 +1,143 @@
+---
+# Multi-Estimator CFA (multiEstCfa): RESULTS. Filled by R/multiEstCfa.b.R.
+# The fitted results are cached as the state of the `fit` table; its clearWith
+# lists exactly the options that require refitting. The estimator columns of
+# the other tables are added in .init().
+name: multiEstCfa
+title: Multi-Estimator CFA
+jrs: '1.1'
+refs:
+  - psyWiz
+  - lavaan
+items:
+  - name: todo
+    title: ''
+    type: Html
+    visible: false
+  - name: fit
+    title: Model Fit by Estimator
+    type: Table
+    rows: 0
+    clearWith: &model
+      - factors
+      - type
+      - estML
+      - estMLR
+      - estMLM
+      - estULS
+      - estULSMV
+      - estDWLS
+      - estWLSMV
+      - estWLS
+      - missing
+    columns:
+      - name: estimator
+        title: Estimator
+        type: text
+      - name: treated
+        title: Items as
+        type: text
+      - name: n
+        title: N
+        type: integer
+      - name: chisq
+        title: χ²
+        type: number
+      - name: df
+        title: df
+        type: integer
+      - name: p
+        title: p
+        type: number
+        format: zto,pvalue
+      - name: cfi
+        title: CFI
+        type: number
+        format: zto
+      - name: tli
+        title: TLI
+        type: number
+        format: zto
+      - name: rmsea
+        title: RMSEA
+        type: number
+        format: zto
+      - name: rmseaLo
+        title: Lower
+        superTitle: RMSEA 90% CI
+        type: number
+        format: zto
+      - name: rmseaHi
+        title: Upper
+        superTitle: RMSEA 90% CI
+        type: number
+        format: zto
+      - name: srmr
+        title: SRMR
+        type: number
+        format: zto
+  - name: std
+    title: Standardized Loadings
+    type: Table
+    rows: 0
+    visible: (showStd)
+    clearWith: &loadings
+      - factors
+      - type
+      - estML
+      - estMLR
+      - estMLM
+      - estULS
+      - estULSMV
+      - estDWLS
+      - estWLSMV
+      - estWLS
+      - missing
+      - sortLoadings
+      - highlight
+    columns:
+      - name: factor
+        title: Factor
+        type: text
+        combineBelow: true
+      - name: item
+        title: Item
+        type: text
+  - name: unstd
+    title: Unstandardized Loadings
+    type: Table
+    rows: 0
+    visible: (showUnstd)
+    clearWith: *loadings
+    columns:
+      - name: factor
+        title: Factor
+        type: text
+        combineBelow: true
+      - name: item
+        title: Item
+        type: text
+  - name: cors
+    title: Factor Correlations
+    type: Table
+    rows: 0
+    visible: (showCors)
+    clearWith: *model
+    columns:
+      - name: factor1
+        title: ''
+        type: text
+      - name: factor2
+        title: ''
+        type: text
+  - name: rel
+    title: Reliability
+    type: Table
+    rows: 0
+    visible: (showRel)
+    clearWith: *model
+    columns:
+      - name: factor
+        title: Factor
+        type: text
+...

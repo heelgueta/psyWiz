@@ -1,0 +1,188 @@
+---
+# Multi-Estimator CFA (multiEstCfa): OPTIONS. jmvtools compiles this file (with
+# the .r.yaml) into R/multiEstCfa.h.R. The implementation is in R/multiEstCfa.b.R.
+name: multiEstCfa
+title: Multi-Estimator CFA
+menuGroup: psyWiz
+menuSubgroup: Estimator Comparison
+version: '1.0.0'
+jas: '1.2'
+description:
+  main: >
+    Fits one confirmatory factor model (one factor or several correlated
+    factors) under several estimators and shows fit indices, loadings, factor
+    correlations and reliabilities side by side.
+  R:
+    dontrun: true
+    usage: |
+      data('wizdata', package = 'psyWiz')
+      psyWiz::multiEstCfa(wizdata, run = TRUE, factors = list(
+          list(label = 'Trust', vars = c('trust1', 'trust2', 'trust3', 'trust4')),
+          list(label = 'Stress', vars = c('stress1', 'stress2', 'stress3', 'stress4'))))
+options:
+  - name: data
+    type: Data
+    description:
+      R: the data as a data frame
+  - name: factors
+    title: Factors
+    type: Array
+    default:
+      - label: Factor 1
+        vars: []
+    template:
+      type: Group
+      elements:
+        - name: label
+          type: String
+        - name: vars
+          type: Variables
+          suggested:
+            - ordinal
+            - continuous
+          permitted:
+            - numeric
+            - factor
+    description:
+      R: >
+        a list of lists, each with a `label` (the factor name) and `vars`
+        (the names of its items)
+  # Nothing is fitted until this is ticked.
+  - name: run
+    title: Run analysis
+    type: Bool
+    default: false
+    description:
+      R: >
+        `TRUE` or `FALSE` (default), fit the models; while `FALSE` only a
+        summary of the planned models is shown
+  - name: type
+    title: Treat items as
+    type: List
+    options:
+      - name: auto
+        title: Their measure type
+      - name: ordinal
+        title: Ordinal
+      - name: continuous
+        title: Continuous
+    default: auto
+    description:
+      R: >
+        `'auto'` (default), `'ordinal'` or `'continuous'`. ML, MLR and MLM
+        always treat the items as continuous; the other estimators treat them
+        as ordinal only when the items are ordinal
+  # ESTIMATORS: one checkbox each, so any subset can be compared.
+  - name: estML
+    title: ML
+    type: Bool
+    default: false
+    description:
+      R: "`TRUE` or `FALSE` (default), maximum likelihood"
+  - name: estMLR
+    title: MLR
+    type: Bool
+    default: true
+    description:
+      R: "`TRUE` (default) or `FALSE`, robust maximum likelihood (Yuan-Bentler)"
+  - name: estMLM
+    title: MLM
+    type: Bool
+    default: false
+    description:
+      R: "`TRUE` or `FALSE` (default), maximum likelihood with Satorra-Bentler correction"
+  - name: estULS
+    title: ULS
+    type: Bool
+    default: false
+    description:
+      R: "`TRUE` or `FALSE` (default), unweighted least squares"
+  - name: estULSMV
+    title: ULSMV
+    type: Bool
+    default: true
+    description:
+      R: "`TRUE` (default) or `FALSE`, unweighted least squares, mean- and variance-adjusted test"
+  - name: estDWLS
+    title: DWLS
+    type: Bool
+    default: false
+    description:
+      R: "`TRUE` or `FALSE` (default), diagonally weighted least squares"
+  - name: estWLSMV
+    title: WLSMV
+    type: Bool
+    default: true
+    description:
+      R: "`TRUE` (default) or `FALSE`, diagonally weighted least squares, mean- and variance-adjusted test"
+  - name: estWLS
+    title: WLS
+    type: Bool
+    default: false
+    description:
+      R: "`TRUE` or `FALSE` (default), weighted least squares (ADF); needs large samples"
+  - name: missing
+    title: Missing values
+    type: List
+    options:
+      - name: auto
+        title: Automatic (FIML / pairwise)
+      - name: listwise
+        title: Exclude cases listwise
+    default: auto
+    description:
+      R: >
+        `'auto'` (default; FIML for ML and MLR, pairwise deletion for ordinal
+        treatment, listwise otherwise) or `'listwise'`
+  - name: parallel
+    title: Use several processor cores for slow models
+    type: Bool
+    default: true
+    description:
+      R: >
+        `TRUE` (default) or `FALSE`, fit the estimators concurrently when the
+        first model takes more than a second
+  # OUTPUT
+  - name: showStd
+    title: Standardized loadings
+    type: Bool
+    default: true
+    description:
+      R: "`TRUE` (default) or `FALSE`, show the standardized loadings"
+  - name: showUnstd
+    title: Unstandardized loadings
+    type: Bool
+    default: false
+    description:
+      R: "`TRUE` or `FALSE` (default), show the unstandardized loadings"
+  - name: sortLoadings
+    title: Sort items by loading
+    type: Bool
+    default: false
+    description:
+      R: >
+        `TRUE` or `FALSE` (default), sort the items of each factor by their
+        mean absolute standardized loading
+  - name: showCors
+    title: Factor correlations
+    type: Bool
+    default: true
+    description:
+      R: "`TRUE` (default) or `FALSE`, show the factor correlations"
+  - name: showRel
+    title: Reliability (ω and AVE)
+    type: Bool
+    default: true
+    description:
+      R: >
+        `TRUE` (default) or `FALSE`, show composite reliability (omega) and
+        average variance extracted for each factor
+  - name: highlight
+    title: Highlight weak loadings in colour
+    type: Bool
+    default: false
+    description:
+      R: >
+        `TRUE` or `FALSE` (default), show standardized loadings below 0.40
+        in red
+...

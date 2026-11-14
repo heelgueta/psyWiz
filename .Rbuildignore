@@ -1,1 +1,9 @@
-^LICENSE\.md$
+^build$
+^docs$
+^tools$
+^jamovi$
+^.*\.jmo$
+^.*\.Rproj$
+^\.Rproj\.user$
+^data/.*\.omv$
+^LICENSE$
