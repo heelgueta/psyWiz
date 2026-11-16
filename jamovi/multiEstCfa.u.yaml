@@ -115,3 +115,6 @@ children:
             name: showRel
           - type: CheckBox
             name: highlight
+          - type: ComboBox
+            name: palette
+            enable: (highlight)

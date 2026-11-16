@@ -75,3 +75,5 @@ children:
             name: showCors
           - type: CheckBox
             name: highlight
+          - type: CheckBox
+            name: showLoom

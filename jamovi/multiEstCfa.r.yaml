@@ -140,4 +140,8 @@ items:
       - name: factor
         title: Factor
         type: text
+  - name: heat
+    title: Colour Summary
+    type: Html
+    visible: (highlight)
 ...

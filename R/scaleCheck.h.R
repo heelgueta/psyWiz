@@ -23,10 +23,16 @@ scaleCheckOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             useChisq = FALSE,
             alpha = 0.05,
             showItems = TRUE,
-            showScal = TRUE,
-            showDiagram = FALSE,
-            diagramStyle = "comb",
-            highlight = FALSE, ...) {
+            tau = FALSE,
+            showScal = FALSE,
+            showComb = FALSE,
+            combThick = FALSE,
+            showPath = FALSE,
+            pathNumbers = TRUE,
+            pathWidth = TRUE,
+            highlight = FALSE,
+            guttmanOrder = "entered",
+            showScalogram = FALSE, ...) {
 
             super$initialize(
                 package="psyWiz",
@@ -135,25 +141,48 @@ scaleCheckOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 "showItems",
                 showItems,
                 default=TRUE)
+            private$..tau <- jmvcore::OptionBool$new(
+                "tau",
+                tau,
+                default=FALSE)
             private$..showScal <- jmvcore::OptionBool$new(
                 "showScal",
                 showScal,
-                default=TRUE)
-            private$..showDiagram <- jmvcore::OptionBool$new(
-                "showDiagram",
-                showDiagram,
                 default=FALSE)
-            private$..diagramStyle <- jmvcore::OptionList$new(
-                "diagramStyle",
-                diagramStyle,
-                options=list(
-                    "comb",
-                    "diagram",
-                    "tiles"),
-                default="comb")
+            private$..showComb <- jmvcore::OptionBool$new(
+                "showComb",
+                showComb,
+                default=FALSE)
+            private$..combThick <- jmvcore::OptionBool$new(
+                "combThick",
+                combThick,
+                default=FALSE)
+            private$..showPath <- jmvcore::OptionBool$new(
+                "showPath",
+                showPath,
+                default=FALSE)
+            private$..pathNumbers <- jmvcore::OptionBool$new(
+                "pathNumbers",
+                pathNumbers,
+                default=TRUE)
+            private$..pathWidth <- jmvcore::OptionBool$new(
+                "pathWidth",
+                pathWidth,
+                default=TRUE)
             private$..highlight <- jmvcore::OptionBool$new(
                 "highlight",
                 highlight,
+                default=FALSE)
+            private$..guttmanOrder <- jmvcore::OptionList$new(
+                "guttmanOrder",
+                guttmanOrder,
+                options=list(
+                    "entered",
+                    "difficulty"),
+                default="entered")
+            private$..showScalogram <- jmvcore::OptionBool$new(
+                "showScalogram",
+                showScalogram,
                 default=FALSE)
 
             self$.addOption(private$..vars)
@@ -173,10 +202,16 @@ scaleCheckOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$.addOption(private$..useChisq)
             self$.addOption(private$..alpha)
             self$.addOption(private$..showItems)
+            self$.addOption(private$..tau)
             self$.addOption(private$..showScal)
-            self$.addOption(private$..showDiagram)
-            self$.addOption(private$..diagramStyle)
+            self$.addOption(private$..showComb)
+            self$.addOption(private$..combThick)
+            self$.addOption(private$..showPath)
+            self$.addOption(private$..pathNumbers)
+            self$.addOption(private$..pathWidth)
             self$.addOption(private$..highlight)
+            self$.addOption(private$..guttmanOrder)
+            self$.addOption(private$..showScalogram)
         }),
     active = list(
         vars = function() private$..vars$value,
@@ -196,10 +231,16 @@ scaleCheckOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         useChisq = function() private$..useChisq$value,
         alpha = function() private$..alpha$value,
         showItems = function() private$..showItems$value,
+        tau = function() private$..tau$value,
         showScal = function() private$..showScal$value,
-        showDiagram = function() private$..showDiagram$value,
-        diagramStyle = function() private$..diagramStyle$value,
-        highlight = function() private$..highlight$value),
+        showComb = function() private$..showComb$value,
+        combThick = function() private$..combThick$value,
+        showPath = function() private$..showPath$value,
+        pathNumbers = function() private$..pathNumbers$value,
+        pathWidth = function() private$..pathWidth$value,
+        highlight = function() private$..highlight$value,
+        guttmanOrder = function() private$..guttmanOrder$value,
+        showScalogram = function() private$..showScalogram$value),
     private = list(
         ..vars = NA,
         ..scaleName = NA,
@@ -218,10 +259,16 @@ scaleCheckOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         ..useChisq = NA,
         ..alpha = NA,
         ..showItems = NA,
+        ..tau = NA,
         ..showScal = NA,
-        ..showDiagram = NA,
-        ..diagramStyle = NA,
-        ..highlight = NA)
+        ..showComb = NA,
+        ..combThick = NA,
+        ..showPath = NA,
+        ..pathNumbers = NA,
+        ..pathWidth = NA,
+        ..highlight = NA,
+        ..guttmanOrder = NA,
+        ..showScalogram = NA)
 )
 
 scaleCheckResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
@@ -234,7 +281,9 @@ scaleCheckResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         comparison = function() private$.items[["comparison"]],
         items = function() private$.items[["items"]],
         scalability = function() private$.items[["scalability"]],
-        diagram = function() private$.items[["diagram"]]),
+        scalogram = function() private$.items[["scalogram"]],
+        comb = function() private$.items[["comb"]],
+        path = function() private$.items[["path"]]),
     private = list(),
     public=list(
         initialize=function(options) {
@@ -282,6 +331,7 @@ scaleCheckResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 name="fit",
                 title="Measurement Models",
                 rows=0,
+                visible="(tau)",
                 clearWith=list(
                     "vars",
                     "scaleName",
@@ -343,6 +393,7 @@ scaleCheckResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 name="comparison",
                 title="Tau-Equivalence and Parallelism",
                 rows=0,
+                visible="(tau)",
                 refs=list(
                     "graham2006"),
                 clearWith=list(
@@ -452,7 +503,8 @@ scaleCheckResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                         `name`="H", 
                         `title`="H", 
                         `type`="number", 
-                        `format`="zto"))))
+                        `format`="zto", 
+                        `visible`="(showScal)"))))
             self$add(jmvcore::Table$new(
                 options=options,
                 name="scalability",
@@ -466,7 +518,8 @@ scaleCheckResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "scaleName",
                     "type",
                     "estimator",
-                    "missing"),
+                    "missing",
+                    "guttmanOrder"),
                 columns=list(
                     list(
                         `name`="statistic", 
@@ -483,20 +536,50 @@ scaleCheckResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                         `type`="text"))))
             self$add(jmvcore::Image$new(
                 options=options,
-                name="diagram",
-                title="Congeneric Model",
+                name="scalogram",
+                title="Scalogram",
                 width=600,
                 height=400,
                 renderFun=".diagram",
-                visible="(showDiagram)",
+                visible="(showScalogram)",
                 clearWith=list(
                     "vars",
                     "scaleName",
                     "type",
                     "estimator",
                     "missing",
-                    "highlight",
-                    "diagramStyle")))}))
+                    "guttmanOrder")))
+            self$add(jmvcore::Image$new(
+                options=options,
+                name="comb",
+                title="Comb Plot",
+                width=600,
+                height=400,
+                renderFun=".diagram",
+                visible="(showComb)",
+                clearWith=list(
+                    "vars",
+                    "scaleName",
+                    "type",
+                    "estimator",
+                    "missing",
+                    "combThick")))
+            self$add(jmvcore::Image$new(
+                options=options,
+                name="path",
+                title="Path Diagram",
+                width=600,
+                height=400,
+                renderFun=".diagram",
+                visible="(showPath)",
+                clearWith=list(
+                    "vars",
+                    "scaleName",
+                    "type",
+                    "estimator",
+                    "missing",
+                    "pathNumbers",
+                    "pathWidth")))}))
 
 scaleCheckBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
     "scaleCheckBase",
@@ -521,10 +604,10 @@ scaleCheckBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 
 #' Scale Check
 #'
-#' Checks one scale: reliability (alpha, lambda-2, omega, AVE), whether the 
-#' items are congeneric, tau-equivalent or parallel (which decides whether 
-#' alpha and unit-weighted sum scores are justified), item statistics, and 
-#' Guttman / Mokken scalability.
+#' Checks one scale: reliability (alpha, lambda-2, omega, AVE) and item 
+#' statistics. On request: whether the items are congeneric, tau-equivalent or 
+#' parallel (which decides whether alpha and unit-weighted sum scores are 
+#' justified), and Guttman / Mokken scalability.
 #' 
 #'
 #' @examples
@@ -566,17 +649,29 @@ scaleCheckBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' @param alpha a number (default 0.05), the significance level of the
 #'   difference test
 #' @param showItems \code{TRUE} (default) or \code{FALSE}, show the item table
-#' @param showScal \code{TRUE} (default) or \code{FALSE}, show Loevinger's H
+#' @param tau \code{TRUE} or \code{FALSE} (default), compare the congeneric,
+#'   tau-equivalent and parallel models
+#' @param showScal \code{TRUE} or \code{FALSE} (default), show Loevinger's H
 #'   and the Guttman scalogram statistics
-#' @param showDiagram \code{TRUE} or \code{FALSE} (default), draw the
-#'   congeneric model
-#' @param diagramStyle \code{'comb'} (teeth whose length is the variance an
-#'   item shares with its factor), \code{'diagram'} (path diagram, arrow width
-#'   proportional to the loading) or \code{'tiles'} (path diagram with a square
-#'   per item filled in proportion to R-squared)
+#' @param showComb \code{TRUE} or \code{FALSE} (default), draw the comb plot:
+#'   one tooth per item, whose length is the variance the item shares with its
+#'   factor
+#' @param combThick \code{TRUE} or \code{FALSE} (default), make each tooth as
+#'   thick as the item's observed variance is large
+#' @param showPath \code{TRUE} or \code{FALSE} (default), draw the path
+#'   diagram
+#' @param pathNumbers \code{TRUE} (default) or \code{FALSE}, print the
+#'   standardized loadings on the arrows
+#' @param pathWidth \code{TRUE} (default) or \code{FALSE}, make the width of
+#'   an arrow proportional to its loading
 #' @param highlight \code{TRUE} or \code{FALSE} (default), show flagged
 #'   changes in fit, weak loadings (below 0.40) and unscalable items (H below
 #'   0.30) in red
+#' @param guttmanOrder \code{'entered'} (default: the order of \code{vars} is
+#'   taken as the hypothesised order, easiest item first) or \code{'difficulty'}
+#'   (items sorted from the most to the least endorsed)
+#' @param showScalogram \code{TRUE} or \code{FALSE} (default), draw
+#'   respondents sorted by total score against the items
 #' @return A results object containing:
 #' \tabular{llllll}{
 #'   \code{results$todo} \tab \tab \tab \tab \tab a html \cr
@@ -585,7 +680,9 @@ scaleCheckBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #'   \code{results$comparison} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$items} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$scalability} \tab \tab \tab \tab \tab a table \cr
-#'   \code{results$diagram} \tab \tab \tab \tab \tab an image \cr
+#'   \code{results$scalogram} \tab \tab \tab \tab \tab an image \cr
+#'   \code{results$comb} \tab \tab \tab \tab \tab an image \cr
+#'   \code{results$path} \tab \tab \tab \tab \tab an image \cr
 #' }
 #'
 #' Tables can be converted to data frames with \code{asDF} or \code{\link{as.data.frame}}. For example:
@@ -614,10 +711,16 @@ scaleCheck <- function(
     useChisq = FALSE,
     alpha = 0.05,
     showItems = TRUE,
-    showScal = TRUE,
-    showDiagram = FALSE,
-    diagramStyle = "comb",
-    highlight = FALSE) {
+    tau = FALSE,
+    showScal = FALSE,
+    showComb = FALSE,
+    combThick = FALSE,
+    showPath = FALSE,
+    pathNumbers = TRUE,
+    pathWidth = TRUE,
+    highlight = FALSE,
+    guttmanOrder = "entered",
+    showScalogram = FALSE) {
 
     if ( ! requireNamespace("jmvcore", quietly=TRUE))
         stop("scaleCheck requires jmvcore to be installed (restart may be required)")
@@ -647,10 +750,16 @@ scaleCheck <- function(
         useChisq = useChisq,
         alpha = alpha,
         showItems = showItems,
+        tau = tau,
         showScal = showScal,
-        showDiagram = showDiagram,
-        diagramStyle = diagramStyle,
-        highlight = highlight)
+        showComb = showComb,
+        combThick = combThick,
+        showPath = showPath,
+        pathNumbers = pathNumbers,
+        pathWidth = pathWidth,
+        highlight = highlight,
+        guttmanOrder = guttmanOrder,
+        showScalogram = showScalogram)
 
     analysis <- scaleCheckClass$new(
         options = options,

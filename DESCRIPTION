@@ -1,7 +1,7 @@
 Package: psyWiz
 Type: Package
 Title: Psychometric Wizardry for Scales and Factor Models
-Version: 0.3.0
+Version: 0.4.0
 Authors@R: person("Herman", "Elgueta", email = "herman.elgueta@umag.cl", role = c("aut", "cre"),
     comment = c(ORCID = "0000-0002-6764-5490"))
 Description: Tools for scale psychometrics built on 'lavaan', usable from R

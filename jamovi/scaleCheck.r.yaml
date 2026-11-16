@@ -39,6 +39,7 @@ items:
     title: 'Measurement Models'
     type: Table
     rows: 0
+    visible: (tau)
     clearWith:
       - vars
       - scaleName
@@ -89,6 +90,7 @@ items:
     title: 'Tau-Equivalence and Parallelism'
     type: Table
     rows: 0
+    visible: (tau)
     refs:
       - graham2006
     clearWith:
@@ -181,6 +183,7 @@ items:
         title: 'H'
         type: number
         format: zto
+        visible: (showScal)
   - name: scalability
     title: 'Scalability'
     type: Table
@@ -194,6 +197,7 @@ items:
       - type
       - estimator
       - missing
+      - guttmanOrder
     columns:
       - name: statistic
         title: 'Statistic'
@@ -205,19 +209,47 @@ items:
       - name: reading
         title: 'Reading'
         type: text
-  - name: diagram
-    title: 'Congeneric Model'
+  - name: scalogram
+    title: 'Scalogram'
     type: Image
     width: 600
     height: 400
     renderFun: .diagram
-    visible: (showDiagram)
+    visible: (showScalogram)
     clearWith:
       - vars
       - scaleName
       - type
       - estimator
       - missing
-      - highlight
-      - diagramStyle
+      - guttmanOrder
+  - name: comb
+    title: 'Comb Plot'
+    type: Image
+    width: 600
+    height: 400
+    renderFun: .diagram
+    visible: (showComb)
+    clearWith:
+      - vars
+      - scaleName
+      - type
+      - estimator
+      - missing
+      - combThick
+  - name: path
+    title: 'Path Diagram'
+    type: Image
+    width: 600
+    height: 400
+    renderFun: .diagram
+    visible: (showPath)
+    clearWith:
+      - vars
+      - scaleName
+      - type
+      - estimator
+      - missing
+      - pathNumbers
+      - pathWidth
 ...

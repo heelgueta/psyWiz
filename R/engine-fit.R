@@ -141,13 +141,21 @@ psw_estimates <- function(fit, prep) {
   glab <- if (length(prep$groups)) prep$groups[pe$group] else rep(NA_character_, nrow(pe))
   it <- prep$items
 
-  l <- pe$op == "=~"
+  # observed variance of each item (as scored), per group: used for tooth thickness in the comb plot
+  item_var <- function(id, g) tryCatch({
+    x <- prep$data[[id]]
+    if (!is.na(g)) x <- x[prep$data[[psw_group_col]] == g]
+    stats::var(psw_as_numeric(x), na.rm = TRUE)
+  }, error = function(e) NA_real_)
+
+  l <- pe$op == "=~" & pe$rhs %in% it$id & pe$lhs %in% names(prep$fnames)
   loadings <- data.frame(
     group = glab[l],
     factor = unname(prep$fnames[pe$lhs[l]]),
     item = it$name[match(pe$rhs[l], it$id)],
     est = pe$est[l], se = pe$se[l], p = pe$pvalue[l], std = pe$std.all[l],
     stringsAsFactors = FALSE)
+  loadings$var <- unname(mapply(item_var, pe$rhs[l], glab[l]))
 
   cc <- pe$op == "~~" & pe$lhs != pe$rhs & pe$lhs %in% names(prep$fnames) & pe$rhs %in% names(prep$fnames)
   cors <- data.frame(

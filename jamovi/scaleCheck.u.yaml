@@ -45,7 +45,66 @@ children:
           - type: CheckBox
             name: parallel
   - type: CollapseBox
-    label: Decision Criteria
+    label: Output
+    collapsed: false
+    stretchFactor: 1
+    children:
+      - type: LayoutBox
+        margin: large
+        children:
+          - type: CheckBox
+            name: showItems
+          - type: CheckBox
+            name: highlight
+  - type: CollapseBox
+    label: Figures
+    collapsed: true
+    stretchFactor: 1
+    children:
+      - type: LayoutBox
+        margin: large
+        children:
+          - type: CheckBox
+            name: showComb
+            children:
+              - type: CheckBox
+                name: combThick
+                enable: (showComb)
+          - type: CheckBox
+            name: showPath
+            children:
+              - type: CheckBox
+                name: pathNumbers
+                enable: (showPath)
+              - type: CheckBox
+                name: pathWidth
+                enable: (showPath)
+  - type: CollapseBox
+    label: More
+    collapsed: true
+    stretchFactor: 1
+    children:
+      - type: LayoutBox
+        margin: large
+        children:
+          - type: CheckBox
+            name: tau
+  - type: CollapseBox
+    label: Guttman Scale
+    collapsed: true
+    stretchFactor: 1
+    children:
+      - type: LayoutBox
+        margin: large
+        children:
+          - type: CheckBox
+            name: showScal
+          - type: CheckBox
+            name: showScalogram
+          - type: ComboBox
+            name: guttmanOrder
+  - type: CollapseBox
+    label: Decision Criteria (tau-equivalence)
     collapsed: true
     stretchFactor: 1
     children:
@@ -84,22 +143,3 @@ children:
                 name: alpha
                 format: number
                 enable: (useChisq)
-  - type: CollapseBox
-    label: Output
-    collapsed: true
-    stretchFactor: 1
-    children:
-      - type: LayoutBox
-        margin: large
-        children:
-          - type: CheckBox
-            name: showItems
-          - type: CheckBox
-            name: showScal
-          - type: CheckBox
-            name: showDiagram
-          - type: ComboBox
-            name: diagramStyle
-            enable: (showDiagram)
-          - type: CheckBox
-            name: highlight

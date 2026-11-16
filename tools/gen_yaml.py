@@ -8,7 +8,7 @@ missing values, decision criteria, figure options) and table layouts. Keeping
 many hand-written yaml files in sync is error-prone, so they are generated
 from the small helpers below. Edit THIS file, run it, then rebuild the module.
 
-Not generated: multiEstCfa.*.yaml (written by hand), 0000.yaml, 00refs.yaml.
+Not generated: multiEstCfa.*.yaml (written by hand), 0000.yaml (menu order), 00refs.yaml.
 
 Conventions
   * an option that changes which models are fitted must be in the `refit`
@@ -131,14 +131,23 @@ O_CRITERIA = (
 CRITERIA_KEYS = ["useCfi", "cutCfi", "useRmsea", "cutRmsea", "useSrmr", "cutSrmrLoad", "cutSrmr", "useChisq", "alpha"]
 
 
-def o_figure(default_style, what):
-    return (o_bool("showDiagram", "Figure", False, f"`TRUE` or `FALSE` (default), draw {what}") +
-            o_list("diagramStyle", "Figure type",
-                   [("comb", "Comb plot"), ("diagram", "Path diagram"), ("tiles", "Path diagram with variance tiles")],
-                   default_style,
-                   "`'comb'` (teeth whose length is the variance an item shares with its factor), `'diagram'` "
-                   "(path diagram, arrow width proportional to the loading) or `'tiles'` (path diagram with a "
-                   "square per item filled in proportion to R-squared)"))
+# Figures of a simple-structure model: a comb plot and a path diagram, which can both be
+# shown, each with its own small options.
+def o_figures(comb=False, path=False):
+    d = lambda on: "`TRUE` (default) or `FALSE`" if on else "`TRUE` or `FALSE` (default)"
+    return (o_bool("showComb", "Comb plot", comb, f"{d(comb)}, draw the comb plot: one tooth per item, whose "
+                   "length is the variance the item shares with its factor") +
+            o_bool("combThick", "Tooth thickness by item variance", False,
+                   "`TRUE` or `FALSE` (default), make each tooth as thick as the item's observed variance is large") +
+            o_bool("showPath", "Path diagram", path, f"{d(path)}, draw the path diagram") +
+            O_PATH_TWEAKS)
+
+
+O_PATH_TWEAKS = (o_bool("pathNumbers", "Loadings on the arrows", True,
+                        "`TRUE` (default) or `FALSE`, print the standardized loadings on the arrows") +
+                 o_bool("pathWidth", "Arrow width by loading", True,
+                        "`TRUE` (default) or `FALSE`, make the width of an arrow proportional to its loading"))
+FIG_KEYS = ["combThick", "pathNumbers", "pathWidth"]
 
 
 # ------------------------------------------------------------------ results --
@@ -162,9 +171,28 @@ def table(name, title, cols, clear_keys, visible=None, refs=None):
     return out + "    clearWith:\n" + clear(clear_keys) + "    columns:\n" + "".join(cols)
 
 
-def image(name, title, clear_keys, visible="(showDiagram)"):
+def image(name, title, clear_keys, visible):
     return (f"  - name: {name}\n    title: {q(title)}\n    type: Image\n    width: 600\n    height: 400\n"
             f"    renderFun: .diagram\n    visible: {visible}\n    clearWith:\n" + clear(clear_keys))
+
+
+def figures(refit, comb_title="Comb Plot", path_title="Path Diagram"):
+    return (image("comb", comb_title, refit + ["combThick"], "(showComb)") +
+            image("path", path_title, refit + ["pathNumbers", "pathWidth"], "(showPath)"))
+
+
+# Colour is off by default everywhere. `highlight` switches it on, `palette` chooses the ramp
+# (R/colour.R). The option keeps its old name so saved analyses still open.
+def o_colour(what):
+    return (o_bool("highlight", "Colour", False, "`TRUE` or `FALSE` (default), " + what) +
+            o_list("palette", "Palette",
+                   [("purpleorange", "Orange to purple (colour-blind safe)"), ("cividis", "Yellow to blue (colour-blind safe)"),
+                    ("redblue", "Red to blue (classic psyWiz)"), ("grey", "Greys")], "purpleorange",
+                   "the colour ramp used when colour is on: `'purpleorange'` (default), `'cividis'`, `'redblue'` or `'grey'`"))
+
+
+def heat(visible="(highlight)"):
+    return f"  - name: heat\n    title: Colour Summary\n    type: Html\n    visible: {visible}\n"
 
 
 TODO = "  - name: todo\n    title: ''\n    type: Html\n    visible: false\n"
@@ -259,19 +287,63 @@ UI_CRITERIA = ui_collapse("Decision Criteria", [
     ui_check_with("useSrmr", ["cutSrmrLoad", "cutSrmr"]), ui_check_with("useChisq", ["alpha"])])
 
 
-def ui_model(extra=()):
+def ui_model(extra=(), parallel=True):
     return ui_collapse("Model", [ui_box(
         [ui_ctl("ComboBox", "type", 10), ui_ctl("ComboBox", "estimator", 10), ui_ctl("ComboBox", "missing", 10)] +
-        [ui_ctl(k, n, 10) for k, n in extra] + [ui_ctl("CheckBox", "parallel", 10)], 6)], collapsed=False)
+        [ui_ctl(k, n, 10) for k, n in extra] + ([ui_ctl("CheckBox", "parallel", 10)] if parallel else []), 6)],
+        collapsed=False)
 
 
-def ui_output(controls):
-    return ui_collapse("Output", [ui_box([ui_ctl(k, n, 10, e) for k, n, e in controls], 6)])
+def ui_output(controls, label="Output", collapsed=True):
+    """controls: (kind, name, extra) tuples, or ready-made yaml strings (indent 10)."""
+    return ui_collapse(label, [ui_box([c if isinstance(c, str) else ui_ctl(c[0], c[1], 10, c[2])
+                                       for c in controls], 6)], collapsed)
 
 
-FIG_UI = [("CheckBox", "showDiagram", ""),
-          ("ComboBox", "diagramStyle", "            enable: (showDiagram)\n"),
-          ("CheckBox", "highlight", "")]
+COLOUR_UI = [("CheckBox", "highlight", ""), ("ComboBox", "palette", "            enable: (highlight)\n")]
+
+
+def ui_check_kids(name, kids, indent=10):
+    pad = " " * indent
+    return (f"{pad}- type: CheckBox\n{pad}  name: {name}\n{pad}  children:\n" +
+            "".join(f"{pad}    - type: CheckBox\n{pad}      name: {k}\n{pad}      enable: ({name})\n" for k in kids))
+
+
+UI_PATH = ui_check_kids("showPath", ["pathNumbers", "pathWidth"])
+
+
+def ui_figures(extra=()):
+    return ui_collapse("Figures", [ui_box([ui_check_kids("showComb", ["combThick"]), UI_PATH] +
+                                          [c if isinstance(c, str) else ui_ctl(c[0], c[1], 10, c[2]) for c in extra], 6)])
+
+
+UI_PAIRS = """\
+  - type: CollapseBox
+    label: Residual Correlations
+    collapsed: true
+    stretchFactor: 1
+    children:
+      - type: VariableSupplier
+        persistentItems: true
+        stretchFactor: 1
+        children:
+          - type: TargetLayoutBox
+            label: Pairs of items whose residuals may correlate
+            children:
+              - type: VariablesListBox
+                name: resCov
+                fullRowSelect: true
+                isTarget: true
+                columns:
+                  - name: i1
+                    stretchFactor: 1
+                    template:
+                      type: VariableLabel
+                  - name: i2
+                    stretchFactor: 1
+                    template:
+                      type: VariableLabel
+"""
 
 
 def head_a(name, title, subgroup, blurb, usage):
@@ -299,14 +371,111 @@ def write(name, a, r, u):
     print("wrote", name)
 
 
+USAGE_FACTORS = ("list(\n"
+                 "          list(label = 'Trust', vars = c('trust1', 'trust2', 'trust3', 'trust4')),\n"
+                 "          list(label = 'Stress', vars = c('stress1', 'stress2', 'stress3', 'stress4'))))\n")
+
+# Menu: psyWiz > [Factor Models: CFA, Group CFA, Multi-Estimator CFA, CFA vs ESEM] [Scales: Scale Check,
+# Composite Check]. The order inside a subgroup is the order of the analyses in jamovi/0000.yaml.
+SUB_MODELS, SUB_SCALES = "Factor Models", "Scales"
+
+
+# -------------------------------------------------------------- plain CFA --
+def plain_cfa():
+    name, title = "plainCfa", "CFA"
+    refit = ["factors", "type", "estimator", "missing", "resCov", "secondOrder", "higherName"]
+    a = head_a(name, title, SUB_MODELS,
+               "Confirmatory factor analysis of one factor or several correlated factors: fit, standardized "
+               "loadings, factor correlations and reliability, with ordinal items handled as ordinal. Optionally "
+               "the largest modification indices and the factor correlations obtained from composite scores "
+               "and factor scores.",
+               "      data('wizdata', package = 'psyWiz')\n"
+               "      # resCov has no default when called from R: pass list() for none\n"
+               "      psyWiz::plainCfa(wizdata, run = TRUE, resCov = list(), factors = " + USAGE_FACTORS)
+    a += O_DATA + O_FACTORS_ONE + O_RUN + O_TYPE + O_ESTIMATOR + O_MISSING
+    a += "  # ADDITIONS TO THE MODEL\n"
+    a += ("  - name: resCov\n    title: Residual correlations\n    type: Pairs\n    permitted:\n      - numeric\n"
+          "      - factor\n" + desc("a list of lists, each with `i1` and `i2`: pairs of items whose residuals may correlate"))
+    a += o_bool("secondOrder", "Second-order factor instead of factor correlations", False,
+                "`TRUE` or `FALSE` (default), let the factors (three or more) load on one second-order factor")
+    a += o_str("higherName", "Its name", "General", "a string, the name of the second-order factor")
+    a += "  # OUTPUT\n"
+    a += o_bool("showLoadings", "Loadings", True, "`TRUE` (default) or `FALSE`, show the loadings")
+    a += o_bool("showRel", "Reliability", True, "`TRUE` (default) or `FALSE`, show alpha, omega and AVE per factor")
+    a += o_bool("showCors", "Factor correlations", True,
+                "`TRUE` (default) or `FALSE`, show the correlations between the factors")
+    a += o_figures(comb=True)
+    a += o_colour("mark standardized loadings below 0.40 in the table and add a summary of fit indices, loadings "
+                  "and reliabilities on a colour ramp")
+    a += o_bool("showMethods", "Factor correlations by scoring method", False,
+                "`TRUE` or `FALSE` (default), show each factor correlation as obtained from composite scores, "
+                "corrected composites, the CFA and factor scores")
+    a += o_bool("showMi", "Largest modification indices", False,
+                "`TRUE` or `FALSE` (default), list the residual correlations and cross-loadings with the "
+                "largest modification indices")
+    a += o_num("miN", "Number listed", 10, 1, 200, "an integer (default 10), how many to list", "Integer")
+
+    r = head_r(name, title, ["psyWiz", "lavaan"]) + TODO
+    r += table("fit", "Model Fit", FIT_COLS, refit)
+    r += table("loadings", "Loadings",
+               [col("factor", "Factor", "text", extra=COMBINE), col("item", "Item", "text"),
+                col("est", "Estimate"), col("se", "SE"), col("p", "p", fmt="zto,pvalue"),
+                col("std", "Standardized", fmt="zto"), col("r2", "R²", fmt="zto")],
+               refit + ["highlight"], visible="(showLoadings)")
+    r += table("cors", "Factor Correlations",
+               [col("factor1", "", "text"), col("factor2", "", "text"), col("r", "r", fmt="zto"),
+                col("p", "p", fmt="zto,pvalue")], refit, visible="(showCors)")
+    r += table("rel", "Reliability",
+               [col("factor", "Factor", "text"), col("k", "Items", "integer"), col("alpha", "α", fmt="zto"),
+                col("omega", "ω", fmt="zto"), col("ave", "AVE", fmt="zto")], refit, visible="(showRel)")
+    sup = "        superTitle: Factor scores\n"
+    r += table("methods", "Factor Correlations by Scoring Method",
+               [col("factor1", "", "text"), col("factor2", "", "text"), col("composite", "Composite scores", fmt="zto"),
+                col("corrected", "Corrected composites", fmt="zto"), col("cfa", "CFA", fmt="zto"),
+                col("scores", "Regression", fmt="zto", extra=sup), col("bartlett", "Bartlett", fmt="zto", extra=sup)],
+               refit, visible="(showMethods)")
+    r += table("mi", "Largest Modification Indices",
+               [col("kind", "Would add", "text"), col("lhs", "", "text"), col("rhs", "", "text"),
+                col("detail", "", "text"), col("mi", "MI"), col("epc", "Expected value", fmt="zto")],
+               refit + ["miN"], visible="(showMi)")
+    r += table("higher", "Second-Order Loadings",
+               [col("factor", "Factor", "text"), col("est", "Estimate"), col("se", "SE"), col("p", "p", fmt="zto,pvalue"),
+                col("std", "Standardized", fmt="zto"), col("r2", "R²", fmt="zto")], refit, visible="false")
+    r += table("resid", "Residual Correlations",
+               [col("item1", "", "text"), col("item2", "", "text"), col("r", "r", fmt="zto"),
+                col("p", "p", fmt="zto,pvalue")], refit, visible="false")
+    r += figures(refit)
+    r += heat()
+
+    u = head_u(name, title) + ui_supplier([UI_FACTORS]) + UI_RUN + ui_model(parallel=False)
+    u += ui_output([("CheckBox", "showLoadings", ""), ("CheckBox", "showRel", ""), ("CheckBox", "showCors", "")] + COLOUR_UI,
+                   collapsed=False)
+    u += ui_figures()
+    u += ui_collapse("Second-Order Factor", [ui_box([
+        "          - type: CheckBox\n            name: secondOrder\n            children:\n"
+        "              - type: TextBox\n                name: higherName\n                format: string\n"
+        "                enable: (secondOrder)\n"], 6)])
+    u += UI_PAIRS
+    u += ui_output([("CheckBox", "showMethods", ""), ui_check_with("showMi", ["miN"])], "More")
+    write(name, a, r, u)
+
+
+plain_cfa()
+
+
 # ------------------------------------------------------- group invariance --
-def group_analysis(name, title, blurb, model_opts, model_keys, model_ui, extra_ui, usage):
+def group_cfa():
+    name, title = "groupCfa", "Group CFA (Invariance)"
+    model_keys = ["factors"]
     refit = model_keys + ["group", "type", "estimator", "missing", "strict"]
-    a = head_a(name, title, "Measurement Invariance",
-               blurb + " Fits the model under increasingly strict equality constraints (configural, "
+    a = head_a(name, title, SUB_MODELS,
+               "Tests the measurement invariance of a one-factor or correlated-factors model across groups. "
+               "Fits the model under increasingly strict equality constraints (configural, "
                "[thresholds,] loadings, intercepts and optionally residual variances), compares each step with "
-               "the previous one and points at the constraints that fit worst.", usage)
-    a += O_DATA + model_opts
+               "the previous one and points at the constraints that fit worst.",
+               "      data('wizdata', package = 'psyWiz')\n"
+               "      psyWiz::groupCfa(wizdata, group = 'country', run = TRUE, factors = " + USAGE_FACTORS)
+    a += O_DATA + O_FACTORS_ONE
     a += o_vars("group", "Grouping Variable", "a string naming the grouping variable", ("factor",), ("nominal",), True)
     a += O_RUN + O_TYPE + O_ESTIMATOR + O_MISSING
     a += o_bool("strict", "Also test residual variances (strict)", False,
@@ -320,10 +489,13 @@ def group_analysis(name, title, blurb, model_opts, model_keys, model_ui, extra_u
                "an integer (default 5), how many constraints to list for each step", "Integer")
     a += o_bool("showLoadings", "Standardized loadings by group", False,
                 "`TRUE` or `FALSE` (default), show the standardized loadings of the configural model for each group")
-    a += o_figure("diagram", "the configural model with the standardized loadings of each group")
-    a += o_bool("highlight", "Highlight flagged values in colour", False,
-                "`TRUE` or `FALSE` (default), show flagged changes in fit in red and colour weak loadings "
-                "(below 0.40) in the figure")
+    a += o_bool("partial", "Partial invariance: release the worst items when a step fails", False,
+                "`TRUE` or `FALSE` (default), refit the ladder releasing, item by item, the constraints with the "
+                "largest score tests at every step that is not supported")
+    a += o_num("maxFree", "Items released per factor, at most", 2, 1, 20,
+               "an integer (default 2), the largest number of items released per factor at one step", "Integer")
+    a += o_figures()
+    a += o_bool("highlight", "Colour", False, "`TRUE` or `FALSE` (default), show flagged changes in fit in red")
     a += o_bool("robust", "Robustness of the verdict", False,
                 "`TRUE` or `FALSE` (default), refit the ladder under other estimators and item treatments, apply "
                 "five decision rules to each step and report how often each level of invariance is supported "
@@ -339,6 +511,18 @@ def group_analysis(name, title, blurb, model_opts, model_keys, model_ui, extra_u
                 col("item", "Item", "text"), col("group", "Group", "text"), col("x2", "χ²"),
                 col("df", "df", "integer"), col("p", "p", fmt="zto,pvalue")],
                refit + CRITERIA_KEYS + ["culprits", "culpritsN"], visible="false")
+    # partialLadder holds the cached partial ladder (its state), so every option that changes
+    # the search is in its clearWith
+    r += table("partialLadder", "Partial Invariance",
+               COMPARE_COLS + [col("verdict", "Invariance", "text"), col("freed", "Left free", "text")],
+               refit + CRITERIA_KEYS + ["partial", "maxFree"], visible="(partial)", refs=["byrne1989", "steenkamp1998"])
+    r += table("partialReleased", "Released Constraints",
+               [col("model", "Step", "text", extra=COMBINE), col("parameter", "Constraint", "text"),
+                col("item", "Item", "text"), col("factor", "Factor", "text"),
+                col("group", "Group", "text"), col("x2", "χ²"),
+                col("df", "df", "integer"), col("p", "p", fmt="zto,pvalue"),
+                col("reason", "Why", "text")],
+               refit + CRITERIA_KEYS + ["partial", "maxFree"], visible="(partial)")
     robust_keys = model_keys + ["group", "strict"]
     r += table("robustSummary", "Robustness of the Verdict",
                [col("model", "Step", "text"), col("supported", "Supported in", "text"),
@@ -352,46 +536,27 @@ def group_analysis(name, title, blurb, model_opts, model_keys, model_ui, extra_u
     r += table("loadings", "Standardized Loadings (Configural Model)",
                [col("factor", "Factor", "text", extra=COMBINE), col("item", "Item", "text")], refit,
                visible="(showLoadings)")
-    r += image("diagram", "Configural Model", refit + ["highlight", "diagramStyle"])
+    r += figures(refit, "Comb Plot (Configural Model)", "Path Diagram (Configural Model)")
 
-    u = head_u(name, title) + ui_supplier([model_ui, ui_target("Grouping Variable", "group", True)]) + extra_ui
+    u = head_u(name, title) + ui_supplier([UI_FACTORS, ui_target("Grouping Variable", "group", True)])
     u += UI_RUN + ui_model([("CheckBox", "strict")]) + UI_CRITERIA
-    u += ui_output([("ComboBox", "culprits", ""), ("TextBox", "culpritsN", ""), ("CheckBox", "showLoadings", ""),
-                    ("CheckBox", "robust", "")] + FIG_UI)
+    u += ui_output([("CheckBox", "showLoadings", ""), ("CheckBox", "highlight", "")]) + ui_figures()
+    u += ui_output([("ComboBox", "culprits", ""), ("TextBox", "culpritsN", ""),
+                    ui_check_with("partial", ["maxFree"]), ("CheckBox", "robust", "")], "When a Step Fails")
     write(name, a, r, u)
 
 
-group_analysis(
-    "groupCfaOne", "One-Factor Group CFA",
-    "Tests the measurement invariance of a one-factor model across groups.",
-    o_vars("vars", "Items", "a vector of strings naming the items of the factor") +
-    o_str("factorName", "Factor name", "Factor", "a string, the name of the factor"),
-    ["vars", "factorName"], ui_target("Items", "vars"),
-    ui_box([ui_ctl("TextBoxS", "factorName")]),
-    "      data('wizdata', package = 'psyWiz')\n"
-    "      psyWiz::groupCfaOne(wizdata, vars = c('trust1', 'trust2', 'trust3', 'trust4'),\n"
-    "                          group = 'country', run = TRUE)\n")
-
-USAGE_FACTORS = ("list(\n"
-                 "          list(label = 'Trust', vars = c('trust1', 'trust2', 'trust3', 'trust4')),\n"
-                 "          list(label = 'Stress', vars = c('stress1', 'stress2', 'stress3', 'stress4'))))\n")
-
-group_analysis(
-    "groupCfaCorr", "Correlated-Factors Group CFA",
-    "Tests the measurement invariance of a correlated-factors model across groups.",
-    O_FACTORS_ONE, ["factors"], UI_FACTORS, "",
-    "      data('wizdata', package = 'psyWiz')\n"
-    "      psyWiz::groupCfaCorr(wizdata, group = 'country', run = TRUE, factors = " + USAGE_FACTORS)
+group_cfa()
 
 
 # ------------------------------------------------------------- scale check --
 def scale_check():
     name, title = "scaleCheck", "Scale Check"
     refit = ["vars", "scaleName", "type", "estimator", "missing"]
-    a = head_a(name, title, "Single Scale",
-               "Checks one scale: reliability (alpha, lambda-2, omega, AVE), whether the items are congeneric, "
-               "tau-equivalent or parallel (which decides whether alpha and unit-weighted sum scores are "
-               "justified), item statistics, and Guttman / Mokken scalability.",
+    a = head_a(name, title, SUB_SCALES,
+               "Checks one scale: reliability (alpha, lambda-2, omega, AVE) and item statistics. On request: "
+               "whether the items are congeneric, tau-equivalent or parallel (which decides whether alpha and "
+               "unit-weighted sum scores are justified), and Guttman / Mokken scalability.",
                "      data('wizdata', package = 'psyWiz')\n"
                "      psyWiz::scaleCheck(wizdata, vars = c('trust1', 'trust2', 'trust3', 'trust4'), run = TRUE)\n")
     a += O_DATA + o_vars("vars", "Items", "a vector of strings naming the items of the scale")
@@ -399,33 +564,48 @@ def scale_check():
     a += O_RUN + O_TYPE + O_ESTIMATOR + O_MISSING + O_PARALLEL + O_CRITERIA
     a += "  # OUTPUT\n"
     a += o_bool("showItems", "Item statistics", True, "`TRUE` (default) or `FALSE`, show the item table")
-    a += o_bool("showScal", "Scalability (Guttman and Mokken)", True,
-                "`TRUE` (default) or `FALSE`, show Loevinger's H and the Guttman scalogram statistics")
-    a += o_figure("comb", "the congeneric model")
-    a += o_bool("highlight", "Highlight flagged values in colour", False,
+    a += o_bool("tau", "Tau-equivalence and parallelism", False,
+                "`TRUE` or `FALSE` (default), compare the congeneric, tau-equivalent and parallel models")
+    a += o_bool("showScal", "Scalability (Guttman and Mokken)", False,
+                "`TRUE` or `FALSE` (default), show Loevinger's H and the Guttman scalogram statistics")
+    a += o_figures()
+    a += o_bool("highlight", "Colour", False,
                 "`TRUE` or `FALSE` (default), show flagged changes in fit, weak loadings (below 0.40) and "
                 "unscalable items (H below 0.30) in red")
+    a += o_list("guttmanOrder", "Guttman: test the items",
+                [("entered", "In the order entered (easiest first)"), ("difficulty", "Sorted by endorsement")], "entered",
+                "`'entered'` (default: the order of `vars` is taken as the hypothesised order, easiest item first) or "
+                "`'difficulty'` (items sorted from the most to the least endorsed)")
+    a += o_bool("showScalogram", "Scalogram", False,
+                "`TRUE` or `FALSE` (default), draw respondents sorted by total score against the items")
 
     r = head_r(name, title, ["psyWiz", "lavaan"]) + TODO
+    # `reliability` is always shown, so it is the table that holds the cached result (its state)
     r += table("reliability", "Reliability",
                [col("coefficient", "Coefficient", "text"), col("value", "Value", fmt="zto"),
                 col("basis", "Refers to", "text")], refit, refs=["graham2006"])
-    r += table("fit", "Measurement Models", [col("model", "Model", "text")] + FIT_COLS, refit)
+    r += table("fit", "Measurement Models", [col("model", "Model", "text")] + FIT_COLS, refit, visible="(tau)")
     r += table("comparison", "Tau-Equivalence and Parallelism", COMPARE_COLS + [col("verdict", "Tenable", "text")],
-               refit + CRITERIA_KEYS + ["highlight"], refs=["graham2006"])
+               refit + CRITERIA_KEYS + ["highlight"], visible="(tau)", refs=["graham2006"])
     r += table("items", "Items",
                [col("item", "Item", "text"), col("mean", "Mean"), col("sd", "SD"),
                 col("loading", "Loading", fmt="zto"), col("r2", "R²", fmt="zto"),
                 col("restR", "Item-rest r", fmt="zto"), col("alphaDrop", "α if dropped", fmt="zto"),
-                col("H", "H", fmt="zto")], refit + ["highlight"], visible="(showItems)")
+                col("H", "H", fmt="zto", extra="        visible: (showScal)\n")],
+               refit + ["highlight"], visible="(showItems)")
     r += table("scalability", "Scalability",
                [col("statistic", "Statistic", "text"), col("value", "Value", fmt="zto"),
-                col("reading", "Reading", "text")], refit, visible="(showScal)", refs=["mokken1971"])
-    r += image("diagram", "Congeneric Model", refit + ["highlight", "diagramStyle"])
+                col("reading", "Reading", "text")], refit + ["guttmanOrder"], visible="(showScal)", refs=["mokken1971"])
+    r += image("scalogram", "Scalogram", refit + ["guttmanOrder"], "(showScalogram)")
+    r += figures(refit)
 
     u = head_u(name, title) + ui_supplier([ui_target("Items", "vars")])
-    u += ui_box([ui_ctl("TextBoxS", "scaleName")]) + UI_RUN + ui_model() + UI_CRITERIA
-    u += ui_output([("CheckBox", "showItems", ""), ("CheckBox", "showScal", "")] + FIG_UI)
+    u += ui_box([ui_ctl("TextBoxS", "scaleName")]) + UI_RUN + ui_model()
+    u += ui_output([("CheckBox", "showItems", ""), ("CheckBox", "highlight", "")], collapsed=False) + ui_figures()
+    u += ui_output([("CheckBox", "tau", "")], "More")
+    u += ui_output([("CheckBox", "showScal", ""), ("CheckBox", "showScalogram", ""), ("ComboBox", "guttmanOrder", "")],
+                   "Guttman Scale")
+    u += UI_CRITERIA.replace("label: Decision Criteria", "label: Decision Criteria (tau-equivalence)")
     write(name, a, r, u)
 
 
@@ -436,7 +616,7 @@ scale_check()
 def esem_cfa():
     name, title = "esemCfa", "CFA vs ESEM"
     refit = ["factors", "type", "estimator", "missing", "rotation"]
-    a = head_a(name, title, "Model Comparison",
+    a = head_a(name, title, SUB_MODELS,
                "Fits the hypothesised correlated-factors model as a CFA and as an exploratory structural "
                "equation model (every item may load on every factor), and lists each factor correlation as "
                "obtained from composite scores, corrected composites, the CFA, factor scores and the ESEM.",
@@ -451,12 +631,14 @@ def esem_cfa():
                 "`TRUE` (default) or `FALSE`, show the standardized loadings of both models")
     a += o_bool("showCors", "Factor correlations by method", True,
                 "`TRUE` (default) or `FALSE`, show each factor correlation under the different scoring methods")
-    a += o_bool("highlight", "Highlight flagged values in colour", False,
+    a += o_bool("highlight", "Colour", False,
                 "`TRUE` or `FALSE` (default), show cross-loadings of 0.30 or more and own-factor loadings below "
                 "0.40 in red")
+    a += o_bool("showLoom", "Loom plot", False,
+                "`TRUE` or `FALSE` (default), draw the ESEM loadings of every item on every factor")
 
     r = head_r(name, title, ["psyWiz", "lavaan", "marsh2014"]) + TODO
-    r += table("fit", "Model Fit", [col("model", "Model", "text")] + FIT_COLS, refit)
+    r += table("fit", "Model Fit", [col("model", "Model", "text"), col("chisqStd", "Uncorrected χ²")] + FIT_COLS, refit)
     r += table("comparison", "CFA against ESEM",
                [col("dchisq", "Δχ²"), col("ddf", "Δdf", "integer"), col("p", "p", fmt="zto,pvalue"),
                 col("dcfi", "ΔCFI", fmt="zto"), col("drmsea", "ΔRMSEA", fmt="zto"), col("dsrmr", "ΔSRMR", fmt="zto")],
@@ -471,19 +653,72 @@ def esem_cfa():
                 col("scores", "Regression", fmt="zto", extra=sup), col("bartlett", "Bartlett", fmt="zto", extra=sup),
                 col("esem", "ESEM", fmt="zto")], refit, visible="(showCors)")
 
+    r += image("loom", "Loom Plot (ESEM)", refit, "(showLoom)")
+
     u = head_u(name, title) + ui_supplier([UI_FACTORS]) + UI_RUN + ui_model([("ComboBox", "rotation")])
-    u += ui_output([("CheckBox", "showLoadings", ""), ("CheckBox", "showCors", ""), ("CheckBox", "highlight", "")])
+    u += ui_output([("CheckBox", "showLoadings", ""), ("CheckBox", "showCors", ""), ("CheckBox", "highlight", ""),
+                    ("CheckBox", "showLoom", "")])
     write(name, a, r, u)
 
 
 esem_cfa()
 
 
+# ------------------------------------------------------------ bifactor CFA --
+def bifactor_cfa():
+    name, title = "bifactorCfa", "Bifactor CFA"
+    refit = ["factors", "generalName", "type", "estimator", "missing"]
+    a = head_a(name, title, SUB_MODELS,
+               "Bifactor model: every item loads on a general factor and on one specific factor, all "
+               "uncorrelated. Shows how much of the total score and of each subscale score is general (omega "
+               "hierarchical, explained common variance), with an antenna plot.",
+               "      psyWiz::bifactorCfa(data, run = TRUE, factors = list(\n"
+               "          list(label = 'A', vars = c('a1', 'a2', 'a3')),\n"
+               "          list(label = 'B', vars = c('b1', 'b2', 'b3'))))\n")
+    a += O_DATA + O_FACTORS.replace("title: Factors", "title: Specific Factors")
+    a += o_str("generalName", "Name of the general factor", "General", "a string, the name of the general factor")
+    a += O_RUN + O_TYPE + O_ESTIMATOR + O_MISSING + "  # OUTPUT\n"
+    a += o_bool("showIndices", "Omega and explained common variance", True,
+                "`TRUE` (default) or `FALSE`, show omega, omega hierarchical and ECV")
+    a += o_bool("showLoadings", "Loadings", True, "`TRUE` (default) or `FALSE`, show the standardized loadings")
+    a += o_bool("showAntenna", "Antenna plot", True,
+                "`TRUE` (default) or `FALSE`, draw the antenna plot: general factor to the left, specific to the right")
+    a += o_bool("showFacing", "Facing combs", False,
+                "`TRUE` or `FALSE` (default), draw the general and the specific combs growing towards each other, "
+                "with the unique variance of each item in between")
+    a += o_bool("showPath", "Path diagram", False, "`TRUE` or `FALSE` (default), draw the path diagram") + O_PATH_TWEAKS
+
+    r = head_r(name, title, ["psyWiz", "lavaan", "rodriguez2016"]) + TODO
+    r += table("fit", "Model Fit", [col("model", "Model", "text")] + FIT_COLS, refit)
+    r += table("indices", "How General Are the Scores?",
+               [col("scale", "Score", "text"), col("k", "Items", "integer"), col("omega", "ω", fmt="zto"),
+                col("omegaH", "ω hierarchical", fmt="zto"), col("ecv", "ECV", fmt="zto")], refit,
+               visible="(showIndices)")
+    r += table("loadings", "Standardized Loadings",
+               [col("specific", "Specific factor", "text", extra=COMBINE), col("item", "Item", "text"),
+                col("general", "General", fmt="zto"), col("own", "Specific", fmt="zto"),
+                col("unique", "Unique", fmt="zto"), col("iecv", "Item ECV", fmt="zto")], refit,
+               visible="(showLoadings)")
+    r += image("antenna", "Antenna Plot", refit, "(showAntenna)")
+    r += image("facing", "Facing Combs", refit, "(showFacing)")
+    r += image("path", "Path Diagram", refit + ["pathNumbers", "pathWidth"], "(showPath)")
+
+    u = head_u(name, title) + ui_supplier([UI_FACTORS.replace("label: Factors", "label: Specific Factors")])
+    u += ui_box([ui_ctl("TextBoxS", "generalName")]) + UI_RUN + ui_model(parallel=False)
+    u += ui_output([("CheckBox", "showIndices", ""), ("CheckBox", "showLoadings", "")], collapsed=False)
+    u += ui_collapse("Figures", [ui_box([ui_ctl("CheckBox", "showAntenna", 10), ui_ctl("CheckBox", "showFacing", 10),
+                                         UI_PATH], 6)], collapsed=False)
+    write(name, a, r, u)
+
+
+bifactor_cfa()
+
+
 # -------------------------------------------------------- composite check --
 def composite_check():
     name, title = "compositeCheck", "Composite Check"
     refit = ["indicators", "outcomes", "folds", "repeats"]
-    a = head_a(name, title, "Formative Indicators",
+    a = head_a(name, title, SUB_SCALES,
                "Checks whether a set of formative indicators relates to two or more outcomes through one "
                "weighted composite (rank-one reduced-rank regression), and how much is lost by using a "
                "unit-weighted sum, in sample and in cross-validation.",

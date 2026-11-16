@@ -79,21 +79,37 @@ psw_jmv_time_text <- function(info) {
 }
 
 # ---- figures ----------------------------------------------------------------
-# .run() stores what the figure needs as the image's state and sets its size;
-# the render function of every analysis (.diagram) is psw_jmv_diagram().
-psw_jmv_set_figure <- function(image, loadings, cors, panel_col, type, highlight, caption = NULL) {
-  size <- if (type == "comb") psw_comb_size(loadings, cors, panel_col)
-          else psw_diagram_size(loadings, cors, panel_col, tiles = type == "tiles")
+# .run() stores WHAT to draw as the image's state (a kind and the arguments of
+# its drawing function, never a plot object: the state is saved with the
+# analysis) and sets the image size the layout expects. Every analysis uses
+# psw_jmv_diagram() as its render function.
+psw_jmv_build <- function(kind, args) {
+  do.call(switch(kind, figure = psw_figure, scalogram = psw_scalogram_plot, antenna = psw_antenna,
+                 facing = psw_facing, bfpath = psw_bifactor_path, loom = psw_loom), args)
+}
+
+psw_jmv_plot <- function(image, kind, args) {
+  size <- attr(psw_jmv_build(kind, args), "psw_size")
   image$setSize(size[["width"]], size[["height"]])
-  image$setState(list(loadings = loadings, cors = cors, panel_col = panel_col, type = type,
-                      highlight = isTRUE(highlight), caption = caption))
+  image$setState(list(kind = kind, args = args))
 }
 
 psw_jmv_diagram <- function(image) {
   st <- image$state
   if (is.null(st)) return(FALSE)
-  print(psw_figure(st$loadings, st$cors, st$panel_col, st$type, st$highlight, st$caption))
+  print(psw_jmv_build(st$kind, st$args))
   TRUE
+}
+
+# The comb plot and the path diagram of a simple-structure model, from the
+# shared figure options (showComb, combThick, showPath, pathNumbers, pathWidth).
+psw_jmv_figures <- function(out, opt, loadings, cors, panel_col = "group", caption = NULL, resid = NULL, higher = NULL) {
+  if (opt$showComb)
+    psw_jmv_plot(out$comb, "figure", list(loadings = loadings, cors = cors, panel_col = panel_col, type = "comb",
+                                          caption = caption, opts = list(thick = opt$combThick, resid = resid, higher = higher)))
+  if (opt$showPath)
+    psw_jmv_plot(out$path, "figure", list(loadings = loadings, cors = cors, panel_col = panel_col, type = "path",
+                                          caption = caption, opts = list(numbers = opt$pathNumbers, width = opt$pathWidth)))
 }
 
 # Criteria and cutoffs from the shared "Decision Criteria" options.

@@ -5,7 +5,7 @@
 name: esemCfa
 title: CFA vs ESEM
 menuGroup: psyWiz
-menuSubgroup: Model Comparison
+menuSubgroup: Factor Models
 version: '1.0.0'
 jas: '1.2'
 description:
@@ -146,10 +146,17 @@ options:
       R: >
         `TRUE` (default) or `FALSE`, show each factor correlation under the different scoring methods
   - name: highlight
-    title: 'Highlight flagged values in colour'
+    title: 'Colour'
     type: Bool
     default: false
     description:
       R: >
         `TRUE` or `FALSE` (default), show cross-loadings of 0.30 or more and own-factor loadings below 0.40 in red
+  - name: showLoom
+    title: 'Loom plot'
+    type: Bool
+    default: false
+    description:
+      R: >
+        `TRUE` or `FALSE` (default), draw the ESEM loadings of every item on every factor
 ...

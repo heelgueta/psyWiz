@@ -19,8 +19,26 @@ tests/testthat/   engine tests and headless jamovi tests
 ```
 
 Rule: **no statistics in the jamovi layer.** A `.b.R` file turns options into
-arguments of `invarianceWiz()` or `cfaWiz()`, caches the result and copies data
-frames into tables. Anything a jamovi user can get, an R user can get.
+arguments of an engine function, caches the result and copies data frames
+into tables. Anything a jamovi user can get, an R user can get.
+
+Since 0.4 the module is what the project presents itself as (README, menu,
+priorities). The repository is not split into a module folder and a package
+folder: both would need the same engine, so one would have to copy it or
+depend on the other, and jamovi builds a module from an R package anyway.
+
+| jamovi analysis | `.b.R` | Engine function |
+|---|---|---|
+| CFA | `plainCfa.b.R` | `factorWiz()` in `engine-cfa.R` |
+| Group CFA (Invariance) | `groupCfa.b.R` + `jmv-invariance.R` | `invarianceWiz()`, `invarianceVerdict()`, `invariancePartial()`, `invarianceMultiverse()` |
+| Bifactor CFA | `bifactorCfa.b.R` | `bifactorWiz()` in `engine-bifactor.R` |
+| Multi-Estimator CFA | `multiEstCfa.b.R` | `cfaWiz()` in `engine-multiest.R` |
+| CFA vs ESEM | `esemCfa.b.R` | `esemWiz()` in `engine-esem.R` |
+| Scale Check | `scaleCheck.b.R` | `scaleWiz()` in `engine-scale.R` |
+| Composite Check | `compositeCheck.b.R` | `compositeWiz()` in `engine-composite.R` |
+
+Naming wart: `cfaWiz()` is the multi-estimator function (it descends from the
+2024 `cfawiz()`), so the plain CFA is `factorWiz()`.
 
 ## Engine
 
@@ -36,7 +54,9 @@ frames into tables. Anything a jamovi user can get, an R user can get.
 | `engine-robust.R` | `invarianceMultiverse()`: verdicts across estimators and rules |
 | `engine-composite.R` | `compositeWiz()`: rank-one check for formative indicators (no lavaan) |
 | `engine-parallel.R` | `psw_run_tasks()`: sequential or parallel fitting |
-| `plot.R` | `psw_figure()`: fixed-layout path diagram, variance tiles and comb plot (ggplot2) |
+| `plot.R` | all figures (ggplot2): comb plot, path diagram, scalogram, antenna plot, facing combs, loom plot |
+| `engine-cfa.R`, `engine-bifactor.R` | `factorWiz()` (plain CFA, residual correlations, second-order), `bifactorWiz()` |
+| `colour.R` | palettes and the Html "Colour Summary" |
 
 Decisions:
 
@@ -101,18 +121,21 @@ covariance once and sharing them between the least-squares estimators in
 `cfaWiz()`. It would help when run sequentially; in parallel the estimators
 already overlap.
 
-## Diagram
+## Figures
 
-Automatic path-diagram layouts look bad because they must cope with any model.
-psyWiz only fits simple-structure CFAs, so `psw_diagram()` uses one fixed
-layout: factors in a column on the left, items in a column on the right, one
-straight arrow per loading, correlations as arcs on the far left (up to four
-factors), one panel per group or estimator. Arrow width encodes the
-standardized loading, which makes panels comparable at a glance. Label space
-is estimated from character counts for the image size given by
-`psw_diagram_size()`; long names are truncated. If the model family grows
-(cross-loadings, bifactor), this layout has to be extended deliberately, not
-replaced by an optimiser.
+All in `R/plot.R`; the header of that file lists them. Rules:
+
+- Fixed layouts. psyWiz fits a small family of models, so each figure has
+  one layout that always works; nothing is placed by an optimiser. Text
+  widths are estimated from character counts for the image size the code
+  itself requests (the `psw_size` attribute).
+- Lengths mean something. In the comb, antenna, facing-comb and loom plots
+  every bar is a share of an item's variance on a 0-1 scale.
+- No colour in figures.
+- In jamovi an image's state is `list(kind, args)`: which drawing function
+  and its arguments (data frames), never a plot object, because the state is
+  saved with the analysis. `psw_jmv_plot()` stores it and sets the size;
+  `psw_jmv_diagram()` is the render function of every image.
 
 ## Colour
 
@@ -123,25 +146,53 @@ comparisons (group analyses) and standardized loadings below .40
 `print(x, colored = TRUE)` gives the red-to-blue ramp of the original
 `cfawiz()`.
 
+Since 0.4 the checkbox is "Colour" with a palette (`R/colour.R`). jamovi
+tables cannot colour a cell freely (only mark it "negative"), so the ramp is
+shown in a separate Html result, "Colour Summary", built by
+`psw_heat_summary()`. Tables keep the red marks.
+
 ## jamovi layer
 
 - **Run checkbox.** jamovi re-runs an analysis whenever an option changes.
   While `run` is off, `.run()` only validates the data and shows the plan.
-- **Caching.** The engine result is stored as the state of the `fit` table.
-  That table's `clearWith` lists exactly the options that require refitting;
-  jamovi clears the state when one of them changes. Output options and
-  cutoffs are not in the list. If you add an option that changes the models,
-  add it there (for the group analyses: in `tools/gen_yaml.py`).
+- **Caching.** The engine result is stored as the state of one table that is
+  always shown (`fit`; `reliability` in Scale Check). That table's
+  `clearWith` lists exactly the options that require refitting; jamovi clears
+  the state when one of them changes. Output options and cutoffs are not in
+  the list. If you add an option that changes the models, add it to the
+  `refit` list of the analysis in `tools/gen_yaml.py`.
+- **Simple by default.** An analysis shows by default only what nearly every
+  user of it wants; the rest sits in a collapsed "More" (or "When a Step
+  Fails") box and is off. Cheap extras are computed anyway and only hidden
+  (Scale Check); extras that refit models are computed on request and have
+  their own cache.
+- **Nothing large in the state.** The state is saved in the `.omv` file, so
+  the prepared data are dropped before caching (`res$prep <- NULL`).
 - **Generated yaml.** All analyses except Multi-Estimator CFA get their
   `.a/.r/.u.yaml` from `tools/gen_yaml.py`, because they share option blocks
   (item treatment, estimator, decision criteria, figure options) and table
-  layouts. The two group analyses also share their R implementation
-  (`R/jmv-invariance.R`).
-- **Second cache.** The robustness check stores its result as the state of
+  layouts.
+- **Further caches.** The robustness check stores its result as the state of
   its own summary table, cleared only by the model, the grouping variable
-  and `strict` (it spans estimators and item treatments itself).
+  and `strict` (it spans estimators and item treatments itself). The partial
+  invariance search is cached on its ladder table, cleared also by the
+  decision criteria, because the search follows the verdicts.
 - **Dynamic columns** (one per group or per estimator) are added in `.init()`,
   where jamovi expects the table structure to be defined.
+
+## Decisions taken with the author (2026-11-16)
+
+- The jamovi module is the product for now; the R package comes later and
+  stays in this repository.
+- One Group CFA instead of two. A plain CFA is added as the entry point.
+  Redundancy between menus is fine: complex analyses may contain the simple
+  ones.
+- Simple defaults; Guttman / Mokken and the tau-equivalence ladder are opt-in.
+- Partial invariance is kept as an opt-in search (it reverses "no automatic
+  partial invariance" below: it is never run unless asked for, and its
+  output says that it is a search).
+- Multi-Estimator CFA, CFA vs ESEM and Composite Check stay as ordinary menu
+  entries, not labelled as extras.
 
 ## Decisions taken with the author (2026-11-14)
 

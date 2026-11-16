@@ -7,7 +7,7 @@ refs:
         author: Elgueta, H.
         year: 2026
         title: 'psyWiz: Psychometric wizardry for confirmatory factor analysis'
-        publisher: '(Version 0.2) [jamovi module and R package]. Retrieved from https://github.com/heelgueta/psywiz'
+        publisher: '(Version 0.4) [jamovi module]. Retrieved from https://github.com/heelgueta/psywiz'
         url: https://github.com/heelgueta/psywiz
 
     lavaan:
@@ -114,4 +114,37 @@ refs:
         year: 1971
         title: 'A theory and procedure of scale analysis'
         publisher: Mouton
+
+    byrne1989:
+        type: 'article'
+        author: Byrne, B. M., Shavelson, R. J., & Muthén, B.
+        year: 1989
+        title: 'Testing for the equivalence of factor covariance and mean structures: The issue of partial measurement invariance'
+        publisher: Psychological Bulletin
+        volume: 105
+        issue: 3
+        pages: 456-466
+        url: https://doi.org/10.1037/0033-2909.105.3.456
+
+    steenkamp1998:
+        type: 'article'
+        author: Steenkamp, J. B. E., & Baumgartner, H.
+        year: 1998
+        title: 'Assessing measurement invariance in cross-national consumer research'
+        publisher: Journal of Consumer Research
+        volume: 25
+        issue: 1
+        pages: 78-90
+        url: https://doi.org/10.1086/209528
+
+    rodriguez2016:
+        type: 'article'
+        author: Rodriguez, A., Reise, S. P., & Haviland, M. G.
+        year: 2016
+        title: 'Evaluating bifactor models: Calculating and interpreting statistical indices'
+        publisher: 'Psychological Methods'
+        volume: 21
+        issue: 2
+        pages: 137-150
+        doi: 10.1037/met0000045
 ...

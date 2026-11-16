@@ -15,10 +15,12 @@ search before claiming novelty".
 | Guttman scalogram statistics for ordinal items via item steps, and Loevinger's H | Scale Check | Classical: Mokken (1971), Molenaar (1991). H *is* the "pseudo-Guttman for ordinal scales". Implemented from the covariance definition; not cross-checked against the `mokken` package (not installable here). |
 | ESEM with target rotation next to the CFA | CFA vs ESEM, `esemWiz()` | Established (Asparouhov & Muthen 2009; Marsh et al. 2014). Target rotation is still the standard confirmatory use of ESEM. |
 | One factor correlation under five scorings (composites, corrected composites, CFA, regression and Bartlett factor scores, ESEM) | CFA vs ESEM | Each piece is textbook; the side-by-side table is a convenience, and a good teaching device: on the example data the same correlation ranges from -.35 to -.51. |
-| Comb plot | `plot(x, type = "comb")`, figure option in jamovi | The author's idea. Closest precedent found *(searched)*: bar charts of loadings. A figure in which every length is shared variance on one 0-1 scale (factor = 1, item = loading squared, other factor = r squared) was not found. |
-| Variance tiles | `type = "tiles"` | Path diagram where each item has a square (its variance) containing a filled square of area R-squared. Area encodings of variance exist in many forms; not claimed as new. |
+| Comb plot (redesigned in 0.4, see section 5) | `plot(x, type = "comb")`, figure option in jamovi | The author's idea. Closest precedent found *(searched)*: bar charts of loadings. A figure in which every length is shared variance on one 0-1 scale (factor = 1, item = loading squared, other factor = r squared) was not found. |
+| Variance tiles (removed in 0.4) | was `type = "tiles"` | Path diagram where each item has a square (its variance) containing a filled square of area R-squared. Area encodings of variance exist in many forms; not claimed as new. |
 | **Verdict multiverse for invariance** | "Robustness of the verdict", `invarianceMultiverse()` | See section 2. |
 | **Composite sufficiency check for formative indicators** | Composite Check, `compositeWiz()` | See section 3. |
+
+Added in 0.4 (2026-11-16): partial invariance by score-test search (`invariancePartial()`), which is classical (Byrne et al. 1989; Steenkamp & Baumgartner 1998), and the plain CFA with modification indices and correlations by scoring method. Nothing new as an idea.
 
 ## 2. The idea that is ours: a multiverse of invariance verdicts
 
@@ -118,6 +120,32 @@ the everyday large-sample scale validation psyWiz targets.
 
 ## 5. Thought through, not built
 
+Figures, 2026-11-16. The author proposed a set of variants; prototypes
+were drawn with a throwaway script (`tools/plot_proposals.R`, deleted once the
+choices were built; it was never committed) and the author chose:
+
+| Idea | Outcome |
+|---|---|
+| Factor name along the spine | Adopted as the comb default |
+| Correlations as arcs between spines | Adopted (up to four factors) |
+| Residual correlations as brackets | Adopted for correlations in the model. Not built: a dashed bracket for a pair only *suggested* by a modification index |
+| Tooth thickness by item variance | Adopted as an option, off by default |
+| Second-order comb | Adopted, with the split top tooth |
+| Antenna plot for bifactor models | Adopted, default figure of Bifactor CFA |
+| Unexplained variance in the middle, combs from both sides | Built as "facing combs" |
+| "Grill" for EFA / ESEM | Built and named **loom plot** (items are the weft, factors the warp). The name is a proposal; rename freely |
+| Colouring the figures | Tried (teeth coloured by loading size), dropped |
+| Path diagram with variance tiles | Removed |
+| Scalogram | Adopted in Scale Check |
+
+Open: arcs for more than four factors (a small matrix instead?); the loom
+plot for a plain EFA (psyWiz has no EFA analysis; jamovi has one).
+
+Also wanted: one example data set with several short scales that differ in
+item type (binary, ordinal, numeric) and in quality (clean, cross-loading,
+residual pair, non-invariant item, dud item, bifactor, second-order), with a
+paragraph explaining each.
+
 - **Extreme responding vs. content.** Split each response into direction
   (agree / disagree) and extremity (distance from the midpoint). This is the
   logic of IRTree and multiprocess models (Bockenholt 2012) and of
@@ -162,5 +190,5 @@ the everyday large-sample scale validation psyWiz targets.
   predictor; Bartlett scores are continuous-only.
 - The robustness check refits four ladders and is slow for large ordinal
   models.
-- Bifactor models, latent mean comparisons and partial invariance are still
-  not implemented.
+- Bifactor models and latent mean comparisons are still not implemented.
+- 0.4: the partial invariance search does not release thresholds.

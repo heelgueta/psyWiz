@@ -99,3 +99,102 @@ test_that("the composite check accepts one channel and rejects two", {
   expect_identical(compositeWiz(one, paste0("x", 1:4), paste0("y", 1:3))$r2, a$r2)   # seeded
   expect_error(compositeWiz(one, paste0("x", 1:4), "y1"), "At least two outcomes")
 })
+
+test_that("factorWiz gives the same CFA as lavaan and the same correlations as esemWiz", {
+  f <- list(Trust = paste0("trust", 1:4), Stress = paste0("stress", 1:4))
+  x <- factorWiz(wizdata, f, keep.fits = TRUE)
+  expect_s3_class(x, "psw_cfa")
+  expect_equal(x$info$estimator, "WLSMV")
+  d <- wizdata
+  d[unlist(f)] <- lapply(d[unlist(f)], ordered)
+  ref <- lavaan::cfa("T =~ trust1 + trust2 + trust3 + trust4\nS =~ stress1 + stress2 + stress3 + stress4",
+                     d, std.lv = TRUE, estimator = "WLSMV", missing = "pairwise")
+  expect_equal(x$fit$chisq, lavaan::fitMeasures(ref, "chisq.scaled")[[1]], tolerance = 1e-6)
+  expect_equal(x$loadings$std, lavaan::standardizedSolution(ref)$est.std[1:8], tolerance = 1e-6)
+  e <- esemWiz(wizdata, f, parallel = FALSE)
+  expect_equal(x$correlations[c("composite", "corrected", "cfa", "scores")],
+               e$correlations[c("composite", "corrected", "cfa", "scores")], tolerance = 1e-6)
+  expect_true(all(c("Residual correlation", "Cross-loading") %in% x$suggestions$kind))
+  expect_true(all(diff(x$suggestions$mi) <= 0))
+
+  # continuous: omega is the sum-score omega of scaleWiz
+  one <- factorWiz(wizdata, f["Trust"], type = "continuous")
+  sc <- scaleWiz(wizdata, f$Trust, type = "continuous", parallel = FALSE)
+  expect_equal(one$reliability$omega, sc$reliability$value[sc$reliability$coefficient == "McDonald's omega"], tolerance = 1e-6)
+  expect_equal(one$reliability$alpha, sc$reliability$value[sc$reliability$coefficient == "Cronbach's alpha"], tolerance = 1e-6)
+  expect_null(one$correlations)
+  expect_s3_class(plot(one), "ggplot")
+  expect_output(print(x), "Factor correlations by scoring method")
+})
+
+test_that("the Guttman statistics follow the order of the items, H does not", {
+  set.seed(2)
+  th <- rnorm(500)
+  G <- as.data.frame(sapply(c(-1.2, -0.4, 0.3, 1.1), function(b) as.integer(th + rnorm(500, 0, 0.3) > b)))
+  names(G) <- paste0("g", 1:4)
+  right <- scaleWiz(G, paste0("g", 1:4), type = "continuous", parallel = FALSE)
+  wrong <- scaleWiz(G, paste0("g", 4:1), type = "continuous", parallel = FALSE)
+  cr <- function(x, order) x$guttman[[order]]$table$value[4]
+  # entered easiest first = the sorted order; entered backwards is much worse
+  expect_equal(cr(right, "entered"), cr(right, "difficulty"))
+  expect_lt(cr(wrong, "entered"), cr(right, "entered") - 0.2)
+  expect_equal(cr(wrong, "difficulty"), cr(right, "difficulty"))
+  tau <- function(x) utils::tail(x$scalability$value, 1)
+  expect_equal(c(tau(right), tau(wrong)), c(1, -1))
+  expect_equal(right$scalability$value[1], wrong$scalability$value[1])
+  expect_s3_class(plot(right, type = "scalogram"), "ggplot")
+  expect_true(right$guttman$entered$scalogram$binary)
+})
+
+test_that("CFA vs ESEM reports the uncorrected chi-square, which cannot favour the CFA", {
+  e <- esemWiz(wizdata, two, parallel = FALSE)
+  expect_lte(e$fit$chisq.std[2], e$fit$chisq.std[1])
+  expect_false(e$info$reversed)
+})
+
+test_that("every palette has ten colours and cells get readable text", {
+  expect_true(all(lengths(ns$psw_palettes) == 10L))
+  expect_equal(ns$psw_value_colour("cfi", 0.995, "redblue"), "#053061")
+  expect_equal(ns$psw_text_on("#053061"), "#FFFFFF")
+  expect_true(is.na(ns$psw_value_colour("chisq", 10)))
+})
+
+test_that("bifactorWiz recovers a known structure and its indices follow from the loadings", {
+  set.seed(5)
+  n <- 3000
+  g <- rnorm(n)
+  d <- do.call(cbind, lapply(1:3, function(k) { s <- rnorm(n); sapply(1:4, function(j) 0.6 * g + 0.45 * s + rnorm(n, 0, 0.66)) }))
+  colnames(d) <- paste0(rep(c("a", "b", "c"), each = 4), 1:4)
+  f <- list(A = paste0("a", 1:4), B = paste0("b", 1:4), C = paste0("c", 1:4))
+  x <- bifactorWiz(as.data.frame(d), f)
+  # population: variance = .36 + .2025 + .4356 = .998, so loadings are about .60 and .45
+  expect_equal(mean(x$loadings$general), 0.60, tolerance = 0.03)
+  expect_equal(mean(x$loadings$own), 0.45, tolerance = 0.04)
+  L <- x$loadings
+  ss <- tapply(L$own, L$specific, sum)
+  V <- sum(L$general)^2 + sum(ss^2) + sum(L$unique)
+  expect_equal(x$indices$omegaH[1], sum(L$general)^2 / V)
+  expect_equal(x$indices$ecv[1], sum(L$general^2) / sum(L$general^2 + L$own^2))
+  expect_equal(x$info$puc, 1 - 3 * 6 / 66)
+  expect_lt(x$fit$chisq[1], x$fit$chisq[2])
+  for (t in c("antenna", "facing", "path")) expect_s3_class(plot(x, type = t), "ggplot")
+  expect_output(print(x), "omega hierarchical")
+  expect_error(bifactorWiz(wizdata, list(Trust = paste0("trust", 1:2), Stress = paste0("stress", 1:4))), "at least three items")
+
+  # second-order model on the same data: equivalent to three correlated factors, so same fit
+  h <- factorWiz(as.data.frame(d), f, higher = "G", residuals = list(c("a1", "a2")))
+  cf <- factorWiz(as.data.frame(d), f, residuals = list(c("a1", "a2")))
+  expect_equal(h$fit$chisq, cf$fit$chisq, tolerance = 1e-4)
+  expect_equal(h$correlations$cfa, cf$correlations$cfa, tolerance = 1e-3)
+  expect_equal(h$reliability$omega, cf$reliability$omega, tolerance = 1e-3)
+  expect_equal(nrow(h$residuals), 1)
+  expect_s3_class(plot(h, thick = TRUE), "ggplot")
+  expect_s3_class(plot(cf, type = "path", numbers = FALSE), "ggplot")
+})
+
+test_that("the loom plot is drawn from an ESEM", {
+  e <- esemWiz(wizdata, two, parallel = FALSE)
+  expect_equal(names(e$uniqueness), unlist(two, use.names = FALSE))
+  expect_true(all(e$uniqueness > 0 & e$uniqueness < 1))
+  expect_s3_class(plot(e), "ggplot")
+})

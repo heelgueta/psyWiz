@@ -117,8 +117,70 @@ groups 2+ (ordinal intercepts and residual variances) use
 
 lavaan computes these without the robust correction, and with many constraints
 some will be large by chance. Use them to rank constraints and to decide where
-to look, not as confirmatory tests. psyWiz deliberately does not free
-parameters automatically.
+to look, not as confirmatory tests.
+
+## Partial invariance
+
+Off by default. `invariancePartial()`, or "Partial invariance" in Group CFA,
+refits the ladder and lets single items out of the equality constraints:
+
+1. Each step is fitted and judged against the previous model with the
+   current decision criteria.
+2. If the verdict is "Not supported" or "Ambiguous", the constraints that
+   step adds are ranked by their score test (previous section). The item at
+   the top is left free in every group, the step is refitted and judged
+   again against the same previous model. This repeats until the step is
+   supported or no release is allowed.
+3. A release is allowed only if at least two items of the factor stay
+   constrained (`min.invariant`) and no more than `max.free` (default 2)
+   items of that factor are free on that parameter. Two constrained items
+   per factor is the usual minimum for the factor to be on a common scale
+   (Byrne, Shavelson & Muthen, 1989; Steenkamp & Baumgartner, 1998).
+4. Whatever is freed stays free in later steps, and a freed loading also
+   frees that item's intercept at the intercepts step; a freed intercept
+   frees its residual variance at the strict step.
+5. If a step is still not supported when the search stops, the releases made
+   are kept, the ladder continues, and the summary reports the highest level
+   reached with every step below it supported.
+
+Limits, stated in the output as well:
+
+- Thresholds of ordinal items are never released. An item with free
+  thresholds needs its own identification constraints (Wu & Estabrook, 2016),
+  which the syntax builder does not write yet. A failed thresholds step ends
+  the claim.
+- An item is released in all groups at once, although the score test that
+  picked it belongs to one group.
+- It is a search guided by the data. With many items, some release will
+  improve fit by chance, and the tests of the later steps are conditional on
+  the search. Partial scalar invariance supports comparing latent means in a
+  model that keeps the freed parameters free; observed sum scores still
+  contain the freed items.
+
+## Plain CFA
+
+`factorWiz()` / the CFA analysis: the single-group model of section "Models",
+factor variances fixed to 1. Reported: one version of each fit index (as in
+"Fit indices"), unstandardised and standardised loadings, R-squared
+(standardised loading squared), factor correlations.
+
+Reliability per factor: alpha from the items as scored (complete cases of
+that factor's items); omega = (sum of loadings)^2 / ((sum of loadings)^2 +
+sum of residual variances) from the unstandardised solution. For continuous
+items that is the reliability of the sum score under the model; for ordinal
+items the solution is on the latent-response scale, so omega describes the
+latent responses and is usually higher than what the sum score achieves
+(Scale Check reports both). AVE = mean squared standardised loading.
+
+Factor correlations by scoring method (two or more factors), as in "CFA vs
+ESEM" without the ESEM column: composite (item mean) scores; composites
+corrected for attenuation with the two alphas; the CFA; regression factor
+scores and, for continuous items, Bartlett scores.
+
+Largest modification indices: `lavaan::modindices()`, restricted to residual
+covariances between two items and loadings of an item on another factor,
+sorted by size. The expected value is lavaan's fully standardised expected
+parameter change. They are not robust-corrected.
 
 ## Multi-estimator comparison
 
@@ -165,6 +227,29 @@ steps (response at or above each category), ordered by popularity, with
 Goodenough-Edwards error counting: CR = 1 - errors / (N x steps), MMR = mean
 of max(p, 1 - p), CS = (CR - MMR) / (1 - MMR).
 
+### Order of the items in the Guttman statistics
+
+A Guttman scale is a claim about order: whoever endorses a hard item also
+endorses every easier one. CR, MMR and CS count deviations from that
+pattern, so they need an order of the items.
+
+- *In the order entered* (default): the order in which the items were given
+  is taken as the hypothesised order, easiest first. This tests your
+  ordering. Kendall's tau between that order and the observed endorsement
+  rates is added (1 = entered exactly from easiest to hardest).
+- *Sorted by endorsement*: items sorted from the most to the least endorsed
+  in this sample. This is the order that fits the sample best, so CR is at
+  its most favourable; it is the usual exploratory scalogram.
+
+For items with more than two categories the statistics are computed on item
+steps, and the steps are always sorted by endorsement (an order of items
+does not define an order of their steps); only tau uses the entered order.
+Loevinger's H does not depend on the order at all.
+
+The scalogram figure shows respondents sorted by total score (averaged in
+at most 150 groups) against the items in the chosen order; for binary items
+a line marks where a perfect Guttman scale would end.
+
 ## CFA vs ESEM
 
 The CFA is the correlated-factors model above. The ESEM lets every item load
@@ -178,6 +263,27 @@ Factor correlations by method: composite = correlation of item means;
 corrected = composite / sqrt(alpha_1 x alpha_2); CFA and ESEM = latent
 correlations; factor scores = correlations of `lavaan::lavPredict()` scores
 from the CFA (regression method; Bartlett for continuous items).
+
+### When the ESEM looks worse than the CFA
+
+The CFA is the ESEM with the cross-loadings fixed to zero, so the ESEM's
+discrepancy from the data can only be equal or smaller. With robust test
+statistics (WLSMV, MLR) the table can still show a *higher* chi-square and
+*lower* CFI for the ESEM. The reason: the robust chi-square is the
+uncorrected one divided by a scaling factor (and shifted) that is estimated
+separately for each model, and the two factors can differ a lot. In the
+reproduction of 2026-11-16 (20 five-point items, 3 factors, a nuisance
+factor on six items, n = 900, WLSMV) the uncorrected chi-squares were 981
+(CFA) and 663 (ESEM) but the scaling factor of the ESEM was 0.46, giving a
+scaled value of 1467. CFI, TLI and RMSEA are computed from the scaled values
+and inherit the reversal.
+
+What psyWiz does: the fit table shows the uncorrected chi-square next to the
+corrected one, and when they disagree a note says that the corrected indices
+of the two models are not comparable. What to read instead: the difference
+test (which is built from the uncorrected statistics and corrected as one
+test) and SRMR (which involves no correction). Whether lavaan's correction
+for rotated solutions is itself right in such cases was not investigated.
 
 ## Robustness of the invariance verdict
 
@@ -203,13 +309,75 @@ second and later canonical correlations, df = (p - 1)(q - 1). Cross-validated
 R² is 1 - SSE/SST over held-out cases, k folds, averaged over repetitions
 with a fixed seed. See docs/IDEAS.md, section 3.
 
+## Residual correlations and second-order factor (CFA)
+
+Residual correlations: `i ~~ j` for each chosen pair of items; reported as
+correlations between the two unique parts. A second-order factor: the
+first-order factors load on one more factor and their correlations are no
+longer free. With exactly three factors this is the same model as three
+correlated factors (same fit), only described differently; from four factors
+on it is a restriction. Reliability: omega = T / (T + E), with T = (sum of
+unstandardised loadings)^2 x model-implied factor variance and E = sum of
+all residual variances and covariances among the factor's items.
+
+## Bifactor CFA
+
+Every item loads on a general factor and on one specific factor; all factors
+are uncorrelated (`g ~~ 0*f`, `f ~~ 0*f'`), variances fixed to 1. Each
+specific factor needs three or more items. The correlated-factors model is
+fitted alongside for comparison; a bifactor model tends to fit better even
+when it is not the better description, so the indices matter more than the
+fit. With standardised loadings g (general) and s (specific) and unique
+variances u = 1 - g^2 - s^2 (Rodriguez, Reise & Haviland, 2016):
+
+- omega, total score: [(sum g)^2 + sum over factors of (sum s)^2] / V, where
+  V is that numerator plus the sum of u.
+- omega hierarchical: (sum g)^2 / V, the share of the total score's variance
+  due to the general factor.
+- for a subscale: omega = [(sum g)^2 + (sum s)^2] / V_k and omega
+  hierarchical = (sum s)^2 / V_k over its own items: what the subscale score
+  measures beyond the general factor.
+- ECV = sum g^2 / (sum g^2 + sum s^2); item ECV the same for one item; PUC =
+  share of item pairs from different specific factors.
+
+For ordinal items all of this refers to the latent responses.
+
 ## Figures
 
-All figures use fixed layouts (docs/DESIGN.md). Comb plot: every length is
-shared variance on a 0 to 1 scale; top tooth = the factor (1), item tooth =
-squared standardized loading on a pale tooth of length 1, thin teeth = squared
-correlation with each other factor. Tiles: each item's square has unit area
-and contains a filled square of area R².
+Black, white and grey; fixed layouts; sizes chosen by the code.
+
+- **Comb plot.** One comb per factor, the factor's name along the spine. A
+  tooth is an item: dark part = squared standardised loading, pale remainder
+  = unique variance, so every length is a share of variance between 0 and 1.
+  Arcs join the spines of correlated factors, line width 0.4 + 3.6|r| (not
+  drawn for more than four factors). Brackets join the tips of items whose
+  residuals correlate in the model. Optional: tooth thickness proportional
+  to the item's observed variance (items as scored, per group), relative to
+  the largest in the figure. Second-order model: each factor has a top tooth
+  whose dark part is its squared loading on the second-order factor.
+- **Path diagram.** Factors left, items right, an arrow per loading (width
+  0.25 + 1.5|loading| unless switched off).
+- **Scalogram.** See "Order of the items in the Guttman statistics".
+- **Antenna plot** (bifactor). One row per item; from a mast in the middle,
+  the bar to the left is g^2 and the bar to the right is s^2.
+- **Facing combs** (bifactor). Each row is the item's whole variance: g^2
+  from the left spine, s^2 from the right spine, u in between, where the
+  item's name is written.
+- **Loom plot** (ESEM). Items as rows, one vertical line per factor; to the
+  right of each line the squared standardised loading on that factor (dark
+  for the item's own factor, grey for cross-loadings); left of the first
+  line the item's unique variance from the model. With correlated factors
+  the squared loadings of an item do not add up to its explained variance.
+
+## Colour
+
+Off by default. When on, a value is placed on a ten-step ramp by fixed bands
+per statistic (`psw_color_index()` in `R/print.R`): CFI and TLI .70 to .99,
+RMSEA .30 to .01, SRMR .35 to .03, loadings and AVE .1 to .9, omega .50 to
+.95. The bands are those of the 2024 prototype and are a reading aid, not
+cutoffs. The ramp is used in the "Colour Summary" tables only, not in figures. Palettes (`R/colour.R`): orange to purple (ColorBrewer PuOr,
+default) and yellow to blue (cividis) are chosen to survive the common forms
+of colour blindness; red to blue is the original ramp.
 
 ## References
 

@@ -116,6 +116,12 @@ multiEstCfaClass <- if (requireNamespace("jmvcore", quietly = TRUE)) R6::R6Class
           "the values refer to the latent response variables, not to the observed sum score."), init = FALSE)
       }
 
+      # ---- colour summary: one column per estimator, as cfawiz() printed it ----
+      if (opt$highlight) {
+        ok <- res$fit[match(est, res$fit$estimator), , drop = FALSE]
+        out$heat$setContent(psw_heat_summary(ok, est, res$loadings, res$reliability, "estimator", opt$palette))
+      }
+
       invisible()
     }
   )

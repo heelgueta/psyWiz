@@ -1,4 +1,114 @@
-# psyWiz 0.3.0 (in development)
+# psyWiz 0.4.0 (in development)
+
+The module is now the focus; the R interface stays but is not advertised.
+The menu was reorganised around a simple core. See `docs/ROADMAP.md`.
+
+## Menu
+
+- New **CFA** analysis (`plainCfa` in jamovi, `factorWiz()` in R): one factor
+  or several correlated factors in one group. Fit, loadings, factor
+  correlations, alpha / omega / AVE and a comb plot by default. On request:
+  each factor correlation as obtained from composite scores, corrected
+  composites and factor scores; and the largest modification indices
+  (residual correlations and cross-loadings).
+- **Group CFA (Invariance)** (`groupCfa`) replaces One-Factor Group CFA and
+  Correlated-Factors Group CFA. It starts with one factor box; add more for
+  correlated factors. *Breaking for R users of the jamovi functions:*
+  `groupCfaOne()` and `groupCfaCorr()` are gone; analyses saved in `.omv`
+  files with the old names will not reopen.
+- **Scale Check** shows reliability and item statistics only. The
+  tau-equivalence ladder and the Guttman / Mokken statistics are under
+  "More", off by default.
+- Two menu groups: *Factor Models* (CFA, Group CFA, Multi-Estimator CFA, CFA
+  vs ESEM) and *Scales* (Scale Check, Composite Check).
+
+## Partial invariance
+
+- `invariancePartial()` and the option "Partial invariance" in Group CFA:
+  when a step is not supported, the item with the largest score test is left
+  free in every group and the step is judged again, keeping at least two
+  constrained items per factor. A freed loading frees the intercept, a freed
+  intercept frees the residual variance.
+- First written by another coding session on 2026-11-15; reviewed and
+  rewritten on 2026-11-16. Changed in the review: thresholds are no longer
+  released (the model with free thresholds was not identified); the jamovi
+  result is cached instead of being refitted on every option change; the
+  data are no longer stored in the saved analysis; the summary only claims a
+  level of invariance if all steps below it hold, and no longer says that
+  observed means become comparable.
+
+## CFA vs ESEM: the ESEM can look worse than the CFA
+
+- Reported by the author on real data (20 ordinal items, 3 factors, WLSMV):
+  the ESEM had a higher chi-square and lower CFI than the CFA, which cannot
+  be true of the fit itself. Reproduced on simulated data: the uncorrected
+  chi-square favours the ESEM (663 vs 981) while the robust (scaled) one says
+  the opposite (1467 vs about 1100), because each model gets its own
+  correction. The model fit table now also shows the uncorrected chi-square,
+  and a note appears when the two disagree. `docs/METHODS.md`, "CFA vs ESEM".
+
+## Guttman scales
+
+- The scalogram statistics are tested against the order in which the items
+  were entered (easiest first) by default, with Kendall's tau between that
+  order and the observed difficulty. "Sorted by endorsement" gives the old
+  behaviour. For items with more than two categories the item steps are
+  always sorted. Loevinger's H never depended on the order.
+- New figure: scalogram (Scale Check > Guttman Scale; `plot(x, type =
+  "scalogram")`).
+
+## Colour
+
+- Still off by default. The checkbox is now called "Colour". In CFA and
+  Multi-Estimator CFA it adds a "Colour Summary": fit indices, standardized
+  loadings, omega and AVE on a ten-step ramp, as the 2024 `cfawiz()` printed
+  them, with a choice of palette: orange to purple (default, colour-blind
+  safe), yellow to blue (colour-blind safe), red to blue (the 2024 ramp) or
+  greys. Elsewhere it marks flagged values in red, as before.
+- Figures are black, white and grey. Colouring comb teeth by loading size
+  was tried and dropped the same day.
+
+## Figures (decided by the author on 2026-11-16 from a sheet of prototypes)
+
+- **Comb plot, new default look**: factor name written along the spine (no
+  top tooth), factor correlations as arcs joining the spines (thicker =
+  stronger), residual correlations in the model as brackets at the tooth
+  tips. Option: tooth thickness proportional to the item's observed variance.
+- **Second-order comb**: each factor gets a top tooth split into the share
+  explained by the second-order factor and the rest.
+- **Antenna plot** and **facing combs** for bifactor models; a bifactor path
+  diagram.
+- **Loom plot** for ESEM: every item on every factor, unique variance to the
+  left of the first factor.
+- The comb plot and the path diagram are separate checkboxes and can be
+  shown together. Path diagram options: loadings on the arrows, arrow width
+  by loading.
+- Removed: the path diagram with variance tiles.
+- *Breaking:* options `showDiagram` and `diagramStyle` are replaced by
+  `showComb`, `combThick`, `showPath`, `pathNumbers`, `pathWidth`;
+  `plot(type = "diagram")` is now `type = "path"`, `type = "tiles"` is gone,
+  and `plot()` no longer takes `highlight`.
+
+## Models
+
+- **Bifactor CFA** (new analysis; `bifactorWiz()`): general factor plus
+  specific factors, compared with the correlated-factors model; omega,
+  omega hierarchical and explained common variance for the total score and
+  each subscale (Rodriguez, Reise & Haviland, 2016).
+- **CFA**: residual correlations between pairs of items, and a second-order
+  factor in place of the factor correlations (three or more factors).
+  Omega now counts residual covariances as error and uses the model-implied
+  factor variance. Called from R, the jamovi function needs `resCov =
+  list()` (a jamovi "Pairs" option has no default, as in `jmv::cfa()`).
+
+## Internal
+
+- `psw_composite_cors()` and `psw_score_cors()` are shared by `factorWiz()`
+  and `esemWiz()`.
+- Known: the 0.3.0 check on GitHub failed in an R example ("Argument 'data'
+  must be a data frame"); not yet traced. It does not affect the module.
+
+# psyWiz 0.3.0 (2026-11-14)
 
 ## New analyses
 

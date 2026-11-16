@@ -51,10 +51,12 @@ psw_step_flags <- function(step, type) {
 #' @param prep Output of `psw_prepare()`.
 #' @param step One of the steps from `psw_steps()`; ignored for a single group.
 #' @param parameterization `"delta"` or `"theta"` (ordinal items only).
+#' @param free Partial invariance: named list (`load`, `int`, `res`) of items (names or ids) whose
+#'   loading / intercept / residual variance is left free across groups even when the step constrains it.
 #' @return A single string of lavaan syntax using the internal identifiers.
 #' @keywords internal
 #' @noRd
-psw_syntax <- function(prep, step = "configural", parameterization = "delta") {
+psw_syntax <- function(prep, step = "configural", parameterization = "delta", free = list()) {
   it <- prep$items
   G <- length(prep$groups)
   fids <- names(prep$fnames)
@@ -64,6 +66,15 @@ psw_syntax <- function(prep, step = "configural", parameterization = "delta") {
     return(paste(out, collapse = "\n"))
   }
 
+  to_id <- function(x) {
+    if (is.null(x) || length(x) == 0L) return(character())
+    m <- match(x, it$name)
+    ifelse(is.na(m), x, it$id[m])
+  }
+  free_load <- to_id(free$load)
+  free_int <- to_id(free$int)
+  free_res <- to_id(free$res)
+
   ord <- prep$type == "ordinal"
   fl <- psw_step_flags(step, prep$type)
   gv <- function(first, rest = first)
@@ -72,7 +83,11 @@ psw_syntax <- function(prep, step = "configural", parameterization = "delta") {
 
   for (f in fids) {
     ids <- it$id[it$fid == f]
-    mod <- if (fl$load) vapply(paste0("L_", ids), gv, "") else rep(gv("NA"), length(ids))
+    mod <- if (fl$load) {
+      vapply(ids, function(i) if (i %in% free_load) gv("NA") else gv(paste0("L_", i)), "")
+    } else {
+      rep(gv("NA"), length(ids))
+    }
     out <- c(out,
              paste0(f, " =~ ", paste0(mod, "*", ids, collapse = " + ")),
              sprintf("%s ~~ %s*%s", f, if (fl$load) gv("1", "NA") else gv("1"), f),
@@ -81,19 +96,22 @@ psw_syntax <- function(prep, step = "configural", parameterization = "delta") {
 
   for (i in it$id) {
     if (!ord) {
+      int_mod <- if (fl$int && !(i %in% free_int)) gv(paste0("N_", i)) else gv("NA")
+      res_mod <- if (fl$res && !(i %in% free_res)) gv(paste0("E_", i)) else gv("NA")
       out <- c(out,
-               sprintf("%s ~ %s*1", i, if (fl$int) gv(paste0("N_", i)) else gv("NA")),
-               sprintf("%s ~~ %s*%s", i, if (fl$res) gv(paste0("E_", i)) else gv("NA"), i))
+               sprintf("%s ~ %s*1", i, int_mod),
+               sprintf("%s ~~ %s*%s", i, res_mod, i))
       next
     }
     k <- seq_len(prep$nthr[[i]])
     tmod <- if (fl$thr) vapply(paste0("T_", i, "_", k), gv, "") else rep(gv("NA"), length(k))
     out <- c(out, paste0(i, " | ", paste0(tmod, "*t", k, collapse = " + ")))
-    # intercepts: identified (and freed) once thresholds are equal; fixed to 0 again at the scalar step
-    out <- c(out, sprintf("%s ~ %s*1", i, if (fl$thr && !fl$int) gv("0", "NA") else gv("0")))
+    # intercepts: identified (and freed) once thresholds are equal; fixed to 0 again at the scalar step unless freed
+    free_int_ord <- (fl$thr && !fl$int) || (fl$int && (i %in% free_int))
+    out <- c(out, sprintf("%s ~ %s*1", i, if (free_int_ord) gv("0", "NA") else gv("0")))
     # scale / residual variance: freed in groups 2+ once thresholds are equal, but
     # only for items with 3+ categories (not identified for binary items)
-    free_scale <- fl$thr && !fl$res && prep$nthr[[i]] >= 2L
+    free_scale <- (fl$thr && !fl$res && prep$nthr[[i]] >= 2L) || (fl$res && (i %in% free_res) && prep$nthr[[i]] >= 2L)
     smod <- if (free_scale) gv("1", "NA") else gv("1")
     out <- c(out, if (parameterization == "theta") sprintf("%s ~~ %s*%s", i, smod, i)
                   else sprintf("%s ~*~ %s*%s", i, smod, i))

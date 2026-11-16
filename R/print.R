@@ -5,8 +5,8 @@
 # weak loadings and poor fit stand out. Colours are off by default; ask for
 # them with `print(x, colored = TRUE)` (used only if the terminal supports them).
 
-psw_palette <- c("#67001F", "#B2182B", "#D6604D", "#F4A582", "#FDDBC7",
-                 "#D1E5F0", "#92C5DE", "#4393C3", "#2166AC", "#053061")
+# the ramps are in R/colour.R; the console keeps the original red-to-blue one
+psw_palette <- psw_palettes$redblue
 
 psw_use_color <- function(colored = TRUE) {
   if (!isTRUE(colored) || nzchar(Sys.getenv("NO_COLOR"))) return(FALSE)
@@ -179,7 +179,47 @@ print.psw_invariance <- function(x, colored = FALSE, culprits = 5L, ...) {
                       lab, c("chisq", "p"), cells)
     }
   }
+  if (!is.null(x$partial)) {
+    cat("\n")
+    print(x$partial, colored = colored)
+  }
   psw_print_notes(x$notes)
+  invisible(x)
+}
+
+#' @export
+print.psw_partial <- function(x, colored = FALSE, ...) {
+  col <- psw_use_color(colored)
+  psw_header("psyWiz: partial measurement invariance", col)
+
+  cp <- x$comparison
+  mark <- function(v, flag, kind = "") {
+    txt <- psw_cell(v, kind = kind)
+    if (isTRUE(flag)) { if (col) psw_paint(txt, 2L) else sub(" (?=\\S)", "!", txt, perl = TRUE) } else txt
+  }
+  cells <- lapply(seq_len(nrow(cp)), function(i) c(
+    mark(cp$dchisq[i], FALSE), psw_cell(cp$ddf[i], digits = 0L), mark(cp$p[i], cp$flag.chisq[i], "p"),
+    mark(cp$dcfi[i], cp$flag.cfi[i]), mark(cp$drmsea[i], cp$flag.rmsea[i]),
+    mark(cp$dsrmr[i], cp$flag.srmr[i]), paste0("  ", cp$verdict[i]),
+    paste0("  ", cp$freed[i])))
+  psw_print_block("Partial invariance ladder",
+                  cp$label, c("d.chisq", "d.df", "p", "d.cfi", "d.rmsea", "d.srmr", "  verdict", "  freed"), cells)
+
+  if (!is.null(x$released) && nrow(x$released) > 0L) {
+    rel <- x$released
+    row_labs <- paste0(rel$step, ": ", rel$item, " (", rel$parameter, ")")
+    rcells <- lapply(seq_len(nrow(rel)), function(i) c(
+      psw_cell(rel$group[i]),
+      psw_cell(rel$x2[i]),
+      psw_cell(rel$p[i], kind = "p"),
+      paste0("  ", rel$reason[i])
+    ))
+    psw_print_block("Released constraints", row_labs, c("group", "score.x2", "p", "  reason"), rcells)
+  }
+
+  if (nzchar(x$summary)) {
+    cat("\nSubstantive conclusion:\n  ", x$summary, "\n", sep = "")
+  }
   invisible(x)
 }
 
@@ -187,6 +227,8 @@ print.psw_invariance <- function(x, colored = FALSE, culprits = 5L, ...) {
 
 psw_print_df <- function(title, d, digits = 3L) {
   cat("\n", title, "\n", sep = "")
+  whole <- vapply(d, is.integer, logical(1))
+  d[whole] <- lapply(d[whole], as.character)
   num <- vapply(d, is.numeric, logical(1))
   d[num] <- lapply(d[num], function(v) ifelse(is.na(v), "", formatC(v, digits = digits, format = "f")))
   d[!num] <- lapply(d[!num], function(v) ifelse(is.na(v), "", as.character(v)))
@@ -251,6 +293,38 @@ print.psw_composite <- function(x, colored = FALSE, ...) {
   psw_print_df("Rank-one test (Bartlett)", x$test)
   psw_print_df(sprintf("R-squared per outcome (cv: %d folds x %d)", x$info$folds, x$info$repeats), x$r2)
   psw_print_df("Composite weights", x$weights)
+  psw_print_notes(x$notes)
+  invisible(x)
+}
+
+#' @rdname print.psyWiz
+#' @export
+print.psw_cfa <- function(x, colored = FALSE, suggestions = 5L, ...) {
+  psw_header("psyWiz: confirmatory factor analysis", psw_use_color(colored))
+  cat(sprintf("%d factor(s), %d items, items are %s, estimator %s, N = %d\n", length(x$info$factors),
+              length(unlist(x$info$factors)), x$info$type, x$info$estimator, x$info$n))
+  psw_print_df("Model fit", x$fit[c("chisq", "df", "pvalue", "cfi", "tli", "rmsea", "rmsea.lo", "rmsea.hi", "srmr")])
+  psw_print_df("Loadings", x$loadings[c("factor", "item", "est", "se", "p", "std", "r2")])
+  if (!is.null(x$cors) && nrow(x$cors)) psw_print_df("Factor correlations", x$cors[c("factor1", "factor2", "r", "p")])
+  if (!is.null(x$higher)) psw_print_df(paste("Loadings on", x$higher$name), x$higher$loadings)
+  if (!is.null(x$residuals)) psw_print_df("Residual correlations", x$residuals)
+  psw_print_df("Reliability", x$reliability)
+  if (!is.null(x$correlations)) psw_print_df("Factor correlations by scoring method", x$correlations)
+  if (!is.null(x$suggestions) && suggestions > 0L)
+    psw_print_df("Largest modification indices", utils::head(x$suggestions, suggestions))
+  psw_print_notes(x$notes)
+  invisible(x)
+}
+
+#' @rdname print.psyWiz
+#' @export
+print.psw_bifactor <- function(x, colored = FALSE, ...) {
+  psw_header("psyWiz: bifactor CFA", psw_use_color(colored))
+  cat(sprintf("%s + %d specific factors, %d items, items are %s, estimator %s, N = %d\n", x$info$general,
+              length(x$info$factors), nrow(x$loadings), x$info$type, x$info$estimator, x$info$n))
+  psw_print_df("Model fit", x$fit[c("label", "chisq", "df", "pvalue", "cfi", "tli", "rmsea", "srmr")])
+  psw_print_df("Omega, omega hierarchical and explained common variance", x$indices)
+  psw_print_df("Standardized loadings", x$loadings)
   psw_print_notes(x$notes)
   invisible(x)
 }

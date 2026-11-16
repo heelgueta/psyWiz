@@ -63,22 +63,85 @@ psw_mokken_h <- function(X) {
 #' up; CS and Loevinger's H are the more informative numbers there.
 #' @keywords internal
 #' @noRd
-psw_guttman <- function(X) {
+psw_guttman <- function(X, order = c("difficulty", "entered")) {
+  order <- match.arg(order)
   X <- as.matrix(X)
   steps <- do.call(cbind, lapply(seq_len(ncol(X)), function(j) {
     v <- sort(unique(X[, j]))[-1L]
     vapply(v, function(cut) as.numeric(X[, j] >= cut), numeric(nrow(X)))
   }))
   p <- colMeans(steps)
-  steps <- steps[, order(-p), drop = FALSE]
-  p <- sort(p, decreasing = TRUE)
+  # The order the scale is tested against. "difficulty": easiest step first, as
+  # observed (the usual, exploratory scalogram). "entered": the order in which
+  # the items were given, easiest first, i.e. a hypothesis. That is only
+  # defined for binary items; steps of polytomous items are always sorted.
+  binary <- ncol(steps) == ncol(X)
+  ord <- if (order == "entered" && binary) seq_len(ncol(steps)) else order(-p)
+  steps <- steps[, ord, drop = FALSE]
+  p <- p[ord]
   s <- rowSums(steps)
   ideal <- outer(s, seq_len(ncol(steps)), ">=") * 1
   errors <- sum(steps != ideal)
   cr <- 1 - errors / length(steps)
   mmr <- mean(pmax(p, 1 - p))
   list(cr = cr, mmr = mmr, cs = (cr - mmr) / (1 - mmr), errors = errors,
-       nsteps = ncol(steps), perfect = mean(rowSums(steps != ideal) == 0))
+       nsteps = ncol(steps), perfect = mean(rowSums(steps != ideal) == 0),
+       order = if (binary) order else "difficulty")
+}
+
+#' Data for a scalogram figure (internal)
+#'
+#' Items in columns (in the entered order, or easiest first), respondents in
+#' rows sorted by total score. Responses are rescaled to 0-1 per item. To keep
+#' the figure light the sorted respondents are averaged in at most `bins`
+#' consecutive groups, so a cell is the share of that group endorsing the item
+#' (binary items) or its mean response (polytomous items).
+#' @keywords internal
+#' @noRd
+psw_scalogram <- function(X, order = c("difficulty", "entered"), bins = 150L) {
+  order <- match.arg(order)
+  X <- as.matrix(X)
+  lo <- apply(X, 2L, min)
+  rng <- pmax(apply(X, 2L, max) - lo, 1e-12)
+  Z <- sweep(sweep(X, 2L, lo), 2L, rng, `/`)
+  io <- if (order == "entered") seq_len(ncol(Z)) else order(-colMeans(Z))
+  Z <- Z[order(rowSums(Z)), io, drop = FALSE]
+  nb <- min(nrow(Z), bins)
+  grp <- ceiling(seq_len(nrow(Z)) * nb / nrow(Z))
+  z <- rowsum(Z, grp) / as.numeric(table(grp))
+  list(z = z, items = colnames(X)[io], binary = all(apply(X, 2L, function(v) length(unique(v)) <= 2L)),
+       n = nrow(X), order = order)
+}
+
+# The scalability table and scalogram for one ordering of the items.
+psw_scalability <- function(X, mk, order) {
+  gt <- psw_guttman(X, order)
+  hij <- mk$Hij[lower.tri(mk$Hij)]
+  tab <- data.frame(
+    statistic = c("Loevinger's H (scale)", "Smallest item H", "Smallest item-pair H",
+                  "Coefficient of reproducibility (CR)", "Minimal marginal reproducibility (MMR)",
+                  "Coefficient of scalability (CS)", "Respondents with a perfect Guttman pattern"),
+    value = c(mk$H, min(mk$Hi), min(hij), gt$cr, gt$mmr, gt$cs, gt$perfect),
+    reading = c(psw_h_label(mk$H),
+                if (min(mk$Hi) < 0.3) "below .30: this item does not fit the scale" else ".30 or more for every item",
+                if (min(hij) < 0) "negative: at least one pair of items orders people in opposite ways" else "no negative pairs",
+                if (gt$cr >= 0.9) ".90 or more (conventional criterion)" else "below .90",
+                "reproducibility expected from the item marginals alone",
+                if (gt$cs >= 0.6) ".60 or more (conventional criterion)" else "below .60",
+                sprintf("%d item steps, %s", gt$nsteps,
+                        if (gt$order == "entered") "tested in the order entered" else "sorted from easiest to hardest")),
+    stringsAsFactors = FALSE)
+  if (order == "entered") {
+    lo <- apply(X, 2L, min)
+    endorsed <- colMeans(sweep(sweep(X, 2L, lo), 2L, pmax(apply(X, 2L, max) - lo, 1e-12), `/`))
+    tau <- suppressWarnings(stats::cor(seq_len(ncol(X)), -endorsed, method = "kendall"))
+    tab <- rbind(tab, data.frame(
+      statistic = "Entered order against observed difficulty (Kendall's tau)", value = tau,
+      reading = if (isTRUE(tau > 0.999)) "the items were entered from easiest to hardest"
+                else "below 1: some items are easier or harder than their position says",
+      stringsAsFactors = FALSE))
+  }
+  list(table = tab, scalogram = psw_scalogram(X, order))
 }
 
 # ---- models ------------------------------------------------------------------
@@ -132,6 +195,11 @@ psw_h_label <- function(h) {
 #' @inheritParams invarianceWiz
 #' @param items Character vector of item names (at least three).
 #' @param name Name of the scale, used in tables and plots.
+#' @param guttman.order Order of the items the Guttman statistics are tested
+#'   against: `"entered"` (default: the order of `items`, easiest first, i.e.
+#'   your hypothesis; binary items only, steps of polytomous items are always
+#'   sorted) or `"difficulty"` (sorted from the most to the least endorsed).
+#'   Loevinger's H does not depend on the order.
 #' @param estimator `"auto"` (`"MLR"` for continuous items, `"WLSMV"` for
 #'   ordinal items) or one accepted by [invarianceWiz()].
 #' @return An object of class `psw_scale`: a list with data frames
@@ -157,9 +225,11 @@ scaleWiz <- function(data, items, name = "Scale",
                      type = c("auto", "ordinal", "continuous"), estimator = "auto",
                      missing = c("auto", "listwise", "fiml", "pairwise"),
                      criteria = c("cfi", "rmsea"), cutoffs = list(),
+                     guttman.order = c("entered", "difficulty"),
                      parallel = "auto", ncores = NULL, keep.fits = FALSE) {
   type <- match.arg(type)
   missing <- match.arg(missing)
+  guttman.order <- match.arg(guttman.order)
   factors <- stats::setNames(list(unique(as.character(items))), name)
   prep <- psw_prepare(data, factors, type = type)
   ord <- prep$type == "ordinal"
@@ -245,24 +315,11 @@ scaleWiz <- function(data, items, name = "Scale",
     H = unname(mk$Hi), stringsAsFactors = FALSE, row.names = NULL)
   items_df$r2 <- items_df$loading^2
 
-  # ---- scalability ----
-  gt <- psw_guttman(X)
-  hij <- mk$Hij[lower.tri(mk$Hij)]
-  scalability <- data.frame(
-    statistic = c("Loevinger's H (scale)", "Smallest item H", "Smallest item-pair H",
-                  "Coefficient of reproducibility (CR)", "Minimal marginal reproducibility (MMR)",
-                  "Coefficient of scalability (CS)", "Respondents with a perfect Guttman pattern"),
-    value = c(mk$H, min(mk$Hi), min(hij), gt$cr, gt$mmr, gt$cs, gt$perfect),
-    reading = c(psw_h_label(mk$H),
-                if (min(mk$Hi) < 0.3) "below .30: this item does not fit the scale" else ".30 or more for every item",
-                if (min(hij) < 0) "negative: at least one pair of items orders people in opposite ways" else "no negative pairs",
-                if (gt$cr >= 0.9) ".90 or more (conventional criterion)" else "below .90",
-                "reproducibility expected from the item marginals alone",
-                if (gt$cs >= 0.6) ".60 or more (conventional criterion)" else "below .60",
-                sprintf("%d item steps", gt$nsteps)),
-    stringsAsFactors = FALSE)
+  # ---- scalability, for both item orders (cheap), so jamovi can switch without refitting ----
+  guttman <- list(entered = psw_scalability(X, mk, "entered"), difficulty = psw_scalability(X, mk, "difficulty"))
+  scalability <- guttman[[guttman.order]]$table
   if (any(apply(X, 2L, function(v) length(unique(v))) > 2L))
-    notes <- c(notes, paste0("Guttman statistics are computed on item steps (response at or above each category). ",
+    notes <- c(notes, paste0("Guttman statistics are computed on item steps (response at or above each category), sorted from easiest to hardest. ",
                              "The steps of one item are nested by construction, which inflates CR; ",
                              "read CS and Loevinger's H instead."))
   if (sum(!cc) > 0L)
@@ -271,7 +328,7 @@ scaleWiz <- function(data, items, name = "Scale",
 
   out <- list(
     reliability = reliability, fit = lad$fit, comparison = lad$comparison, items = items_df,
-    scalability = scalability, hij = mk$Hij,
+    scalability = scalability, guttman = guttman, hij = mk$Hij,
     loadings = if (is.null(load)) NULL else cbind(step = "congeneric", label = "Congeneric", load, stringsAsFactors = FALSE),
     cors = NULL,
     syntax = lapply(syntax, psw_syntax_display, prep = prep), notes = unique(notes),

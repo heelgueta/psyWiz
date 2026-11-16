@@ -35,7 +35,7 @@ known:
 
 | Item | Status | What to do |
 |---|---|---|
-| Help pages for exported functions and `wizdata` | **Missing** (check warning) | Run `roxygen2::roxygenise(roclets = "rd")` on a machine with roxygen2 and commit `man/`. The roxygen comments are already in the source. The jamovi functions (`groupCfaOne()` etc.) get theirs from the generated `R/*.h.R`. |
+| Help pages for exported functions and `wizdata` | **Missing** (check warning) | Run `roxygen2::roxygenise(roclets = "rd")` on a machine with roxygen2 and commit `man/`. The roxygen comments are already in the source. The jamovi functions (`groupCfa()` etc.) get theirs from the generated `R/*.h.R`. |
 | Non-ASCII characters in R code | Fixed | Greek letters in table notes are written as `\uXXXX` escapes. Keep it that way; yaml files may use real characters. |
 | `LICENSE` file "not mentioned" | Fixed | The file stays in the repository for GitHub but is excluded from the R build (`.Rbuildignore`); `License: GPL-3` in DESCRIPTION is what CRAN reads. |
 | Dependencies | OK | jmvcore, R6, lavaan and ggplot2 are all on CRAN. |

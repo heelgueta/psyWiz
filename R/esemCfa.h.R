@@ -17,7 +17,8 @@ esemCfaOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             parallel = TRUE,
             showLoadings = TRUE,
             showCors = TRUE,
-            highlight = FALSE, ...) {
+            highlight = FALSE,
+            showLoom = FALSE, ...) {
 
             super$initialize(
                 package="psyWiz",
@@ -104,6 +105,10 @@ esemCfaOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 "highlight",
                 highlight,
                 default=FALSE)
+            private$..showLoom <- jmvcore::OptionBool$new(
+                "showLoom",
+                showLoom,
+                default=FALSE)
 
             self$.addOption(private$..factors)
             self$.addOption(private$..run)
@@ -115,6 +120,7 @@ esemCfaOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$.addOption(private$..showLoadings)
             self$.addOption(private$..showCors)
             self$.addOption(private$..highlight)
+            self$.addOption(private$..showLoom)
         }),
     active = list(
         factors = function() private$..factors$value,
@@ -126,7 +132,8 @@ esemCfaOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         parallel = function() private$..parallel$value,
         showLoadings = function() private$..showLoadings$value,
         showCors = function() private$..showCors$value,
-        highlight = function() private$..highlight$value),
+        highlight = function() private$..highlight$value,
+        showLoom = function() private$..showLoom$value),
     private = list(
         ..factors = NA,
         ..run = NA,
@@ -137,7 +144,8 @@ esemCfaOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         ..parallel = NA,
         ..showLoadings = NA,
         ..showCors = NA,
-        ..highlight = NA)
+        ..highlight = NA,
+        ..showLoom = NA)
 )
 
 esemCfaResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
@@ -148,7 +156,8 @@ esemCfaResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         fit = function() private$.items[["fit"]],
         comparison = function() private$.items[["comparison"]],
         loadings = function() private$.items[["loadings"]],
-        cors = function() private$.items[["cors"]]),
+        cors = function() private$.items[["cors"]],
+        loom = function() private$.items[["loom"]]),
     private = list(),
     public=list(
         initialize=function(options) {
@@ -181,6 +190,10 @@ esemCfaResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                         `name`="model", 
                         `title`="Model", 
                         `type`="text"),
+                    list(
+                        `name`="chisqStd", 
+                        `title`="Uncorrected \u03C7\u00B2", 
+                        `type`="number"),
                     list(
                         `name`="chisq", 
                         `title`="\u03C7\u00B2", 
@@ -346,7 +359,21 @@ esemCfaResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                         `name`="esem", 
                         `title`="ESEM", 
                         `type`="number", 
-                        `format`="zto"))))}))
+                        `format`="zto"))))
+            self$add(jmvcore::Image$new(
+                options=options,
+                name="loom",
+                title="Loom Plot (ESEM)",
+                width=600,
+                height=400,
+                renderFun=".diagram",
+                visible="(showLoom)",
+                clearWith=list(
+                    "factors",
+                    "type",
+                    "estimator",
+                    "missing",
+                    "rotation")))}))
 
 esemCfaBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
     "esemCfaBase",
@@ -408,6 +435,8 @@ esemCfaBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #'   correlation under the different scoring methods
 #' @param highlight \code{TRUE} or \code{FALSE} (default), show cross-loadings
 #'   of 0.30 or more and own-factor loadings below 0.40 in red
+#' @param showLoom \code{TRUE} or \code{FALSE} (default), draw the ESEM
+#'   loadings of every item on every factor
 #' @return A results object containing:
 #' \tabular{llllll}{
 #'   \code{results$todo} \tab \tab \tab \tab \tab a html \cr
@@ -415,6 +444,7 @@ esemCfaBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #'   \code{results$comparison} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$loadings} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$cors} \tab \tab \tab \tab \tab a table \cr
+#'   \code{results$loom} \tab \tab \tab \tab \tab an image \cr
 #' }
 #'
 #' Tables can be converted to data frames with \code{asDF} or \code{\link{as.data.frame}}. For example:
@@ -437,7 +467,8 @@ esemCfa <- function(
     parallel = TRUE,
     showLoadings = TRUE,
     showCors = TRUE,
-    highlight = FALSE) {
+    highlight = FALSE,
+    showLoom = FALSE) {
 
     if ( ! requireNamespace("jmvcore", quietly=TRUE))
         stop("esemCfa requires jmvcore to be installed (restart may be required)")
@@ -457,7 +488,8 @@ esemCfa <- function(
         parallel = parallel,
         showLoadings = showLoadings,
         showCors = showCors,
-        highlight = highlight)
+        highlight = highlight,
+        showLoom = showLoom)
 
     analysis <- esemCfaClass$new(
         options = options,

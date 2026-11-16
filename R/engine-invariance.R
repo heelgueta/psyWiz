@@ -205,11 +205,15 @@ psw_ladder_tables <- function(res, steps, labels, ordinal) {
 #'   cores? `"auto"` does so only when the first model is slow.
 #' @param ncores Maximum number of worker processes.
 #' @param keep.fits Keep the fitted lavaan objects in the result (`$fits`)?
+#' @param partial Also run [invariancePartial()] and store its result in
+#'   `$partial`?
+#' @param max.free,min.invariant Passed to [invariancePartial()].
 #'
 #' @return An object of class `psw_invariance`: a list with data frames `fit`
 #'   (one row per step), `comparison` (each step against the previous one,
 #'   with a verdict), `culprits` (score tests for the constraints of each
-#'   step), `loadings`, `groups`, plus `syntax`, `notes` and `info`.
+#'   step), `loadings`, `groups`, plus `syntax`, `notes`, `info`, and optionally
+#'   `partial` (if `partial = TRUE`).
 #'
 #' @references
 #' Chen, F. F. (2007). Sensitivity of goodness of fit indexes to lack of
@@ -234,7 +238,8 @@ invarianceWiz <- function(data, factors, group,
                           strict = FALSE,
                           parameterization = c("auto", "delta", "theta"),
                           criteria = c("cfi", "rmsea"), cutoffs = list(),
-                          parallel = "auto", ncores = NULL, keep.fits = FALSE) {
+                          parallel = "auto", ncores = NULL, keep.fits = FALSE,
+                          partial = FALSE, max.free = 2L, min.invariant = 2L) {
   type <- match.arg(type)
   missing <- match.arg(missing)
   parameterization <- match.arg(parameterization)
@@ -305,6 +310,8 @@ invarianceWiz <- function(data, factors, group,
     groups = data.frame(group = names(prep$n), n = as.integer(prep$n), stringsAsFactors = FALSE),
     syntax = lapply(syntax, psw_syntax_display, prep = prep),
     notes = unique(notes),
+    # the prepared data, so that invariancePartial() can refit; the jamovi layer drops it before caching
+    prep = prep,
     info = list(type = prep$type, estimator = estimator, missing = miss,
                 parameterization = parameterization, variant = variant,
                 factors = split(prep$items$name, factor(prep$items$factor, levels = unname(prep$fnames))),
@@ -314,7 +321,14 @@ invarianceWiz <- function(data, factors, group,
                 lavaan = as.character(utils::packageVersion("lavaan"))))
   if (keep.fits) out$fits <- lapply(res, function(r) r$fit)
   class(out) <- "psw_invariance"
-  invarianceVerdict(out, criteria = criteria, cutoffs = cutoffs)
+  out <- invarianceVerdict(out, criteria = criteria, cutoffs = cutoffs)
+
+  if (isTRUE(partial)) {
+    out$partial <- invariancePartial(out, auto = TRUE, max.free = max.free,
+                                     min.invariant = min.invariant,
+                                     criteria = criteria, cutoffs = cutoffs)
+  }
+  out
 }
 
 psw_default_cutoffs <- list(cfi = 0.010, rmsea = 0.015, srmr.loadings = 0.030, srmr = 0.010, alpha = 0.05)
@@ -367,4 +381,173 @@ invarianceVerdict <- function(x, criteria = c("cfi", "rmsea"), cutoffs = list())
   x$criteria <- criteria
   x$cutoffs <- cut
   x
+}
+
+#' Partial measurement invariance
+#'
+#' Refits the invariance ladder, releasing equality constraints item by item
+#' when a step is not supported. It answers the question that follows a
+#' failed step: is the problem confined to a few items, and how far does
+#' invariance go once those are set free?
+#'
+#' Search (when `auto = TRUE`). At a step whose verdict is "Not supported" or
+#' "Ambiguous", the item with the largest score test among the constraints
+#' that step adds is released in every group, the step is refitted and
+#' judged again against the same previous model, and so on until the step is
+#' supported or no further release is allowed. A release is allowed only if
+#' it leaves at least `min.invariant` items of the factor constrained and
+#' frees no more than `max.free` items of that factor (Byrne, Shavelson &
+#' Muthen, 1989). Whatever is freed stays free in the later steps: an item
+#' whose loading is freed also gets a free intercept, and an item whose
+#' intercept is freed also gets a free residual variance.
+#'
+#' Loadings, intercepts and residual variances can be released. Thresholds of
+#' ordinal items are not: an item with free thresholds needs its own
+#' identification constraints (Wu & Estabrook, 2016), and that is left for
+#' later.
+#'
+#' This is a specification search guided by the data. The released items are
+#' a description of where the misfit sits in this sample, not a confirmed
+#' finding; the tests of the later steps are conditional on the search.
+#'
+#' @param x A `psw_invariance` object from [invarianceWiz()].
+#' @param auto Search for constraints to release? If `FALSE`, only the items
+#'   in `free` are released.
+#' @param free Items to release from the start, by name: a list with any of
+#'   `load`, `int` and `res`, e.g. `list(int = c("x2", "x3"))`.
+#' @param max.free Largest number of items released per factor and parameter
+#'   type by the search (default 2).
+#' @param min.invariant Smallest number of items per factor that must stay
+#'   constrained (default 2).
+#' @param criteria,cutoffs As in [invarianceVerdict()]; by default those of `x`.
+#'
+#' @return An object of class `psw_partial`: a list with data frames `fit`
+#'   and `comparison` (as in [invarianceWiz()], plus a column `freed`),
+#'   `released` (one row per released constraint, with the score test that
+#'   led to it), the list `freed`, a one-paragraph `summary`, and `notes`.
+#'
+#' @references
+#' Byrne, B. M., Shavelson, R. J., & Muthen, B. (1989). Testing for the
+#' equivalence of factor covariance and mean structures: The issue of partial
+#' measurement invariance. *Psychological Bulletin, 105*(3), 456-466.
+#'
+#' Steenkamp, J. B. E. M., & Baumgartner, H. (1998). Assessing measurement
+#' invariance in cross-national consumer research. *Journal of Consumer
+#' Research, 25*(1), 78-90.
+#' @examples
+#' \donttest{
+#' data(wizdata)
+#' f <- list(Trust = paste0("trust", 1:4), Stress = paste0("stress", 1:4))
+#' res <- invarianceWiz(wizdata, f, group = "country")
+#' invariancePartial(res)
+#' }
+#' @export
+invariancePartial <- function(x, auto = TRUE, free = list(), max.free = 2L, min.invariant = 2L,
+                              criteria = NULL, cutoffs = list()) {
+  stopifnot(inherits(x, "psw_invariance"))
+  prep <- x$prep
+  if (is.null(prep))
+    stop("`x` does not carry its prepared data (`x$prep`); run invarianceWiz() again.", call. = FALSE)
+  if (is.null(criteria)) criteria <- if (is.null(x$criteria)) c("cfi", "rmsea") else x$criteria
+  cut <- utils::modifyList(if (is.null(x$cutoffs)) psw_default_cutoffs else x$cutoffs, as.list(cutoffs))
+  it <- prep$items
+  ord <- prep$type == "ordinal"
+  info <- x$info
+  par_arg <- if (ord) info$parameterization else "delta"
+  steps <- x$fit$step
+  # which list in `freed` each step adds to (thresholds: none, nothing is released there)
+  kind_of <- function(s) switch(s, metric = "load", scalar = "int", strict = "res", NA_character_)
+
+  bad <- setdiff(names(free), c("load", "int", "res"))
+  if (length(bad)) stop("`free` may only contain `load`, `int` and `res`.", call. = FALSE)
+  bad <- setdiff(unlist(free), it$name)
+  if (length(bad)) stop("Not an item of the model: ", paste(bad, collapse = ", "), call. = FALSE)
+  freed <- list(load = as.character(free$load), int = as.character(free$int), res = as.character(free$res))
+
+  released <- list()
+  log <- function(step, item, reason, cu = NULL)
+    released[[length(released) + 1L]] <<- data.frame(
+      step = psw_step_labels(step, prep$type), parameter = psw_step_target(step), item = item,
+      factor = it$factor[match(item, it$name)],
+      group = if (is.null(cu)) "" else cu$group, x2 = if (is.null(cu)) NA_real_ else cu$x2,
+      df = if (is.null(cu)) NA_integer_ else cu$df, p = if (is.null(cu)) NA_real_ else cu$p,
+      reason = reason, stringsAsFactors = FALSE)
+  for (s in c("metric", "scalar", "strict"))
+    for (i in freed[[kind_of(s)]]) log(s, i, "Chosen by the user")
+
+  fit_step <- function(s)
+    psw_inv_task(list(kind = "inv", step = s, model = psw_syntax(prep, s, par_arg, free = freed), prep = prep,
+                      estimator = info$estimator, missing = info$missing, parameterization = par_arg))
+  judge <- function(comparison)
+    invarianceVerdict(structure(list(comparison = comparison), class = "psw_invariance"),
+                      criteria = criteria, cutoffs = cut)$comparison
+  verdict_of <- function(prev, cur, s)
+    judge(psw_ladder_tables(list(prev, cur), c("previous", s), c("previous", s), ord)$comparison)$verdict
+
+  res <- list(configural = fit_step("configural"))
+  for (s in steps[-1L]) {
+    k <- kind_of(s)
+    # what was freed at an earlier step stays free
+    carry <- switch(s, scalar = setdiff(freed$load, freed$int), strict = setdiff(freed$int, freed$res), character())
+    for (i in carry) log(s, i, if (s == "scalar") "Its loading is free" else "Its intercept is free")
+    if (!is.na(k)) freed[[k]] <- c(freed[[k]], carry)
+
+    prev <- res[[length(res)]]
+    cur <- fit_step(s)
+    if (auto && !is.na(k)) repeat {
+      if (!verdict_of(prev, cur, s) %in% c("Not supported", "Ambiguous")) break
+      cu <- cur$culprits
+      if (is.null(cu)) break
+      cu <- cu[!cu$item %in% freed[[k]], , drop = FALSE]
+      n_items <- vapply(cu$factor, function(f) sum(it$factor == f), numeric(1))
+      n_free <- vapply(cu$factor, function(f) sum(it$factor[match(freed[[k]], it$name)] == f), numeric(1))
+      ok <- which(n_items - n_free - 1 >= min.invariant & n_free + 1 <= max.free)
+      if (!length(ok)) break
+      pick <- cu[ok[1L], , drop = FALSE]
+      freed[[k]] <- c(freed[[k]], pick$item)
+      log(s, pick$item, "Largest score test at a step that was not supported", pick)
+      cur <- fit_step(s)
+    }
+    res[[s]] <- cur
+  }
+
+  freed_at <- vapply(steps, function(s) {
+    k <- kind_of(s)
+    if (is.na(k)) "" else paste(freed[[k]], collapse = ", ")
+  }, "")
+  labels <- paste0(psw_step_labels(steps, prep$type), ifelse(nzchar(freed_at), ", partial", ""))
+  lad <- psw_ladder_tables(res, steps, labels, ord)
+  fit <- cbind(lad$fit, freed = unname(freed_at), stringsAsFactors = FALSE)
+  cp <- judge(lad$comparison)
+  cp$freed <- unname(freed_at[-1L])
+
+  # how far up the ladder does (partial) invariance go?
+  holds <- cp$verdict %in% c("Supported", "Equivalent to previous model")
+  reached <- cp$step[seq_len(if (all(holds)) nrow(cp) else which(!holds)[1L] - 1L)]
+  listing <- function(k, what) if (length(freed[[k]])) sprintf("%s of %s", what, paste(freed[[k]], collapse = ", "))
+  summary <- if ("scalar" %in% reached) {
+    fr <- c(listing("load", "loadings"), listing("int", "intercepts"))
+    if (length(fr)) paste0(
+      "Partial scalar invariance is supported after freeing the ", paste(fr, collapse = " and the "), ". ",
+      "With at least two invariant items per factor, latent means are usually considered comparable in a model ",
+      "that keeps these parameters free (Byrne, Shavelson & Muthen, 1989). Observed sum or mean scores still ",
+      "contain the freed items, so their group differences are not purely differences in the construct.")
+    else "Full scalar invariance is supported; no constraint had to be released."
+  } else if ("metric" %in% reached) {
+    paste0(if (length(freed$load)) sprintf("Partial metric invariance is supported after freeing the %s. ", listing("load", "loadings"))
+           else "Metric invariance is supported. ",
+           "The intercepts step is not, even with the releases allowed here. Relations among the factors ",
+           "(correlations, regressions) can be compared across groups; means should not be.")
+  } else {
+    sprintf("The %s step is not supported%s, so this model does not justify comparing the groups on these factors.",
+            tolower(psw_step_labels(cp$step[which(!holds)[1L]], prep$type)),
+            if (cp$step[which(!holds)[1L]] == "thresholds") " (thresholds are not released)"
+            else " even with the releases allowed here")
+  }
+
+  out <- list(fit = fit, comparison = cp, released = if (length(released)) do.call(rbind, released),
+              freed = freed, summary = summary, variant = lad$variant, criteria = criteria, cutoffs = cut,
+              notes = unique(lad$notes))
+  class(out) <- "psw_partial"
+  out
 }

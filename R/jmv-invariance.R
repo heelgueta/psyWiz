@@ -1,6 +1,6 @@
-# jmv-invariance.R -- jamovi implementation shared by One-Factor Group CFA
-# (groupCfaOne) and Correlated-Factors Group CFA (groupCfaCorr). Their *.b.R
-# files only translate their own model options into a `factors` list.
+# jmv-invariance.R -- jamovi implementation of Group CFA (groupCfa). Up to 0.3
+# this was shared by two analyses (one-factor and correlated-factors), which
+# is why it takes `factors` as an argument instead of reading the options.
 #
 # Lifecycle
 #   .init()  adds one loadings column per group (the groups are known from
@@ -13,6 +13,9 @@
 #               an option in its clearWith changes.
 #            4. apply the decision criteria (cheap, never refits) and fill
 #               the tables.
+#            5. on request, the partial-invariance search and the robustness
+#               check, each with its own cache (the state of its first table)
+#               because each refits models.
 
 psw_jmv_inv_init <- function(self, factors) {
   opt <- self$options
@@ -57,6 +60,8 @@ psw_jmv_inv_run <- function(self, factors) {
                     estimator = opt$estimator, missing = opt$missing, strict = opt$strict,
                     parallel = if (opt$parallel) "auto" else FALSE),
       error = function(e) jmvcore::reject(conditionMessage(e), code = ""))
+    # the prepared data would be saved with the state (and in the .omv file); it is rebuilt when needed
+    res$prep <- NULL
     out$fit$setState(res)
   }
   psw_jmv_todo(out$todo)
@@ -133,6 +138,49 @@ psw_jmv_inv_run <- function(self, factors) {
       init = FALSE)
   }
 
+  # ---- partial invariance: its own cache, on the partial ladder table ----
+  # jamovi clears that state when the model or a decision criterion changes,
+  # because the search depends on the verdicts.
+  if (opt$partial) {
+    part <- out$partialLadder$state
+    if (is.null(part) && opt$run) {
+      part <- tryCatch({
+        res$prep <- psw_prepare(self$data, factors, group = opt$group, type = info$type)
+        invariancePartial(res, max.free = opt$maxFree)
+      }, error = function(e) conditionMessage(e))
+      res$prep <- NULL
+      if (is.list(part)) out$partialLadder$setState(part)
+    }
+    if (is.null(part)) {
+      out$partialLadder$setNote("todo", "Tick 'Run analysis' to run the search.", init = FALSE)
+    } else if (is.character(part)) {
+      out$partialLadder$setNote("err", paste("Partial invariance could not be computed:", part), init = FALSE)
+    } else {
+      pcp <- part$comparison
+      psw_jmv_fill(out$partialLadder, lapply(seq_len(nrow(pcp)), function(i)
+        list(model = pcp$label[i], vs = pcp$vs[i], dchisq = pcp$dchisq[i], ddf = pcp$ddf[i], p = pcp$p[i],
+             dcfi = pcp$dcfi[i], drmsea = pcp$drmsea[i], dsrmr = pcp$dsrmr[i],
+             verdict = pcp$verdict[i], freed = pcp$freed[i])))
+      if (opt$highlight) for (i in seq_len(nrow(pcp))) for (k in criteria)
+        if (isTRUE(pcp[[paste0("flag.", k)]][i]))
+          out$partialLadder$addFormat(rowNo = i, col = flagcols[[k]], format = jmvcore::Cell.NEGATIVE)
+      out$partialLadder$setNote("summary", part$summary, init = FALSE)
+      out$partialLadder$setNote("how", paste0(
+        "The ladder refitted: at a step that is not supported, the item with the largest score test is left free ",
+        "in every group and the step is judged again, keeping at least two constrained items per factor. ",
+        "Thresholds are never released. This is a search guided by the data: it describes where the misfit ",
+        "sits in this sample."), init = FALSE)
+      psw_jmv_notes(out$partialLadder, part$notes)
+      rel <- part$released
+      if (is.null(rel))
+        out$partialReleased$setNote("none", "Nothing was released: every step was supported, or no release was allowed.", init = FALSE)
+      else
+        psw_jmv_fill(out$partialReleased, lapply(seq_len(nrow(rel)), function(i)
+          list(model = rel$step[i], parameter = rel$parameter[i], item = rel$item[i], factor = rel$factor[i],
+               group = rel$group[i], x2 = rel$x2[i], df = rel$df[i], p = rel$p[i], reason = rel$reason[i])))
+    }
+  }
+
   # ---- loadings of the configural model, one column per group ----
   if (opt$showLoadings && !is.null(res$loadings)) {
     l <- res$loadings[res$loadings$step == "configural", , drop = FALSE]
@@ -149,10 +197,10 @@ psw_jmv_inv_run <- function(self, factors) {
   }
 
   # ---- figure: the render function (.diagram in the *.b.R files) draws from this state ----
-  if (opt$showDiagram && !is.null(res$loadings)) {
+  if ((opt$showComb || opt$showPath) && !is.null(res$loadings)) {
     l <- res$loadings[res$loadings$step == "configural", , drop = FALSE]
     cc <- if (is.null(res$cors)) NULL else res$cors[res$cors$step == "configural", , drop = FALSE]
-    if (nrow(l)) psw_jmv_set_figure(out$diagram, l, cc, "group", opt$diagramStyle, opt$highlight)
+    if (nrow(l)) psw_jmv_figures(out, opt, l, cc, caption = "Configural model.")
   }
 
   # ---- robustness of the verdict: its own cache, on the summary table ----

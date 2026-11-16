@@ -30,13 +30,11 @@ psw_esem_task <- function(task) {
     std <- lavaan::lavInspect(r$fit, "std")
     r$lambda <- unclass(std$lambda)
     r$psi <- unclass(std$psi)
+    r$theta <- diag(unclass(std$theta))
     if (isTRUE(task$scores)) {
-      r$scores <- tryCatch(suppressWarnings(stats::cor(lavaan::lavPredict(r$fit), use = "pairwise.complete.obs")),
-                           error = function(e) NULL)
-      # Bartlett scores exist for continuous items only
-      r$bartlett <- if (prep$type == "ordinal") NULL else
-        tryCatch(suppressWarnings(stats::cor(lavaan::lavPredict(r$fit, method = "Bartlett"),
-                                             use = "pairwise.complete.obs")), error = function(e) NULL)
+      sc <- psw_score_cors(r$fit, prep$type == "ordinal")
+      r$scores <- sc$scores
+      r$bartlett <- sc$bartlett
     }
   }
   r
@@ -148,6 +146,21 @@ esemWiz <- function(data, factors, type = c("auto", "ordinal", "continuous"), es
   notes <- c(notes, lad$notes)
   fit <- lad$fit[2:1, , drop = FALSE]
   rownames(fit) <- NULL
+  # The uncorrected chi-square, which is the one that is comparable between
+  # the two models: the ESEM frees parameters of the CFA, so its uncorrected
+  # chi-square cannot be higher. The robust (scaled) chi-squares each get
+  # their own correction and can come out the other way round; CFI, TLI and
+  # RMSEA are computed from them and follow. Seen with WLSMV on 20 ordinal
+  # items (2026-11-16): uncorrected 981 (CFA) vs 663 (ESEM), scaled the
+  # reverse, scaling factor of the ESEM 0.46.
+  fit$chisq.std <- vapply(res[c("cfa", "esem")], function(r) if (is.null(r$fm)) NA_real_ else r$fm[["chisq"]], numeric(1))
+  reversed <- isTRUE(fit$chisq[2L] > fit$chisq[1L] && fit$chisq.std[2L] <= fit$chisq.std[1L])
+  if (reversed)
+    notes <- c(notes, paste0(
+      "The corrected chi-square of the ESEM is higher than the CFA's, although the ESEM fits at least as well ",
+      "(see the uncorrected chi-square and SRMR). Each model gets its own robust correction, so the corrected ",
+      "chi-squares, and the CFI, TLI and RMSEA computed from them, cannot be compared between these two models. ",
+      "Judge the comparison by the difference test and SRMR."))
 
   # ---- loadings: every item on every factor ----
   fn <- unname(prep$fnames)
@@ -167,21 +180,14 @@ esemWiz <- function(data, factors, type = c("auto", "ordinal", "continuous"), es
   }
 
   # ---- factor correlations by method ----
-  num <- if (ord) psw_prepare(data, factors, type = "continuous") else prep
-  comp <- vapply(fids, function(f) rowMeans(num$data[num$items$id[num$items$fid == f]], na.rm = TRUE),
-                 numeric(nrow(num$data)))
-  rc <- stats::cor(comp, use = "pairwise.complete.obs")
-  alpha <- vapply(fids, function(f) {
-    X <- num$data[num$items$id[num$items$fid == f]]
-    psw_alpha(stats::cov(X, use = "complete.obs"))
-  }, numeric(1))
+  cc <- psw_composite_cors(data, factors)
+  alpha <- cc$alpha
   pairs <- which(upper.tri(diag(m)), arr.ind = TRUE)
   pairs <- pairs[order(pairs[, 1L], pairs[, 2L]), , drop = FALSE]
   pick <- function(M) if (is.null(M)) rep(NA_real_, nrow(pairs)) else M[pairs]
   correlations <- data.frame(
     factor1 = fn[pairs[, 1L]], factor2 = fn[pairs[, 2L]],
-    composite = pick(rc),
-    corrected = pick(rc / sqrt(outer(alpha, alpha))),
+    composite = pick(cc$composite), corrected = pick(cc$corrected),
     cfa = pick(res$cfa$psi), scores = pick(res$cfa$scores), bartlett = pick(res$cfa$bartlett),
     esem = pick(esem_psi),
     stringsAsFactors = FALSE)
@@ -192,11 +198,12 @@ esemWiz <- function(data, factors, type = c("auto", "ordinal", "continuous"), es
 
   out <- list(
     fit = fit, comparison = lad$comparison, loadings = loadings, correlations = correlations,
+    uniqueness = if (res$esem$converged) stats::setNames(unname(res$esem$theta[it$id]), it$name),
     reliability = data.frame(factor = fn, alpha = unname(alpha), stringsAsFactors = FALSE),
     syntax = list(cfa = psw_syntax_display(cfa_syntax, prep), esem = psw_syntax_display(esem_syntax, prep)),
     notes = unique(notes),
     info = list(type = prep$type, estimator = estimator, missing = miss, rotation = rotation,
-                variant = lad$variant, factors = split(it$name, factor(it$factor, levels = fn)),
+                variant = lad$variant, reversed = reversed, factors = split(it$name, factor(it$factor, levels = fn)),
                 n = nrow(prep$data), mode = run$mode, workers = run$workers,
                 time = proc.time()[["elapsed"]] - t0,
                 lavaan = as.character(utils::packageVersion("lavaan"))))

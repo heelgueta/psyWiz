@@ -43,7 +43,9 @@ esemCfaClass <- if (requireNamespace("jmvcore", quietly = TRUE)) R6::R6Class(
       psw_jmv_todo(out$todo)
       info <- res$info
 
-      psw_jmv_fill(out$fit, psw_jmv_fit_rows(res$fit))
+      rows <- psw_jmv_fit_rows(res$fit)
+      for (i in seq_along(rows)) rows[[i]]$chisqStd <- res$fit$chisq.std[i]
+      psw_jmv_fill(out$fit, rows)
       out$fit$setNote("info", sprintf(
         "CFA: each item loads on its own factor only. ESEM: every item may load on every factor. Estimator: %s; items treated as %s; missing values: %s. %s %s",
         info$estimator, info$type, info$missing, paste0(psw_jmv_variant_text(info$variant), ""),
@@ -55,7 +57,8 @@ esemCfaClass <- if (requireNamespace("jmvcore", quietly = TRUE)) R6::R6Class(
                                               dcfi = cp$dcfi[1L], drmsea = cp$drmsea[1L], dsrmr = cp$dsrmr[1L])))
       out$comparison$setNote("what", paste0(
         "CFA minus ESEM. The CFA is the ESEM with all cross-loadings fixed to zero, so a clearly worse fit means ",
-        "the zero cross-loadings are too strict, and the CFA factor correlations are then likely inflated."),
+        "the zero cross-loadings are too strict, and the CFA factor correlations are then likely inflated.",
+        if (isTRUE(info$reversed)) " \u0394CFI and \u0394RMSEA are not interpretable here: see the note under Model Fit." else ""),
         init = FALSE)
 
       if (opt$showLoadings) {
@@ -91,7 +94,10 @@ esemCfaClass <- if (requireNamespace("jmvcore", quietly = TRUE)) R6::R6Class(
           "estimated from the CFA; regression scores of correlated factors are typically too strongly correlated, ",
           "Bartlett scores (continuous items only) too weakly."), init = FALSE)
       }
+      if (opt$showLoom && !is.null(res$uniqueness))
+        psw_jmv_plot(out$loom, "loom", list(L = res$loadings, unique = res$uniqueness, value = "esem"))
       invisible()
-    }
+    },
+    .diagram = function(image, ...) psw_jmv_diagram(image)
   )
 )

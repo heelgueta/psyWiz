@@ -62,14 +62,20 @@ not available", use `tools/build.R` with the path of jamovi's
 - jamovi marks a module as incompatible (no menu appears) if it was built with
   a different R version than the one in the jamovi it is installed in. Build
   on the jamovi version you target.
-- Do not edit `R/*.h.R`, `R/00jmv.R`, or the `groupCfa*.yaml` files by hand.
+- Do not edit `R/*.h.R`, `R/00jmv.R`, or any `jamovi/*.yaml` that starts with
+  "GENERATED" by hand; edit `tools/gen_yaml.py` and run it. Hand-written:
+  `multiEstCfa.*.yaml`, `0000.yaml` (its order of analyses is the menu order)
+  and `00refs.yaml`.
 - An option name in a `.a.yaml` becomes an argument of the generated R
   function; renaming one is a breaking change for R users.
 - In headless calls pass variable names as strings (`vars = c("x1", "x2")`).
 - Statistics go in `R/engine-*.R` with a test in `tests/testthat/test-engine.R`
   that checks them against plain lavaan. See [DESIGN.md](DESIGN.md).
 - User-visible changes go in `NEWS.md`; changes to what is computed also go in
-  [METHODS.md](METHODS.md).
+  [METHODS.md](METHODS.md); changes of direction and the list of what is next
+  go in [ROADMAP.md](ROADMAP.md).
+- A new analysis shows only the essentials by default; see "Simple by
+  default" in [DESIGN.md](DESIGN.md).
 - `NAMESPACE` is written by hand. Help pages should be generated from the
   roxygen comments with `roxygen2::roxygenise(roclets = "rd")` (not done yet).
 

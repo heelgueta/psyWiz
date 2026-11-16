@@ -1,63 +1,63 @@
 ---
 title: psyWiz
 name: psyWiz
-version: 0.3.0
+version: 0.4.0
 jms: '1.0'
 authors:
   - Herman Elgueta
 maintainer: Herman Elgueta <herman.elgueta@umag.cl>
-date: '2026-11-14'
+date: '2026-11-16'
 type: R
 description: >-
-  Psychometric wizardry for confirmatory factor analysis. Test measurement
-  invariance across groups step by step (for continuous and for ordinal items),
-  with a verdict for each step and a list of the constraints that fit worst; and
-  fit one CFA under several estimators to compare fit, loadings and reliability
-  side by side.
+  Confirmatory factor analysis by drag and drop, with ordinal items handled as
+  ordinal: a plain CFA with comb plots, measurement invariance across groups
+  step by step (with a verdict for each step and the constraints that fit
+  worst), comparisons across estimators and against ESEM, and reliability and
+  scalability checks for single scales.
 analyses:
-  - title: Scale Check
-    name: scaleCheck
+  - title: CFA
+    name: plainCfa
     ns: psyWiz
     menuGroup: psyWiz
-    menuSubgroup: Single Scale
-    menuTitle: Scale Check
+    menuSubgroup: Factor Models
+    menuTitle: CFA
     description: >
-      Checks one scale: reliability (alpha, lambda-2, omega, AVE), whether the
-      items are congeneric, tau-equivalent or parallel (which decides whether
-      alpha and unit-weighted sum scores are justified), item statistics, and
-      Guttman / Mokken scalability.
+      Confirmatory factor analysis of one factor or several correlated factors:
+      fit, standardized loadings, factor correlations and reliability, with
+      ordinal items handled as ordinal. Optionally the largest modification
+      indices and the factor correlations obtained from composite scores and
+      factor scores.
     category: analyses
-  - title: One-Factor Group CFA
-    name: groupCfaOne
+  - title: Group CFA (Invariance)
+    name: groupCfa
     ns: psyWiz
     menuGroup: psyWiz
-    menuSubgroup: Measurement Invariance
-    menuTitle: One-Factor Group CFA
+    menuSubgroup: Factor Models
+    menuTitle: Group CFA (Invariance)
     description: >
-      Tests the measurement invariance of a one-factor model across groups. Fits
-      the model under increasingly strict equality constraints (configural,
-      [thresholds,] loadings, intercepts and optionally residual variances),
-      compares each step with the previous one and points at the constraints
-      that fit worst.
+      Tests the measurement invariance of a one-factor or correlated-factors
+      model across groups. Fits the model under increasingly strict equality
+      constraints (configural, [thresholds,] loadings, intercepts and optionally
+      residual variances), compares each step with the previous one and points
+      at the constraints that fit worst.
     category: analyses
-  - title: Correlated-Factors Group CFA
-    name: groupCfaCorr
+  - title: Bifactor CFA
+    name: bifactorCfa
     ns: psyWiz
     menuGroup: psyWiz
-    menuSubgroup: Measurement Invariance
-    menuTitle: Correlated-Factors Group CFA
+    menuSubgroup: Factor Models
+    menuTitle: Bifactor CFA
     description: >
-      Tests the measurement invariance of a correlated-factors model across
-      groups. Fits the model under increasingly strict equality constraints
-      (configural, [thresholds,] loadings, intercepts and optionally residual
-      variances), compares each step with the previous one and points at the
-      constraints that fit worst.
+      Bifactor model: every item loads on a general factor and on one specific
+      factor, all uncorrelated. Shows how much of the total score and of each
+      subscale score is general (omega hierarchical, explained common variance),
+      with an antenna plot.
     category: analyses
   - title: Multi-Estimator CFA
     name: multiEstCfa
     ns: psyWiz
     menuGroup: psyWiz
-    menuSubgroup: Model Comparison
+    menuSubgroup: Factor Models
     menuTitle: Multi-Estimator CFA
     description: >
       Fits one confirmatory factor model (one factor or several correlated
@@ -68,7 +68,7 @@ analyses:
     name: esemCfa
     ns: psyWiz
     menuGroup: psyWiz
-    menuSubgroup: Model Comparison
+    menuSubgroup: Factor Models
     menuTitle: CFA vs ESEM
     description: >
       Fits the hypothesised correlated-factors model as a CFA and as an
@@ -76,11 +76,23 @@ analyses:
       factor), and lists each factor correlation as obtained from composite
       scores, corrected composites, the CFA, factor scores and the ESEM.
     category: analyses
+  - title: Scale Check
+    name: scaleCheck
+    ns: psyWiz
+    menuGroup: psyWiz
+    menuSubgroup: Scales
+    menuTitle: Scale Check
+    description: >
+      Checks one scale: reliability (alpha, lambda-2, omega, AVE) and item
+      statistics. On request: whether the items are congeneric, tau-equivalent
+      or parallel (which decides whether alpha and unit-weighted sum scores are
+      justified), and Guttman / Mokken scalability.
+    category: analyses
   - title: Composite Check
     name: compositeCheck
     ns: psyWiz
     menuGroup: psyWiz
-    menuSubgroup: Formative Indicators
+    menuSubgroup: Scales
     menuTitle: Composite Check
     description: >
       Checks whether a set of formative indicators relates to two or more
