@@ -76,4 +76,4 @@ children:
           - type: CheckBox
             name: highlight
           - type: CheckBox
-            name: showLoom
+            name: showBrush

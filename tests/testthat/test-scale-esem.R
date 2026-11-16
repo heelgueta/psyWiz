@@ -192,7 +192,7 @@ test_that("bifactorWiz recovers a known structure and its indices follow from th
   expect_s3_class(plot(cf, type = "path", numbers = FALSE), "ggplot")
 })
 
-test_that("the loom plot is drawn from an ESEM", {
+test_that("the brush plot is drawn from an ESEM", {
   e <- esemWiz(wizdata, two, parallel = FALSE)
   expect_equal(names(e$uniqueness), unlist(two, use.names = FALSE))
   expect_true(all(e$uniqueness > 0 & e$uniqueness < 1))

@@ -107,6 +107,14 @@ datasets:
       Simulated survey: two correlated factors (trust, stress), four 5-point
       items each, three countries, n = 1200. One stress item has a shifted
       intercept in one country.
+  - name: A laboratory of instruments
+    path: wizlab.omv
+    description: >-
+      Simulated: several short instruments of different item types (ordinal,
+      numeric, binary) and qualities: clean scales, a scale with a dud item, a
+      cross-loading, a residual pair and a non-invariant item, a bifactor
+      questionnaire, a Guttman scale, a non-scale, and debt sources that form a
+      partial order. n = 1500, three regions.
 usesNative: true
 minApp: 2.4.0
 

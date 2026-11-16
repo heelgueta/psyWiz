@@ -85,7 +85,7 @@ psw_jmv_time_text <- function(info) {
 # psw_jmv_diagram() as its render function.
 psw_jmv_build <- function(kind, args) {
   do.call(switch(kind, figure = psw_figure, scalogram = psw_scalogram_plot, antenna = psw_antenna,
-                 facing = psw_facing, bfpath = psw_bifactor_path, loom = psw_loom), args)
+                 facing = psw_facing, bfpath = psw_bifactor_path, brush = psw_brush), args)
 }
 
 psw_jmv_plot <- function(image, kind, args) {
@@ -108,7 +108,7 @@ psw_jmv_figures <- function(out, opt, loadings, cors, panel_col = "group", capti
     psw_jmv_plot(out$comb, "figure", list(loadings = loadings, cors = cors, panel_col = panel_col, type = "comb",
                                           caption = caption, opts = list(thick = opt$combThick, resid = resid, higher = higher)))
   if (opt$showPath)
-    psw_jmv_plot(out$path, "figure", list(loadings = loadings, cors = cors, panel_col = panel_col, type = "path",
+    psw_jmv_plot(out$pathFig, "figure", list(loadings = loadings, cors = cors, panel_col = panel_col, type = "path",
                                           caption = caption, opts = list(numbers = opt$pathNumbers, width = opt$pathWidth)))
 }
 

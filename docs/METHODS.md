@@ -363,10 +363,10 @@ Black, white and grey; fixed layouts; sizes chosen by the code.
 - **Facing combs** (bifactor). Each row is the item's whole variance: g^2
   from the left spine, s^2 from the right spine, u in between, where the
   item's name is written.
-- **Loom plot** (ESEM). Items as rows, one vertical line per factor; to the
+- **Brush plot** (ESEM). Items as rows, one vertical line per factor; to the
   right of each line the squared standardised loading on that factor (dark
-  for the item's own factor, grey for cross-loadings); left of the first
-  line the item's unique variance from the model. With correlated factors
+  for the item's own factor, grey for cross-loadings); a last column shows
+  the item's unique variance from the model. With correlated factors
   the squared loadings of an item do not add up to its explained variance.
 
 ## Colour

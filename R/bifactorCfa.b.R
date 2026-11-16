@@ -71,7 +71,7 @@ bifactorCfaClass <- if (requireNamespace("jmvcore", quietly = TRUE)) R6::R6Class
       if (opt$showAntenna) psw_jmv_plot(out$antenna, "antenna", list(L = res$loadings, general = info$general))
       if (opt$showFacing) psw_jmv_plot(out$facing, "facing", list(L = res$loadings, general = info$general))
       if (opt$showPath)
-        psw_jmv_plot(out$path, "bfpath", list(L = res$loadings, general = info$general,
+        psw_jmv_plot(out$pathFig, "bfpath", list(L = res$loadings, general = info$general,
                                               numbers = opt$pathNumbers, width = opt$pathWidth))
       invisible()
     },

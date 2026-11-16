@@ -14,9 +14,11 @@ description:
   R:
     dontrun: true
     usage: |
-      psyWiz::bifactorCfa(data, run = TRUE, factors = list(
-          list(label = 'A', vars = c('a1', 'a2', 'a3')),
-          list(label = 'B', vars = c('b1', 'b2', 'b3'))))
+      data('wizlab', package = 'psyWiz')
+      psyWiz::bifactorCfa(wizlab, run = TRUE, generalName = 'Wellbeing', factors = list(
+          list(label = 'Body', vars = paste0('body', 1:4)),
+          list(label = 'Mind', vars = paste0('mind', 1:4)),
+          list(label = 'Social', vars = paste0('social', 1:4))))
 options:
   - name: data
     type: Data

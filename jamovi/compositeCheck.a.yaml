@@ -14,7 +14,8 @@ description:
   R:
     dontrun: true
     usage: |
-      psyWiz::compositeCheck(data, indicators = c('x1', 'x2', 'x3'), outcomes = c('y1', 'y2'))
+      d <- data.frame(matrix(rnorm(300 * 5), 300))
+      psyWiz::compositeCheck(d, indicators = c('X1', 'X2', 'X3'), outcomes = c('X4', 'X5'))
 options:
   - name: data
     type: Data

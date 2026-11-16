@@ -171,7 +171,7 @@ bifactorCfaResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class
         loadings = function() private$.items[["loadings"]],
         antenna = function() private$.items[["antenna"]],
         facing = function() private$.items[["facing"]],
-        path = function() private$.items[["path"]]),
+        pathFig = function() private$.items[["pathFig"]]),
     private = list(),
     public=list(
         initialize=function(options) {
@@ -357,7 +357,7 @@ bifactorCfaResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class
                     "missing")))
             self$add(jmvcore::Image$new(
                 options=options,
-                name="path",
+                name="pathFig",
                 title="Path Diagram",
                 width=600,
                 height=400,
@@ -403,9 +403,11 @@ bifactorCfaBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #'
 #' @examples
 #' \donttest{
-#' psyWiz::bifactorCfa(data, run = TRUE, factors = list(
-#'     list(label = 'A', vars = c('a1', 'a2', 'a3')),
-#'     list(label = 'B', vars = c('b1', 'b2', 'b3'))))
+#' data('wizlab', package = 'psyWiz')
+#' psyWiz::bifactorCfa(wizlab, run = TRUE, generalName = 'Wellbeing', factors = list(
+#'     list(label = 'Body', vars = paste0('body', 1:4)),
+#'     list(label = 'Mind', vars = paste0('mind', 1:4)),
+#'     list(label = 'Social', vars = paste0('social', 1:4))))
 #'}
 #' @param data the data as a data frame
 #' @param factors a list of lists, each with a \code{label} (the factor name)
@@ -445,7 +447,7 @@ bifactorCfaBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #'   \code{results$loadings} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$antenna} \tab \tab \tab \tab \tab an image \cr
 #'   \code{results$facing} \tab \tab \tab \tab \tab an image \cr
-#'   \code{results$path} \tab \tab \tab \tab \tab an image \cr
+#'   \code{results$pathFig} \tab \tab \tab \tab \tab an image \cr
 #' }
 #'
 #' Tables can be converted to data frames with \code{asDF} or \code{\link{as.data.frame}}. For example:

@@ -162,7 +162,24 @@ def col(name, title, kind="number", fmt=None, extra=""):
     return out + extra
 
 
+# A result must not be named like a member of jamovi's results classes: the generated class gets an
+# active binding per result, which would replace jamovi's own. An image called `path` did exactly that
+# in 0.4 and broke every analysis that had it ("comparison (==) is possible only for atomic and list
+# types" in the jamovi window; headless tests do not serialise, so they passed).
+RESERVED = {"name", "key", "index", "options", "visible", "title", "state", "path", "root", "analysis", "status",
+            "parent", "requiresData", "items", "itemNames", "asDF", "get", "add", "insert", "remove", "clear",
+            "print", "clone", "initialize", "isFilled", "isNotFilled", "setStatus", "setState", "setVisible",
+            "resetVisible", "setTitle", "getRefs", "setRefs", "setError", "saveAs", "asString", "asProtoBuf",
+            "fromProtoBuf", "getBoundVars"}
+
+
+def ok_name(name):
+    assert name not in RESERVED, f"result name '{name}' is reserved by jmvcore; choose another"
+    return name
+
+
 def table(name, title, cols, clear_keys, visible=None, refs=None):
+    ok_name(name)
     out = f"  - name: {name}\n    title: {q(title)}\n    type: Table\n    rows: 0\n"
     if visible:
         out += f"    visible: {visible}\n"
@@ -172,13 +189,14 @@ def table(name, title, cols, clear_keys, visible=None, refs=None):
 
 
 def image(name, title, clear_keys, visible):
+    ok_name(name)
     return (f"  - name: {name}\n    title: {q(title)}\n    type: Image\n    width: 600\n    height: 400\n"
             f"    renderFun: .diagram\n    visible: {visible}\n    clearWith:\n" + clear(clear_keys))
 
 
 def figures(refit, comb_title="Comb Plot", path_title="Path Diagram"):
     return (image("comb", comb_title, refit + ["combThick"], "(showComb)") +
-            image("path", path_title, refit + ["pathNumbers", "pathWidth"], "(showPath)"))
+            image("pathFig", path_title, refit + ["pathNumbers", "pathWidth"], "(showPath)"))
 
 
 # Colour is off by default everywhere. `highlight` switches it on, `palette` chooses the ramp
@@ -587,7 +605,7 @@ def scale_check():
     r += table("fit", "Measurement Models", [col("model", "Model", "text")] + FIT_COLS, refit, visible="(tau)")
     r += table("comparison", "Tau-Equivalence and Parallelism", COMPARE_COLS + [col("verdict", "Tenable", "text")],
                refit + CRITERIA_KEYS + ["highlight"], visible="(tau)", refs=["graham2006"])
-    r += table("items", "Items",
+    r += table("itemStats", "Items",
                [col("item", "Item", "text"), col("mean", "Mean"), col("sd", "SD"),
                 col("loading", "Loading", fmt="zto"), col("r2", "R²", fmt="zto"),
                 col("restR", "Item-rest r", fmt="zto"), col("alphaDrop", "α if dropped", fmt="zto"),
@@ -634,7 +652,7 @@ def esem_cfa():
     a += o_bool("highlight", "Colour", False,
                 "`TRUE` or `FALSE` (default), show cross-loadings of 0.30 or more and own-factor loadings below "
                 "0.40 in red")
-    a += o_bool("showLoom", "Loom plot", False,
+    a += o_bool("showBrush", "Brush plot", False,
                 "`TRUE` or `FALSE` (default), draw the ESEM loadings of every item on every factor")
 
     r = head_r(name, title, ["psyWiz", "lavaan", "marsh2014"]) + TODO
@@ -653,11 +671,11 @@ def esem_cfa():
                 col("scores", "Regression", fmt="zto", extra=sup), col("bartlett", "Bartlett", fmt="zto", extra=sup),
                 col("esem", "ESEM", fmt="zto")], refit, visible="(showCors)")
 
-    r += image("loom", "Loom Plot (ESEM)", refit, "(showLoom)")
+    r += image("brush", "Brush Plot (ESEM)", refit, "(showBrush)")
 
     u = head_u(name, title) + ui_supplier([UI_FACTORS]) + UI_RUN + ui_model([("ComboBox", "rotation")])
     u += ui_output([("CheckBox", "showLoadings", ""), ("CheckBox", "showCors", ""), ("CheckBox", "highlight", ""),
-                    ("CheckBox", "showLoom", "")])
+                    ("CheckBox", "showBrush", "")])
     write(name, a, r, u)
 
 
@@ -672,9 +690,11 @@ def bifactor_cfa():
                "Bifactor model: every item loads on a general factor and on one specific factor, all "
                "uncorrelated. Shows how much of the total score and of each subscale score is general (omega "
                "hierarchical, explained common variance), with an antenna plot.",
-               "      psyWiz::bifactorCfa(data, run = TRUE, factors = list(\n"
-               "          list(label = 'A', vars = c('a1', 'a2', 'a3')),\n"
-               "          list(label = 'B', vars = c('b1', 'b2', 'b3'))))\n")
+               "      data('wizlab', package = 'psyWiz')\n"
+               "      psyWiz::bifactorCfa(wizlab, run = TRUE, generalName = 'Wellbeing', factors = list(\n"
+               "          list(label = 'Body', vars = paste0('body', 1:4)),\n"
+               "          list(label = 'Mind', vars = paste0('mind', 1:4)),\n"
+               "          list(label = 'Social', vars = paste0('social', 1:4))))\n")
     a += O_DATA + O_FACTORS.replace("title: Factors", "title: Specific Factors")
     a += o_str("generalName", "Name of the general factor", "General", "a string, the name of the general factor")
     a += O_RUN + O_TYPE + O_ESTIMATOR + O_MISSING + "  # OUTPUT\n"
@@ -701,7 +721,7 @@ def bifactor_cfa():
                visible="(showLoadings)")
     r += image("antenna", "Antenna Plot", refit, "(showAntenna)")
     r += image("facing", "Facing Combs", refit, "(showFacing)")
-    r += image("path", "Path Diagram", refit + ["pathNumbers", "pathWidth"], "(showPath)")
+    r += image("pathFig", "Path Diagram", refit + ["pathNumbers", "pathWidth"], "(showPath)")
 
     u = head_u(name, title) + ui_supplier([UI_FACTORS.replace("label: Factors", "label: Specific Factors")])
     u += ui_box([ui_ctl("TextBoxS", "generalName")]) + UI_RUN + ui_model(parallel=False)
@@ -722,7 +742,7 @@ def composite_check():
                "Checks whether a set of formative indicators relates to two or more outcomes through one "
                "weighted composite (rank-one reduced-rank regression), and how much is lost by using a "
                "unit-weighted sum, in sample and in cross-validation.",
-               "      psyWiz::compositeCheck(data, indicators = c('x1', 'x2', 'x3'), outcomes = c('y1', 'y2'))\n")
+               "      d <- data.frame(matrix(rnorm(300 * 5), 300))\n      psyWiz::compositeCheck(d, indicators = c('X1', 'X2', 'X3'), outcomes = c('X4', 'X5'))\n")
     a += O_DATA
     a += o_vars("indicators", "Indicators", "a vector of strings naming the formative indicators",
                 ("numeric",), ("continuous", "ordinal"))

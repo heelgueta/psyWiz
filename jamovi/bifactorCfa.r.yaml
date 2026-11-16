@@ -154,7 +154,7 @@ items:
       - type
       - estimator
       - missing
-  - name: path
+  - name: pathFig
     title: 'Path Diagram'
     type: Image
     width: 600

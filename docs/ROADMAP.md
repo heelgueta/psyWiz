@@ -12,7 +12,7 @@ records why and what is intended.
 | 2026-11-14, v0.2 | Rewrite as R package + jamovi module: invariance ladder (continuous and ordinal), verdicts with editable cutoffs, fast score tests, multi-estimator CFA, parallel fitting. |
 | 2026-11-14, v0.3 | Breadth: Scale Check, CFA vs ESEM, Composite Check, verdict multiverse, comb plot and variance tiles. Six menu entries. |
 | 2026-11-15 | Another coding session added partial invariance (uncommitted). |
-| 2026-11-16, v0.4 | Simplification, then figures and models: comb redesign, scalogram, antenna, facing combs, loom plot; residual correlations, second-order factor, Bifactor CFA. The jamovi module is the product; plain CFA added as the entry point; the two group analyses merged; Scale Check reduced to reliability and items by default; partial invariance reviewed, corrected and kept as an option. |
+| 2026-11-16, v0.4 | Simplification, then figures and models: comb redesign, scalogram, antenna, facing combs, brush plot; residual correlations, second-order factor, Bifactor CFA. The jamovi module is the product; plain CFA added as the entry point; the two group analyses merged; Scale Check reduced to reliability and items by default; partial invariance reviewed, corrected and kept as an option. |
 
 ## Where it stands (2026-11-16)
 

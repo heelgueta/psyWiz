@@ -316,7 +316,7 @@ items:
       - secondOrder
       - higherName
       - combThick
-  - name: path
+  - name: pathFig
     title: 'Path Diagram'
     type: Image
     width: 600

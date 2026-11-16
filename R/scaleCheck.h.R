@@ -279,11 +279,11 @@ scaleCheckResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         reliability = function() private$.items[["reliability"]],
         fit = function() private$.items[["fit"]],
         comparison = function() private$.items[["comparison"]],
-        items = function() private$.items[["items"]],
+        itemStats = function() private$.items[["itemStats"]],
         scalability = function() private$.items[["scalability"]],
         scalogram = function() private$.items[["scalogram"]],
         comb = function() private$.items[["comb"]],
-        path = function() private$.items[["path"]]),
+        pathFig = function() private$.items[["pathFig"]]),
     private = list(),
     public=list(
         initialize=function(options) {
@@ -455,7 +455,7 @@ scaleCheckResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                         `type`="text"))))
             self$add(jmvcore::Table$new(
                 options=options,
-                name="items",
+                name="itemStats",
                 title="Items",
                 rows=0,
                 visible="(showItems)",
@@ -566,7 +566,7 @@ scaleCheckResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "combThick")))
             self$add(jmvcore::Image$new(
                 options=options,
-                name="path",
+                name="pathFig",
                 title="Path Diagram",
                 width=600,
                 height=400,
@@ -678,11 +678,11 @@ scaleCheckBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #'   \code{results$reliability} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$fit} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$comparison} \tab \tab \tab \tab \tab a table \cr
-#'   \code{results$items} \tab \tab \tab \tab \tab a table \cr
+#'   \code{results$itemStats} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$scalability} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$scalogram} \tab \tab \tab \tab \tab an image \cr
 #'   \code{results$comb} \tab \tab \tab \tab \tab an image \cr
-#'   \code{results$path} \tab \tab \tab \tab \tab an image \cr
+#'   \code{results$pathFig} \tab \tab \tab \tab \tab an image \cr
 #' }
 #'
 #' Tables can be converted to data frames with \code{asDF} or \code{\link{as.data.frame}}. For example:

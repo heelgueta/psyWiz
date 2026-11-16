@@ -54,7 +54,7 @@ Naming wart: `cfaWiz()` is the multi-estimator function (it descends from the
 | `engine-robust.R` | `invarianceMultiverse()`: verdicts across estimators and rules |
 | `engine-composite.R` | `compositeWiz()`: rank-one check for formative indicators (no lavaan) |
 | `engine-parallel.R` | `psw_run_tasks()`: sequential or parallel fitting |
-| `plot.R` | all figures (ggplot2): comb plot, path diagram, scalogram, antenna plot, facing combs, loom plot |
+| `plot.R` | all figures (ggplot2): comb plot, path diagram, scalogram, antenna plot, facing combs, brush plot |
 | `engine-cfa.R`, `engine-bifactor.R` | `factorWiz()` (plain CFA, residual correlations, second-order), `bifactorWiz()` |
 | `colour.R` | palettes and the Html "Colour Summary" |
 
@@ -129,7 +129,7 @@ All in `R/plot.R`; the header of that file lists them. Rules:
   one layout that always works; nothing is placed by an optimiser. Text
   widths are estimated from character counts for the image size the code
   itself requests (the `psw_size` attribute).
-- Lengths mean something. In the comb, antenna, facing-comb and loom plots
+- Lengths mean something. In the comb, antenna, facing-comb and brush plots
   every bar is a share of an item's variance on a 0-1 scale.
 - No colour in figures.
 - In jamovi an image's state is `list(kind, args)`: which drawing function

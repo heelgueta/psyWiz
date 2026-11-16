@@ -389,7 +389,7 @@ items:
       - missing
       - strict
       - combThick
-  - name: path
+  - name: pathFig
     title: 'Path Diagram (Configural Model)'
     type: Image
     width: 600

@@ -78,8 +78,8 @@ The menu was reorganised around a simple core. See `docs/ROADMAP.md`.
   explained by the second-order factor and the rest.
 - **Antenna plot** and **facing combs** for bifactor models; a bifactor path
   diagram.
-- **Loom plot** for ESEM: every item on every factor, unique variance to the
-  left of the first factor.
+- **Brush plot** for ESEM: every item on every factor, unique variance in a
+  last column.
 - The comb plot and the path diagram are separate checkboxes and can be
   shown together. Path diagram options: loadings on the arrows, arrow width
   by loading.
@@ -100,6 +100,30 @@ The menu was reorganised around a simple core. See `docs/ROADMAP.md`.
   Omega now counts residual covariances as error and uses the model-implied
   factor variance. Called from R, the jamovi function needs `resCov =
   list()` (a jamovi "Pairs" option has no default, as in `jmv::cfa()`).
+
+## Fixed after the first look in the jamovi window (2026-11-16)
+
+- CFA, Group CFA, Scale Check and Bifactor CFA showed only "comparison (==)
+  is possible only for atomic and list types". Cause: a result (the path
+  diagram image) was named `path`, and Scale Check had a table named
+  `items`; both are members of jamovi's own results classes, which the
+  generated code then replaced. Renamed to `pathFig` and `itemStats`. The
+  yaml generator now refuses reserved names and a test checks every
+  analysis. Headless tests could not see this because they never serialise
+  the results the way the jamovi window does.
+- The "loom plot" is now the **brush plot**: unique variance is a plain last
+  column instead of growing leftwards. A clean factor looks like a
+  toothbrush.
+- The R example that failed the 0.3 check on GitHub was `compositeCheck()`'s:
+  it used an object called `data` that does not exist. Examples of the
+  jamovi functions are now self-contained.
+
+## Data
+
+- New example data set `wizlab` ("A laboratory of instruments"): ordinal,
+  numeric and binary instruments, good and bad, including a bifactor
+  questionnaire, a Guttman scale and a partial order. `docs/DATA.md`
+  explains every block and what to try on it.
 
 ## Internal
 

@@ -323,7 +323,7 @@ groupCfaResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         robustGrid = function() private$.items[["robustGrid"]],
         loadings = function() private$.items[["loadings"]],
         comb = function() private$.items[["comb"]],
-        path = function() private$.items[["path"]]),
+        pathFig = function() private$.items[["pathFig"]]),
     private = list(),
     public=list(
         initialize=function(options) {
@@ -787,7 +787,7 @@ groupCfaResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "combThick")))
             self$add(jmvcore::Image$new(
                 options=options,
-                name="path",
+                name="pathFig",
                 title="Path Diagram (Configural Model)",
                 width=600,
                 height=400,
@@ -917,7 +917,7 @@ groupCfaBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #'   \code{results$robustGrid} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$loadings} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$comb} \tab \tab \tab \tab \tab an image \cr
-#'   \code{results$path} \tab \tab \tab \tab \tab an image \cr
+#'   \code{results$pathFig} \tab \tab \tab \tab \tab an image \cr
 #' }
 #'
 #' Tables can be converted to data frames with \code{asDF} or \code{\link{as.data.frame}}. For example:

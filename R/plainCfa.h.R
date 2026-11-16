@@ -246,7 +246,7 @@ plainCfaResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         higher = function() private$.items[["higher"]],
         resid = function() private$.items[["resid"]],
         comb = function() private$.items[["comb"]],
-        path = function() private$.items[["path"]],
+        pathFig = function() private$.items[["pathFig"]],
         heat = function() private$.items[["heat"]]),
     private = list(),
     public=list(
@@ -626,7 +626,7 @@ plainCfaResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "combThick")))
             self$add(jmvcore::Image$new(
                 options=options,
-                name="path",
+                name="pathFig",
                 title="Path Diagram",
                 width=600,
                 height=400,
@@ -746,7 +746,7 @@ plainCfaBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #'   \code{results$higher} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$resid} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$comb} \tab \tab \tab \tab \tab an image \cr
-#'   \code{results$path} \tab \tab \tab \tab \tab an image \cr
+#'   \code{results$pathFig} \tab \tab \tab \tab \tab an image \cr
 #'   \code{results$heat} \tab \tab \tab \tab \tab a html \cr
 #' }
 #'

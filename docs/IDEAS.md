@@ -133,7 +133,7 @@ choices were built; it was never committed) and the author chose:
 | Second-order comb | Adopted, with the split top tooth |
 | Antenna plot for bifactor models | Adopted, default figure of Bifactor CFA |
 | Unexplained variance in the middle, combs from both sides | Built as "facing combs" |
-| "Grill" for EFA / ESEM | Built and named **loom plot** (items are the weft, factors the warp). The name is a proposal; rename freely |
+| "Grill" for EFA / ESEM | Built first as "loom plot" with unique variance growing leftwards; the author renamed it **brush plot** and asked for the unique variance as a plain last column (a clean factor looks like a toothbrush) |
 | Colouring the figures | Tried (teeth coloured by loading size), dropped |
 | Path diagram with variance tiles | Removed |
 | Scalogram | Adopted in Scale Check |

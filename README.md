@@ -19,7 +19,7 @@ You drag items into factor boxes. There is no model syntax to write.
 | | **Group CFA (Invariance)** | The invariance ladder across groups with a verdict per step, and the constraints that fit worst at a failed step | Partial invariance search; robustness of the verdict; loadings by group; figure |
 | | **Bifactor CFA** | General plus specific factors: fit, omega hierarchical, explained common variance, antenna plot | Facing combs; path diagram |
 | | **Multi-Estimator CFA** | One model under up to eight estimators, side by side | |
-| | **CFA vs ESEM** | CFA against a model with cross-loadings; each factor correlation by scoring method | Loom plot |
+| | **CFA vs ESEM** | CFA against a model with cross-loadings; each factor correlation by scoring method | Brush plot |
 | Scales | **Scale Check** | Reliability (alpha, lambda-2, omega, AVE) and item statistics | Tau-equivalence and parallelism; Guttman / Mokken scalability and scalogram; comb plot, path diagram |
 | | **Composite Check** | For formative indicators: do they act through one composite? | |
 
@@ -38,7 +38,7 @@ How it behaves:
 - Colour is off by default; one **Colour** checkbox marks flagged values.
 - Figures are black, white and grey: comb plots (every length is a share of
   variance), path diagrams, a scalogram, antenna plots for bifactor models
-  and a loom plot for ESEM.
+  and a brush plot for ESEM.
 
 ## Install
 

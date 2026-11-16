@@ -86,16 +86,16 @@ scaleCheckClass <- if (requireNamespace("jmvcore", quietly = TRUE)) R6::R6Class(
       # ---- items ----
       if (opt$showItems) {
         it <- res$items
-        psw_jmv_fill(out$items, lapply(seq_len(nrow(it)), function(i)
+        psw_jmv_fill(out$itemStats, lapply(seq_len(nrow(it)), function(i)
           list(item = it$item[i], mean = it$mean[i], sd = it$sd[i], loading = it$loading[i], r2 = it$r2[i],
                restR = it$rest.r[i], alphaDrop = it$alpha.drop[i], H = it$H[i])))
         alpha <- rl$value[rl$coefficient == "Cronbach's alpha"]
         if (opt$highlight) for (i in seq_len(nrow(it))) {
-          if (isTRUE(abs(it$loading[i]) < 0.40)) out$items$addFormat(rowNo = i, col = "loading", format = jmvcore::Cell.NEGATIVE)
-          if (isTRUE(it$H[i] < 0.30)) out$items$addFormat(rowNo = i, col = "H", format = jmvcore::Cell.NEGATIVE)
-          if (isTRUE(it$alpha.drop[i] > alpha)) out$items$addFormat(rowNo = i, col = "alphaDrop", format = jmvcore::Cell.NEGATIVE)
+          if (isTRUE(abs(it$loading[i]) < 0.40)) out$itemStats$addFormat(rowNo = i, col = "loading", format = jmvcore::Cell.NEGATIVE)
+          if (isTRUE(it$H[i] < 0.30)) out$itemStats$addFormat(rowNo = i, col = "H", format = jmvcore::Cell.NEGATIVE)
+          if (isTRUE(it$alpha.drop[i] > alpha)) out$itemStats$addFormat(rowNo = i, col = "alphaDrop", format = jmvcore::Cell.NEGATIVE)
         }
-        out$items$setNote("what", paste0(
+        out$itemStats$setNote("what", paste0(
           "Loading and R\u00B2: standardized, from the one-factor model. Item-rest r: correlation with the sum of the ",
           "other items.",
           if (opt$showScal) " H: item scalability (Loevinger); below .30 the item does not order people like the others do." else "",

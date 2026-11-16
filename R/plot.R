@@ -4,7 +4,7 @@
 #   psw_comb()            comb plot, also for second-order models
 #   psw_scalogram_plot()  Guttman scalogram
 #   psw_antenna(), psw_facing(), psw_bifactor_path()   bifactor models
-#   psw_loom()            loadings of every item on every factor (ESEM)
+#   psw_brush()           loadings of every item on every factor (ESEM)
 #   plot() methods at the end
 #
 # All figures are black, white and grey. Colouring the marks was tried in
@@ -548,25 +548,34 @@ psw_bifactor_path <- function(L, general = "General", numbers = TRUE, width = TR
   p
 }
 
-# ---- loom plot ---------------------------------------------------------------
+# ---- brush plot --------------------------------------------------------------
 
-#' Loom plot (internal): every item on every factor
+#' Brush plot (internal): every item on every factor
 #'
-#' For models where items load on several factors (EFA, ESEM). Items are the
-#' horizontal threads, factors the vertical ones. To the right of each
-#' factor's line, a bar shows the squared standardized loading of the item on
-#' that factor: dark when it is the item's own factor, grey for a
-#' cross-loading. To the left of the first line, a pale bar shows the item's
-#' unique variance. With correlated factors the bars of an item do not add up
-#' to its explained variance exactly (the factors overlap), so the unique
-#' variance is taken from the model, not from the bars.
+#' For models where items load on several factors (EFA, ESEM). One vertical
+#' line per factor (the handle) and one row per item; the bar to the right of
+#' a factor's line is the squared standardized loading of the item on that
+#' factor (a bristle): dark when it is the item's own factor, grey for a
+#' cross-loading. A last column shows the item's unique variance as a pale
+#' bar. With clean data every factor looks like a toothbrush: a block of
+#' long, even bristles on its own items and a bare handle elsewhere. Stray
+#' bristles are cross-loadings; short or ragged ones are weak items.
+#'
+#' With correlated factors the bars of an item do not add up to its explained
+#' variance exactly (the factors overlap), so the unique variance is taken
+#' from the model, not from the bars.
+#'
+#' History: first drawn (2026-11-16) as the "grill" / "loom" plot with the
+#' unique variance growing leftwards from the first line; the author found
+#' that confusing and asked for a plain extra column.
 #' @param L Data frame: item, own (the item's hypothesised factor), factor,
-#'   std (standardized loading on `factor`).
+#'   and the standardized loading on `factor` in column `value`.
 #' @param unique Named numeric vector: unique variance (standardized) per item.
 #' @keywords internal
 #' @noRd
-psw_loom <- function(L, unique, value = "std") {
+psw_brush <- function(L, unique, value = "std") {
   fn <- unique(L$factor)
+  m <- length(fn)
   items <- unique(L[c("item", "own")])
   items$y <- -(seq_len(nrow(items)) + (match(items$own, fn) - 1L) * 0.8)
   L$y <- items$y[match(L$item, items$item)]
@@ -576,33 +585,40 @@ psw_loom <- function(L, unique, value = "std") {
   L$len <- pmin(L$v^2, 1)
   L$target <- L$factor == L$own
   items$u <- pmin(pmax(unname(unique[items$item]), 0), 1)
+  ux <- m * 1.08 + 0.12                       # the unique-variance column, set a little apart
   ink <- "grey20"
   wl <- (max(nchar(psw_short(items$item, 22L))) * psw_cb$char + 14) / psw_cb$px_x
-  xr <- (length(fn) - 1L) * 1.08 + 1
-  warp <- data.frame(x = (seq_along(fn) - 1L) * 1.08, lab = psw_short(fn, 16L))
+  handles <- data.frame(x = (seq_len(m) - 1L) * 1.08, lab = psw_short(fn, 16L))
+  ytop <- max(items$y); ybot <- min(items$y)
+  width <- round((ux + 1.15 + wl) * 150 + 30)
   p <- ggplot2::ggplot() +
-    ggplot2::geom_segment(data = items, ggplot2::aes(x = -1, xend = xr, y = .data$y, yend = .data$y), colour = "grey90", linewidth = 0.3) +
-    ggplot2::geom_segment(data = items, ggplot2::aes(x = -.data$u, xend = 0, y = .data$y, yend = .data$y), colour = "grey82", linewidth = 2.6) +
+    ggplot2::geom_segment(data = items, ggplot2::aes(x = 0, xend = ux + 1, y = .data$y, yend = .data$y), colour = "grey92", linewidth = 0.3) +
     ggplot2::geom_segment(data = L, ggplot2::aes(x = .data$x0, xend = .data$x0 + .data$len, y = .data$y, yend = .data$y,
                                                  colour = .data$target), linewidth = 2.6) +
     ggplot2::geom_text(data = L[abs(L$v) >= 0.095, , drop = FALSE],
                        ggplot2::aes(x = .data$x0 + .data$len + 0.02, y = .data$y, label = psw_fmt_loading(.data$v)),
                        hjust = 0, size = 2.9, colour = ink) +
-    ggplot2::geom_text(data = items, ggplot2::aes(x = -1.04, y = .data$y, label = psw_short(.data$item, 22L)), hjust = 1, size = 3.4, colour = ink) +
-    ggplot2::geom_segment(data = warp, ggplot2::aes(x = .data$x, xend = .data$x, y = max(items$y) + 0.6, yend = min(items$y) - 0.6),
+    ggplot2::geom_segment(data = items, ggplot2::aes(x = ux, xend = ux + .data$u, y = .data$y, yend = .data$y), colour = "grey80", linewidth = 2.6) +
+    ggplot2::geom_text(data = items, ggplot2::aes(x = ux + .data$u + 0.02, y = .data$y, label = psw_fmt_loading(.data$u)),
+                       hjust = 0, size = 2.9, colour = "grey45") +
+    ggplot2::geom_text(data = items, ggplot2::aes(x = -0.05, y = .data$y, label = psw_short(.data$item, 22L)), hjust = 1, size = 3.4, colour = ink) +
+    ggplot2::geom_segment(data = handles, ggplot2::aes(x = .data$x, xend = .data$x, y = ytop + 0.6, yend = ybot - 0.6),
                           colour = ink, linewidth = 2.2, lineend = "square") +
-    ggplot2::geom_text(data = warp, ggplot2::aes(x = .data$x + 0.04, y = max(items$y) + 1.1, label = .data$lab), hjust = 0,
+    ggplot2::annotate("segment", x = ux, xend = ux, y = ytop + 0.6, yend = ybot - 0.6, colour = "grey60", linewidth = 0.8) +
+    ggplot2::geom_text(data = handles, ggplot2::aes(x = .data$x + 0.04, y = ytop + 1.1, label = .data$lab), hjust = 0,
                        fontface = "bold", size = 3.7, colour = ink) +
-    ggplot2::annotate("text", x = -0.04, y = max(items$y) + 1.1, label = "Unique", hjust = 1, size = 3.5, colour = "grey45") +
+    ggplot2::annotate("text", x = ux + 0.04, y = ytop + 1.1, label = "Unique", hjust = 0, size = 3.6, colour = "grey45") +
     ggplot2::scale_colour_manual(values = c(`TRUE` = ink, `FALSE` = "grey55"), guide = "none") +
-    ggplot2::scale_x_continuous(breaks = c(-1, -0.5, warp$x, warp$x + 0.5), labels = c("1", ".50", rep("0", nrow(warp)), rep(".50", nrow(warp)))) +
-    ggplot2::coord_cartesian(xlim = c(-1.06 - wl, xr + 0.12), ylim = c(min(items$y) - 0.8, max(items$y) + 1.6), expand = FALSE, clip = "off") +
+    ggplot2::scale_x_continuous(breaks = c(handles$x, handles$x + 0.5, ux, ux + 0.5),
+                                labels = c(rep("0", m), rep(".50", m), "0", ".50")) +
+    ggplot2::coord_cartesian(xlim = c(-0.07 - wl, ux + 1.08), ylim = c(ybot - 0.8, ytop + 1.6), expand = FALSE, clip = "off") +
     ggplot2::labs(x = NULL, y = NULL, caption = paste(strwrap(paste0(
       "Right of each factor's line: squared standardized loading of the item on that factor (dark = its own factor, ",
-      "grey = cross-loading; numbers are the loadings, shown from .10). Left of the first line: the item's unique variance."),
-      round(((xr + 1.2 + wl) * 150 + 30) / 5.8)), collapse = "\n")) +
+      "grey = cross-loading; numbers are the loadings, shown from .10). Last column: the item's unique variance. ",
+      "A clean factor looks like a toothbrush: even bristles on its own items, none elsewhere."),
+      floor((width - 40) / 6.3)), collapse = "\n")) +
     psw_theme_bars()
-  attr(p, "psw_size") <- c(width = round((xr + 1.2 + wl) * 150 + 30), height = round((max(items$y) - min(items$y) + 2.4) * 22 + 100))
+  attr(p, "psw_size") <- c(width = width, height = round((ytop - ybot + 2.4) * 22 + 110))
   p
 }
 
@@ -628,8 +644,8 @@ psw_loom <- function(L, unique, value = "std") {
 #'   one side, specific factors on the other. In the antenna plot both grow
 #'   from a mast in the middle; in the facing combs they grow towards each
 #'   other and the gap between them is the item's unique variance.
-#' * `"loom"` (`psw_esem`): every item on every factor, for models with
-#'   cross-loadings.
+#' * `"brush"` (`psw_esem`): every item on every factor, for models with
+#'   cross-loadings. A clean factor looks like a toothbrush.
 #'
 #' There is one panel per group (`psw_invariance`) or per estimator
 #' (`psw_multi`). The layout assumes a plotting area of roughly the size
@@ -720,7 +736,7 @@ plot.psw_bifactor <- function(x, type = c("antenna", "facing", "path"), numbers 
 
 #' @rdname plot.psyWiz
 #' @export
-plot.psw_esem <- function(x, type = "loom", ...) {
+plot.psw_esem <- function(x, type = "brush", ...) {
   if (all(is.na(x$loadings$esem))) stop("The ESEM did not converge, nothing to draw.", call. = FALSE)
-  psw_loom(x$loadings, x$uniqueness, value = "esem")
+  psw_brush(x$loadings, x$uniqueness, value = "esem")
 }

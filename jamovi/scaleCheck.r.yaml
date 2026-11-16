@@ -141,7 +141,7 @@ items:
       - name: verdict
         title: 'Tenable'
         type: text
-  - name: items
+  - name: itemStats
     title: 'Items'
     type: Table
     rows: 0
@@ -237,7 +237,7 @@ items:
       - estimator
       - missing
       - combThick
-  - name: path
+  - name: pathFig
     title: 'Path Diagram'
     type: Image
     width: 600

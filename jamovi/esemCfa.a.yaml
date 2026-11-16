@@ -152,8 +152,8 @@ options:
     description:
       R: >
         `TRUE` or `FALSE` (default), show cross-loadings of 0.30 or more and own-factor loadings below 0.40 in red
-  - name: showLoom
-    title: 'Loom plot'
+  - name: showBrush
+    title: 'Brush plot'
     type: Bool
     default: false
     description:

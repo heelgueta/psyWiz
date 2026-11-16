@@ -167,13 +167,13 @@ items:
         title: 'ESEM'
         type: number
         format: zto
-  - name: loom
-    title: 'Loom Plot (ESEM)'
+  - name: brush
+    title: 'Brush Plot (ESEM)'
     type: Image
     width: 600
     height: 400
     renderFun: .diagram
-    visible: (showLoom)
+    visible: (showBrush)
     clearWith:
       - factors
       - type

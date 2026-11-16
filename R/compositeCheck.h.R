@@ -240,7 +240,8 @@ compositeCheckBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class
 #'
 #' @examples
 #' \donttest{
-#' psyWiz::compositeCheck(data, indicators = c('x1', 'x2', 'x3'), outcomes = c('y1', 'y2'))
+#' d <- data.frame(matrix(rnorm(300 * 5), 300))
+#' psyWiz::compositeCheck(d, indicators = c('X1', 'X2', 'X3'), outcomes = c('X4', 'X5'))
 #'}
 #' @param data the data as a data frame
 #' @param indicators a vector of strings naming the formative indicators
