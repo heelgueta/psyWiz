@@ -134,4 +134,13 @@
         `volume`=21, 
         `issue`=2, 
         `pages`="137-150", 
-        `doi`="10.1037/met0000045"))
+        `doi`="10.1037/met0000045"), 
+    `schrepp2003`=list(
+        `type`="article", 
+        `author`="Schrepp, M.", 
+        `year`=2003, 
+        `title`="A method for the analysis of hierarchical dependencies between items of a questionnaire", 
+        `publisher`="Methods of Psychological Research Online", 
+        `volume`=8, 
+        `issue`=1, 
+        `pages`="43-79"))

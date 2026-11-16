@@ -175,6 +175,20 @@ paragraph explaining each.
   *(searched)*; a per-dataset cross-validation would be a small addition to
   Scale Check.
 
+### Order instead of factors (2026-11-16)
+
+The author's case: sources of debt, where a core "stair" is suspected
+(moneylender, bank, friends and family) with some items interchangeable and
+one (mortgage) unrelated. Built as Item Order (`orderWiz()`): Mokken-type
+scales, implications with a chance correction, Hasse diagram, share of
+respondents fitting a line against the order found. All of the ingredients
+are classical (Guttman, Mokken, item tree analysis); nothing is claimed as
+new. What may be worth a closer look later: the pairwise-H condition on
+implications is our own shortcut for "fewer exceptions than chance" and has
+not been compared with the fit criteria of inductive item tree analysis; and
+the share of respondents fitting the line versus the order is a plain,
+readable summary we did not find in the packages (not searched properly).
+
 ## 6. Losses and open issues (2026-11-14)
 
 - Nothing new in this version has been seen in the jamovi window.

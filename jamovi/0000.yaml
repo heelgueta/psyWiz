@@ -88,6 +88,18 @@ analyses:
       or parallel (which decides whether alpha and unit-weighted sum scores are
       justified), and Guttman / Mokken scalability.
     category: analyses
+  - title: Item Order (Exploratory)
+    name: itemOrder
+    ns: psyWiz
+    menuGroup: psyWiz
+    menuSubgroup: Scales
+    menuTitle: Item Order (Exploratory)
+    description: >
+      Looks for order among yes/no items without a hypothesis: which items form
+      a cumulative line, which are interchangeable, which branch and which stand
+      apart. Combines Mokken-type scales, implications between items drawn as a
+      Hasse diagram, and the answer patterns.
+    category: analyses
   - title: Composite Check
     name: compositeCheck
     ns: psyWiz

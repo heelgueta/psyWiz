@@ -644,6 +644,8 @@ psw_brush <- function(L, unique, value = "std") {
 #'   one side, specific factors on the other. In the antenna plot both grow
 #'   from a mast in the middle; in the facing combs they grow towards each
 #'   other and the gap between them is the item's unique variance.
+#' * `"hasse"` (`psw_order`): the order found among items, the most common
+#'   at the bottom; a line upwards means "implies".
 #' * `"brush"` (`psw_esem`): every item on every factor, for models with
 #'   cross-loadings. A clean factor looks like a toothbrush.
 #'
@@ -740,3 +742,7 @@ plot.psw_esem <- function(x, type = "brush", ...) {
   if (all(is.na(x$loadings$esem))) stop("The ESEM did not converge, nothing to draw.", call. = FALSE)
   psw_brush(x$loadings, x$uniqueness, value = "esem")
 }
+
+#' @rdname plot.psyWiz
+#' @export
+plot.psw_order <- function(x, type = "hasse", ...) psw_hasse(x$hasse)

@@ -34,6 +34,7 @@ depend on the other, and jamovi builds a module from an R package anyway.
 | Bifactor CFA | `bifactorCfa.b.R` | `bifactorWiz()` in `engine-bifactor.R` |
 | Multi-Estimator CFA | `multiEstCfa.b.R` | `cfaWiz()` in `engine-multiest.R` |
 | CFA vs ESEM | `esemCfa.b.R` | `esemWiz()` in `engine-esem.R` |
+| Item Order (Exploratory) | `itemOrder.b.R` | `orderWiz()` in `engine-order.R` |
 | Scale Check | `scaleCheck.b.R` | `scaleWiz()` in `engine-scale.R` |
 | Composite Check | `compositeCheck.b.R` | `compositeWiz()` in `engine-composite.R` |
 

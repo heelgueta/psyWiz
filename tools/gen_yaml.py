@@ -734,6 +734,62 @@ def bifactor_cfa():
 bifactor_cfa()
 
 
+# -------------------------------------------------------------- item order --
+def item_order():
+    name, title = "itemOrder", "Item Order (Exploratory)"
+    keys = ["vars", "tolerance", "hMin"]
+    a = head_a(name, title, SUB_SCALES,
+               "Looks for order among yes/no items without a hypothesis: which items form a cumulative line, "
+               "which are interchangeable, which branch and which stand apart. Combines Mokken-type scales, "
+               "implications between items drawn as a Hasse diagram, and the answer patterns.",
+               "      data('wizlab', package = 'psyWiz')\n"
+               "      psyWiz::itemOrder(wizlab, vars = c('debt_family', 'debt_friends', 'debt_bank',\n"
+               "                                         'debt_card', 'debt_lender', 'debt_mortgage'))\n")
+    a += O_DATA + o_vars("vars", "Items", "a vector of strings naming the items", suggested=("nominal", "ordinal"))
+    a += o_num("tolerance", "Exceptions tolerated (%)", 10, 0, 50,
+               "a number (default 10): 'A implies B' is accepted when at most this percentage of those who "
+               "endorse A do not endorse B")
+    a += o_num("hMin", "Smallest H", 0.3, 0, 1,
+               "a number (default 0.30), the smallest Loevinger H for an implication and for joining a scale")
+    a += o_bool("showHasse", "Order diagram", True, "`TRUE` (default) or `FALSE`, draw the order as a Hasse diagram")
+    a += o_bool("showImplications", "Implications", True, "`TRUE` (default) or `FALSE`, list the direct implications")
+    a += o_bool("showScales", "Cumulative (Mokken) scales", True,
+                "`TRUE` (default) or `FALSE`, list the cumulative scales and the unscalable items")
+    a += o_bool("showPatterns", "Most frequent answer patterns", False,
+                "`TRUE` or `FALSE` (default), list the most frequent answer patterns")
+    a += o_num("patternsN", "Number listed", 10, 1, 200, "an integer (default 10), how many patterns", "Integer")
+    a += o_bool("highlight", "Colour", False, "`TRUE` or `FALSE` (default), show item H below the smallest H in red")
+
+    r = head_r(name, title, ["psyWiz", "mokken1971", "schrepp2003"]) + TODO
+    r += "  - name: reading\n    title: What the Items Look Like\n    type: Html\n    clearWith:\n" + clear(keys)
+    r += table("fitTable", "How Well Does an Order Fit?",
+               [col("model", "", "text"), col("fitting", "Respondents fitting", fmt="pc"), col("detail", "", "text")], keys)
+    r += table("itemTable", "Items",
+               [col("item", "Item", "text"), col("endorsed", "Endorsed", fmt="pc"), col("level", "Level", "integer"),
+                col("sameAs", "Same rung as", "text"), col("scale", "Scale", "text"), col("H", "H", fmt="zto"),
+                col("role", "", "text")], keys + ["highlight"])
+    r += image("hasse", "Order Diagram", keys, "(showHasse)")
+    r += table("implications", "Implications",
+               [col("from", "Whoever endorses", "text"), col("to", "also endorses", "text"),
+                col("exceptions", "Exceptions", fmt="pc"), col("H", "H", fmt="zto")], keys, visible="(showImplications)")
+    r += table("scales", "Cumulative Scales",
+               [col("scale", "Scale", "integer"), col("k", "Items", "integer"), col("H", "H", fmt="zto"),
+                col("items", "From most to least endorsed", "text")], keys, visible="(showScales)")
+    r += table("patterns", "Most Frequent Answer Patterns",
+               [col("pattern", "Pattern", "text"), col("n", "N", "integer"), col("share", "Share", fmt="pc"),
+                col("line", "Fits one line", "text"), col("order", "Fits the order found", "text")],
+               keys + ["patternsN"], visible="(showPatterns)")
+
+    u = head_u(name, title) + ui_supplier([ui_target("Items", "vars")])
+    u += ui_collapse("Criteria", [ui_box([ui_ctl("TextBox", "tolerance", 10), ui_ctl("TextBox", "hMin", 10)], 6)], collapsed=False)
+    u += ui_output([("CheckBox", "showHasse", ""), ("CheckBox", "showImplications", ""), ("CheckBox", "showScales", ""),
+                    ui_check_with("showPatterns", ["patternsN"]), ("CheckBox", "highlight", "")], collapsed=False)
+    write(name, a, r, u)
+
+
+item_order()
+
+
 # -------------------------------------------------------- composite check --
 def composite_check():
     name, title = "compositeCheck", "Composite Check"

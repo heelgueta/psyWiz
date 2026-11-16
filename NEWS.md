@@ -101,6 +101,24 @@ The menu was reorganised around a simple core. See `docs/ROADMAP.md`.
   factor variance. Called from R, the jamovi function needs `resCov =
   list()` (a jamovi "Pairs" option has no default, as in `jmv::cfa()`).
 
+## Item Order (exploratory)
+
+- New analysis in *Scales* (`itemOrder`; `orderWiz()` in R) for yes/no items:
+  looks for order instead of common factors. It reports cumulative
+  (Mokken-type) scales and unscalable items, implications between items
+  ("whoever endorses A also endorses B"), items that share a rung, branches
+  and items that stand apart, how many respondents fit a single line and how
+  many fit the order found, and draws the order as a Hasse diagram.
+- Written from a longer brief that asked for the `mokken`, `DAKS` and
+  `POSAC` packages. None ships with jamovi, so the methods were implemented
+  here in a reduced form; what was left out (significance tests in the item
+  selection, POSAC's two-dimensional pattern map, an MDS embedding) is listed
+  in `docs/METHODS.md`.
+- On the example debt items it recovers the structure they were built with:
+  family = friends at the base, bank and moneylender as two branches, card
+  on top of bank, mortgage apart; 55% of respondents fit a single line, 91%
+  the order.
+
 ## Fixed after the first look in the jamovi window (2026-11-16)
 
 - CFA, Group CFA, Scale Check and Bifactor CFA showed only "comparison (==)

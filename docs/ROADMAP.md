@@ -16,7 +16,7 @@ records why and what is intended.
 
 ## Where it stands (2026-11-16)
 
-- Seven analyses in two menu groups (see README). The core is CFA, Group CFA
+- Eight analyses in two menu groups (see README). The core is CFA, Group CFA
   and Scale Check.
 - The author has run CFA vs ESEM in the jamovi window on real data (20 items,
   3 factors; it works, and it exposed the scaled chi-square reversal now
@@ -40,31 +40,27 @@ records why and what is intended.
 
 ## Before submitting to the jamovi library
 
-Nothing below is "weird"; it is what stands between the current state and a
-module other people can install. In order:
-
-1. **Look at every analysis in the jamovi window.** The panels were written
-   blind. Most at risk: the "Residual Correlations" pairs box in CFA (a
-   second variable list in one panel), the nested checkboxes in "Figures",
-   figure sizes, the Html "Colour Summary".
-2. **Commit.** Version 0.4 is a large uncommitted change on top of 0.3.
-3. **Example data that exercise everything.** The bundled data have two
-   factors, so Bifactor CFA and the second-order option have nothing to run
-   on. Wanted: one data set with several short scales of different item
-   types (binary, ordinal, numeric) and qualities (clean, cross-loading,
-   residual pair, non-invariant item, dud item, bifactor, second-order),
-   with a paragraph explaining each.
-4. **Check the numbers against other software**: Loevinger's H against
-   `mokken`, the ordinal invariance ladder against `semTools`, the bifactor
-   indices against `BifactorIndicesCalculator`. None is installable in the
-   development environment; needs a normal R installation.
-5. **R side hygiene, because the module is an R package**: trace the R
-   example that failed the 0.3 check on GitHub; generate the help pages;
-   `label.size` in `geom_label()` is deprecated in recent ggplot2.
-6. **Other platforms**: build and open the module in jamovi on Windows and
+1. **Look at every analysis in the jamovi window.** The first look (CFA,
+   2026-11-16) found a bug that no headless test could see (a result named
+   like one of jamovi's own members; fixed, and now guarded). Still unseen:
+   the "Residual Correlations" pairs box, the nested checkboxes in
+   "Figures", figure sizes, the Html "Colour Summary", Item Order.
+2. **Check the numbers against other software**: Loevinger's H and the item
+   selection against `mokken`, implications against `DAKS`, the ordinal
+   invariance ladder against `semTools`, the bifactor indices against
+   `BifactorIndicesCalculator`. None is installable in the development
+   environment; needs a normal R installation.
+3. **R side hygiene, because the module is an R package**: keep the GitHub
+   check green (0.3 failed on an example that used an undefined `data`;
+   fixed); generate the help pages; `label.size` in `geom_label()` is
+   deprecated in recent ggplot2.
+4. **Other platforms**: build and open the module in jamovi on Windows and
    macOS; confirm lavaan is found (the module relies on the copy that ships
    with jamovi).
-7. **Submission procedure** (dev.jamovi.org): not read yet.
+5. **Submission procedure** (dev.jamovi.org): not read yet.
+
+Done since the list was first written: committed and pushed (0.4); example
+data that exercise everything (`wizlab`, docs/DATA.md).
 
 ## After that
 

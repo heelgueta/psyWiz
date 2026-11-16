@@ -21,6 +21,7 @@ You drag items into factor boxes. There is no model syntax to write.
 | | **Multi-Estimator CFA** | One model under up to eight estimators, side by side | |
 | | **CFA vs ESEM** | CFA against a model with cross-loadings; each factor correlation by scoring method | Brush plot |
 | Scales | **Scale Check** | Reliability (alpha, lambda-2, omega, AVE) and item statistics | Tau-equivalence and parallelism; Guttman / Mokken scalability and scalogram; comb plot, path diagram |
+| | **Item Order (Exploratory)** | For yes/no items: which form a line, share a rung, branch or stand apart; order diagram | Answer patterns |
 | | **Composite Check** | For formative indicators: do they act through one composite? | |
 
 The first three rows are the core. Every analysis takes one factor or several
@@ -130,6 +131,7 @@ All of them return plain data frames (`$fit`, `$comparison`, `$culprits`,
 
 - [NEWS.md](NEWS.md): what changed in each version.
 - [docs/ROADMAP.md](docs/ROADMAP.md): where the project came from, where it stands, what is next.
+- [docs/DATA.md](docs/DATA.md): the example data, block by block, and what to try on each.
 - [docs/METHODS.md](docs/METHODS.md): exactly which models are fitted and how verdicts are reached, with references.
 - [docs/DESIGN.md](docs/DESIGN.md): how the code is organised and why.
 - [docs/IDEAS.md](docs/IDEAS.md): the less usual ideas, what is new and what is not.

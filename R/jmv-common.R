@@ -85,7 +85,7 @@ psw_jmv_time_text <- function(info) {
 # psw_jmv_diagram() as its render function.
 psw_jmv_build <- function(kind, args) {
   do.call(switch(kind, figure = psw_figure, scalogram = psw_scalogram_plot, antenna = psw_antenna,
-                 facing = psw_facing, bfpath = psw_bifactor_path, brush = psw_brush), args)
+                 facing = psw_facing, bfpath = psw_bifactor_path, brush = psw_brush, hasse = psw_hasse), args)
 }
 
 psw_jmv_plot <- function(image, kind, args) {

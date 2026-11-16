@@ -328,3 +328,19 @@ print.psw_bifactor <- function(x, colored = FALSE, ...) {
   psw_print_notes(x$notes)
   invisible(x)
 }
+
+#' @rdname print.psyWiz
+#' @export
+print.psw_order <- function(x, colored = FALSE, patterns = 8L, ...) {
+  psw_header("psyWiz: order among items (exploratory)", psw_use_color(colored))
+  cat(sprintf("%d items, N = %d, exceptions tolerated %.0f%%, H at least %.2f\n\n", x$info$k, x$info$n,
+              100 * x$info$tolerance, x$info$h.min))
+  cat(paste0("  ", x$reading), sep = "\n")
+  psw_print_df("How well does an order fit?", x$fit)
+  psw_print_df("Items", x$items)
+  if (!is.null(x$implications)) psw_print_df("Direct implications (from implies to)", x$implications)
+  if (!is.null(x$scales)) psw_print_df("Cumulative scales", x$scales)
+  if (patterns > 0L) psw_print_df("Most frequent answer patterns", utils::head(x$patterns, patterns))
+  psw_print_notes(x$notes)
+  invisible(x)
+}

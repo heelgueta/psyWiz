@@ -250,6 +250,58 @@ The scalogram figure shows respondents sorted by total score (averaged in
 at most 150 groups) against the items in the chosen order; for binary items
 a line marks where a perfect Guttman scale would end.
 
+## Item Order (exploratory)
+
+For yes/no items. Items with two values are coded 0/1 (higher value = 1);
+items with more values are split at the midpoint of their observed range;
+constant items are left out; cases with missing values are left out.
+
+What it adds to reliability and factor analysis: those ask what items have
+in common. Some item sets are better described by *order* (Guttman, 1950):
+endorsing a rare item implies endorsing the common ones. A factor model of
+such items typically shows one weak factor, or "difficulty factors", and
+hides the structure. Real orders are rarely one clean line, so three things
+are reported.
+
+**Cumulative scales** (after Mokken, 1971; Sijtsma & Molenaar, 2002). A
+scale starts from the pair of items with the highest pairwise H; the item
+with the highest H with respect to the scale is added while that H is at
+least the chosen minimum (default .30) and the item is positively related to
+every item already in; the procedure repeats on the remaining items. Items
+in no scale are *unscalable*. This is Mokken's automated item selection
+without its significance tests, so with small samples it will accept items
+the original procedure would reject.
+
+**Implications** (the idea of item tree analysis: van Leeuwe, 1974; Schrepp,
+1999, 2003; Sargin & Unlu, 2009). "A implies B" is accepted when (1) at most
+the tolerated share (default 10%) of those who endorse A do not endorse B,
+and (2) the pairwise H of A and B is at least the minimum. Condition 2 is
+needed because condition 1 alone is met by any pair in which B is very
+common. Items that imply each other share a rung. Rung X implies rung Y when
+every item of X implies every item of Y and Y is the more common one. Only
+direct implications are listed and drawn. The level of a rung is the length
+of the longest chain below it. Items with no implication to or from any
+other item are reported as *apart*.
+
+The published procedures choose the tolerance by comparing the fit of the
+candidate orders; here the tolerance is an option and the order follows
+from it. Try 5% and 15% to see how stable the picture is.
+
+**Fit to respondents.** The share of respondents whose answers contain no
+exception to (a) a single line through all items, from most to least
+endorsed, and (b) the order found. A large gap says a line is too strict a
+description. The classical coefficients of reproducibility and scalability
+of the line are given alongside.
+
+**Diagram.** A Hasse diagram: rungs as boxes, the most common at the bottom,
+a line upwards for each direct implication, items apart to the side.
+
+Not implemented: POSAC (Shye, 1985), which maps response patterns into two
+dimensions by an iterative fit (the Hasse diagram answers the same question
+at the level of items); multidimensional-scaling embeddings; and the fit
+statistics of inductive item tree analysis. Not checked against the
+`mokken` and `DAKS` packages.
+
 ## CFA vs ESEM
 
 The CFA is the correlated-factors model above. The ESEM lets every item load
@@ -405,3 +457,29 @@ of colour blindness; red to blue is the original ramp.
 - Wu, H., & Estabrook, R. (2016). Identification of confirmatory factor
   analysis models of different levels of invariance for ordered categorical
   outcomes. *Psychometrika, 81*(4), 1014-1045.
+
+Guttman, L. (1950). The basis for scalogram analysis. In S. A. Stouffer et
+al., *Measurement and prediction* (pp. 60-90). Princeton University Press.
+
+Rodriguez, A., Reise, S. P., & Haviland, M. G. (2016). Evaluating bifactor
+models: Calculating and interpreting statistical indices. *Psychological
+Methods, 21*(2), 137-150.
+
+Sargin, A., & Unlu, A. (2009). Inductive item tree analysis: Corrections,
+improvements, and comparisons. *Mathematical Social Sciences, 58*(3), 376-392.
+
+Schrepp, M. (1999). On the empirical construction of implications between
+bi-valued test items. *Mathematical Social Sciences, 38*(3), 361-375.
+
+Schrepp, M. (2003). A method for the analysis of hierarchical dependencies
+between items of a questionnaire. *Methods of Psychological Research Online,
+8*(1), 43-79.
+
+Shye, S. (1985). *Multiple scaling: The theory and application of partial
+order scalogram analysis*. North-Holland.
+
+Sijtsma, K., & Molenaar, I. W. (2002). *Introduction to nonparametric item
+response theory*. Sage.
+
+van Leeuwe, J. F. J. (1974). Item tree analysis. *Nederlands Tijdschrift voor
+de Psychologie, 29*, 475-484.
