@@ -157,6 +157,38 @@ Limits, stated in the output as well:
   model that keeps the freed parameters free; observed sum scores still
   contain the freed items.
 
+## Latent mean comparisons
+
+Latent factor means are identified and comparable across groups once scalar
+invariance (or partial scalar invariance with $\ge 2$ invariant indicators per
+factor) is supported.
+
+- **Model source**: Estimates are extracted from the scalar step of the ladder
+  (or the partial scalar step if full scalar was not supported and partial
+  invariance was enabled). If scalar invariance fails, psyWiz flags that latent
+  means cannot be compared.
+- **Identification & reference group**: In the baseline reference group
+  (defaults to the first group, or specified via `reference` /
+  `latentMeansRef`), factor means are fixed to 0 and factor variance is fixed to
+  1. For non-reference groups, factor means and variances are freely estimated.
+- **Mean difference ($\Delta \kappa$)**: For factor $f$ and group $g$ relative
+  to reference group $r$, $\Delta \kappa = \kappa_{f, g} - \kappa_{f, r}$.
+- **Standard error & Wald test**: The variance of $\Delta \kappa$ is obtained
+  via the Delta method from the parameter covariance matrix ($V$) of the factor
+  means:
+  $$\text{Var}(\Delta \kappa) = V_{gg} + V_{rr} - 2 V_{gr}$$
+  where $V_{1 \cdot} = 0$ for the identification group. The Wald test statistic
+  is $z = \Delta \kappa / \text{SE}$, with two-sided $p$-value and $(1 - \alpha)$
+  confidence intervals.
+- **Standardized effect sizes (Latent Cohen's $d$)**:
+  - **$d_{\text{ref}}$**: Standardized by the reference group factor standard
+    deviation, $d_{\text{ref}} = \Delta \kappa / \sqrt{\psi_{f, r}}$.
+  - **$d_{\text{pool}}$**: Standardized by the pooled factor standard deviation
+    (Hancock, 2001), where:
+    $$\psi_{\text{pool}} = \frac{\sum_{g=1}^G (N_g - 1) \psi_{f, g}}{\sum_{g=1}^G (N_g - 1)}, \quad d_{\text{pool}} = \frac{\Delta \kappa}{\sqrt{\psi_{\text{pool}}}}$$
+- **Visualisation**: A forest/comparison plot displays point estimates and
+  confidence intervals for each group and factor against the reference line at 0.
+
 ## Plain CFA
 
 `factorWiz()` / the CFA analysis: the single-group model of section "Models",

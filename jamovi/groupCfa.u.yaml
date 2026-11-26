@@ -143,6 +143,26 @@ children:
               - type: CheckBox
                 name: pathWidth
                 enable: (showPath)
+          - type: ComboBox
+            name: plotFit
+  - type: CollapseBox
+    label: Latent Means
+    collapsed: true
+    stretchFactor: 1
+    children:
+      - type: LayoutBox
+        margin: large
+        children:
+          - type: CheckBox
+            name: latentMeans
+            children:
+              - type: TextBox
+                name: latentMeansRef
+                format: string
+                enable: (latentMeans)
+              - type: CheckBox
+                name: latentMeansPlot
+                enable: (latentMeans)
   - type: CollapseBox
     label: When a Step Fails
     collapsed: true

@@ -10,6 +10,7 @@ psw_inv_task <- function(task) {
   est <- psw_estimates(r$fit, task$prep)
   r$loadings <- est$loadings
   r$cors <- est$cors
+  r$means <- est$means
   r$culprits <- if (r$converged && task$step != "configural" && !isFALSE(task$culprits))
     psw_culprits(r$fit, task$step, task$prep) else NULL
   r
@@ -239,7 +240,8 @@ invarianceWiz <- function(data, factors, group,
                           parameterization = c("auto", "delta", "theta"),
                           criteria = c("cfi", "rmsea"), cutoffs = list(),
                           parallel = "auto", ncores = NULL, keep.fits = FALSE,
-                          partial = FALSE, max.free = 2L, min.invariant = 2L) {
+                          partial = FALSE, max.free = 2L, min.invariant = 2L,
+                          means = FALSE, means.ref = NULL) {
   type <- match.arg(type)
   missing <- match.arg(missing)
   parameterization <- match.arg(parameterization)
@@ -312,6 +314,8 @@ invarianceWiz <- function(data, factors, group,
     notes = unique(notes),
     # the prepared data, so that invariancePartial() can refit; the jamovi layer drops it before caching
     prep = prep,
+    means_scalar = if (!is.null(res$scalar)) res$scalar$means else NULL,
+    means_strict = if (!is.null(res$strict)) res$strict$means else NULL,
     info = list(type = prep$type, estimator = estimator, missing = miss,
                 parameterization = parameterization, variant = variant,
                 factors = split(prep$items$name, factor(prep$items$factor, levels = unname(prep$fnames))),
@@ -327,6 +331,9 @@ invarianceWiz <- function(data, factors, group,
     out$partial <- invariancePartial(out, auto = TRUE, max.free = max.free,
                                      min.invariant = min.invariant,
                                      criteria = criteria, cutoffs = cutoffs)
+  }
+  if (isTRUE(means)) {
+    out$means <- invarianceMeans(out, reference = means.ref)
   }
   out
 }
@@ -547,7 +554,227 @@ invariancePartial <- function(x, auto = TRUE, free = list(), max.free = 2L, min.
 
   out <- list(fit = fit, comparison = cp, released = if (length(released)) do.call(rbind, released),
               freed = freed, summary = summary, variant = lad$variant, criteria = criteria, cutoffs = cut,
+              means_scalar = if (!is.null(res$scalar)) res$scalar$means else NULL,
               notes = unique(lad$notes))
   class(out) <- "psw_partial"
   out
+}
+
+#' Latent mean comparisons across groups
+#'
+#' Compares factor means across groups from a fitted measurement invariance model,
+#' once scalar (or partial scalar) invariance is supported.
+#'
+#' @param x An object of class `psw_invariance` or `psw_partial`.
+#' @param reference Name of the baseline group against which other groups are
+#'   compared. Defaults to the first group (`NULL` or `""`).
+#' @param alpha Significance level for confidence intervals (default 0.05 for 95% CI).
+#'
+#' @return An object of class `psw_means`, a data frame containing columns
+#'   `factor`, `group`, `is_ref`, `mean`, `se`, `ci_lower`, `ci_upper`, `z`, `p`,
+#'   `d_ref`, `d_pool`, with attributes `reference`, `supported`, `model_type`,
+#'   `freed_items`, `alpha`, and `notes`.
+#'
+#' @references
+#' Hancock, G. R. (2001). Effect size, power, and sample size determination for
+#' structured means modeling and latent growth modeling. *Journal of Educational
+#' and Behavioral Statistics*, 26(2), 149-169.
+#'
+#' Byrne, B. M., Shavelson, R. J., & Muthén, B. (1989). Testing for the
+#' equivalence of factor covariance and mean structures: The issue of partial
+#' measurement invariance. *Psychological Bulletin*, 105(3), 456-466.
+#'
+#' @export
+invarianceMeans <- function(x, reference = NULL, alpha = 0.05) {
+  if (!inherits(x, c("psw_invariance", "psw_partial")))
+    stop("`x` must be an object of class 'psw_invariance' or 'psw_partial'.", call. = FALSE)
+
+  empty_res <- function(supported = FALSE, note = "", ref = "") {
+    df <- data.frame(
+      factor = character(), group = character(), is_ref = logical(),
+      mean = numeric(), se = numeric(), ci_lower = numeric(), ci_upper = numeric(),
+      z = numeric(), p = numeric(), d_ref = numeric(), d_pool = numeric(),
+      stringsAsFactors = FALSE
+    )
+    attr(df, "supported") <- supported
+    attr(df, "reference") <- ref
+    attr(df, "model_type") <- "none"
+    attr(df, "freed_items") <- character()
+    attr(df, "alpha") <- alpha
+    attr(df, "notes") <- note
+    class(df) <- c("psw_means", "data.frame")
+    df
+  }
+
+  model_type <- "none"
+  means_data <- NULL
+  freed_items <- character()
+
+  if (inherits(x, "psw_invariance")) {
+    cp <- x$comparison
+    sc_row <- cp[cp$step == "scalar", , drop = FALSE]
+    full_supported <- nrow(sc_row) > 0L && sc_row$verdict[1L] %in% c("Supported", "Equivalent to previous model")
+
+    part <- x$partial
+    partial_supported <- FALSE
+    if (!is.null(part)) {
+      pcp <- part$comparison
+      holds <- pcp$verdict %in% c("Supported", "Equivalent to previous model")
+      reached <- pcp$step[seq_len(if (all(holds)) nrow(pcp) else which(!holds)[1L] - 1L)]
+      partial_supported <- "scalar" %in% reached
+    }
+
+    if (full_supported && !is.null(x$means_scalar)) {
+      means_data <- x$means_scalar
+      model_type <- "full"
+    } else if (partial_supported && !is.null(part$means_scalar)) {
+      means_data <- part$means_scalar
+      model_type <- "partial"
+      freed_items <- c(part$freed$load, part$freed$int)
+    } else if (!is.null(x$fits$scalar)) {
+      prep <- x$prep
+      if (is.null(prep)) prep <- list(groups = x$groups$group, n = x$groups$n, fnames = stats::setNames(names(x$info$factors), names(x$info$factors)))
+      est <- psw_estimates(x$fits$scalar, prep)
+      if (!is.null(est$means)) {
+        means_data <- est$means
+        model_type <- if (full_supported) "full" else "unsupported"
+      }
+    }
+  } else if (inherits(x, "psw_partial")) {
+    pcp <- x$comparison
+    holds <- pcp$verdict %in% c("Supported", "Equivalent to previous model")
+    reached <- pcp$step[seq_len(if (all(holds)) nrow(pcp) else which(!holds)[1L] - 1L)]
+    if ("scalar" %in% reached && !is.null(x$means_scalar)) {
+      means_data <- x$means_scalar
+      model_type <- "partial"
+      freed_items <- c(x$freed$load, x$freed$int)
+    }
+  }
+
+  if (is.null(means_data) || model_type %in% c("none", "unsupported")) {
+    note <- "Latent means cannot be compared: scalar invariance is not supported across groups."
+    return(empty_res(supported = FALSE, note = note, ref = if (!is.null(reference)) reference else ""))
+  }
+
+  groups <- means_data$groups
+  G <- length(groups)
+  if (G < 2L) {
+    return(empty_res(supported = FALSE, note = "Latent means require at least two groups.", ref = ""))
+  }
+
+  if (is.null(reference) || !nzchar(reference)) {
+    ref_name <- groups[1L]
+  } else {
+    if (!reference %in% groups)
+      stop(sprintf("Reference group '%s' not found. Available groups: %s", reference, paste(groups, collapse = ", ")), call. = FALSE)
+    ref_name <- reference
+  }
+  ref_idx <- match(ref_name, groups)
+
+  pe <- means_data$pe
+  pt <- means_data$pt
+  V <- means_data$vcov
+  fnames <- means_data$fnames
+  N <- means_data$n
+
+  crit <- stats::qnorm(1 - alpha / 2)
+  rows <- list()
+
+  for (fid in names(fnames)) {
+    fname <- unname(fnames[[fid]])
+    m_est <- numeric(G)
+    psi_est <- numeric(G)
+    psi_est[1L] <- 1.0
+
+    # Group 1: mean is 0 by identification
+    m_est[1L] <- 0.0
+
+    # Extract estimates for each group
+    for (g in seq_len(G)) {
+      r_m <- pe[pe$lhs == fid & pe$op == "~1" & pe$group == g, , drop = FALSE]
+      if (nrow(r_m)) m_est[g] <- r_m$est[1L]
+
+      r_psi <- pe[pe$lhs == fid & pe$rhs == fid & pe$op == "~~" & pe$group == g, , drop = FALSE]
+      if (nrow(r_psi)) psi_est[g] <- r_psi$est[1L]
+    }
+
+    # Variance-covariance matrix of means for this factor
+    V_mat <- matrix(0, G, G)
+    if (!is.null(V) && !is.null(pt)) {
+      for (i in seq(2L, G)) {
+        pt_i <- pt[pt$lhs == fid & pt$group == i, , drop = FALSE]
+        par_i <- if (nrow(pt_i) && !is.na(pt_i$name[1L])) pt_i$name[1L] else paste0(fid, "~1.g", i)
+        if (par_i %in% colnames(V)) {
+          for (j in seq(2L, G)) {
+            pt_j <- pt[pt$lhs == fid & pt$group == j, , drop = FALSE]
+            par_j <- if (nrow(pt_j) && !is.na(pt_j$name[1L])) pt_j$name[1L] else paste0(fid, "~1.g", j)
+            if (par_j %in% colnames(V)) {
+              V_mat[i, j] <- V[par_i, par_j]
+            }
+          }
+        }
+      }
+    }
+
+    sd_ref <- sqrt(max(0, psi_est[ref_idx]))
+    psi_pool <- sum((N - 1L) * psi_est) / sum(N - 1L)
+    sd_pool <- sqrt(max(0, psi_pool))
+
+    for (g in seq_len(G)) {
+      is_ref <- (g == ref_idx)
+      diff_m <- m_est[g] - m_est[ref_idx]
+
+      if (is_ref) {
+        se <- NA_real_
+        z <- NA_real_
+        p <- NA_real_
+        ci_lo <- 0.0
+        ci_hi <- 0.0
+        d_ref <- 0.0
+        d_pool <- 0.0
+      } else {
+        var_diff <- max(0, V_mat[g, g] + V_mat[ref_idx, ref_idx] - 2 * V_mat[g, ref_idx])
+        se <- sqrt(var_diff)
+        z <- if (se > 0) diff_m / se else NA_real_
+        p <- if (!is.na(z)) 2 * (1 - stats::pnorm(abs(z))) else NA_real_
+        ci_lo <- diff_m - crit * se
+        ci_hi <- diff_m + crit * se
+        d_ref <- if (sd_ref > 0) diff_m / sd_ref else NA_real_
+        d_pool <- if (sd_pool > 0) diff_m / sd_pool else NA_real_
+      }
+
+      rows[[length(rows) + 1L]] <- data.frame(
+        factor = fname,
+        group = groups[g],
+        is_ref = is_ref,
+        mean = diff_m,
+        se = se,
+        ci_lower = ci_lo,
+        ci_upper = ci_hi,
+        z = z,
+        p = p,
+        d_ref = d_ref,
+        d_pool = d_pool,
+        stringsAsFactors = FALSE
+      )
+    }
+  }
+
+  res <- do.call(rbind, rows)
+  rownames(res) <- NULL
+
+  notes <- character()
+  if (model_type == "partial") {
+    notes <- c(notes, sprintf("Latent means estimated under partial scalar invariance (freed items: %s).",
+                              paste(unique(freed_items), collapse = ", ")))
+  }
+
+  attr(res, "supported") <- TRUE
+  attr(res, "reference") <- ref_name
+  attr(res, "model_type") <- model_type
+  attr(res, "freed_items") <- freed_items
+  attr(res, "alpha") <- alpha
+  attr(res, "notes") <- notes
+  class(res) <- c("psw_means", "data.frame")
+  res
 }

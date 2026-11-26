@@ -254,6 +254,27 @@ options:
     description:
       R: >
         an integer (default 2), the largest number of items released per factor at one step
+  - name: latentMeans
+    title: 'Compare latent means across groups'
+    type: Bool
+    default: false
+    description:
+      R: >
+        `TRUE` or `FALSE` (default), compare latent factor means across groups once scalar or partial scalar invariance is established
+  - name: latentMeansRef
+    title: 'Reference group for latent means'
+    type: String
+    default: ''
+    description:
+      R: >
+        a string (default `''`), group to treat as baseline (defaults to the first group)
+  - name: latentMeansPlot
+    title: 'Latent means comparison plot'
+    type: Bool
+    default: false
+    description:
+      R: >
+        `TRUE` or `FALSE` (default), show a forest plot of latent mean differences with 95% confidence intervals
   - name: showComb
     title: 'Comb plot'
     type: Bool
@@ -289,6 +310,20 @@ options:
     description:
       R: >
         `TRUE` (default) or `FALSE`, make the width of an arrow proportional to its loading
+  - name: plotFit
+    title: 'Model fit on plot'
+    type: List
+    options:
+      - name: none
+        title: 'Do not show'
+      - name: below
+        title: 'Below plot'
+      - name: above
+        title: 'Above plot'
+    default: none
+    description:
+      R: >
+        `'none'` (default), `'below'` or `'above'`, print the model fit measures and estimator on the figure
   - name: highlight
     title: 'Colour'
     type: Bool

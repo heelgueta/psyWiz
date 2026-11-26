@@ -18,7 +18,8 @@ esemCfaOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             showLoadings = TRUE,
             showCors = TRUE,
             highlight = FALSE,
-            showBrush = FALSE, ...) {
+            showBrush = FALSE,
+            plotFit = "none", ...) {
 
             super$initialize(
                 package="psyWiz",
@@ -109,6 +110,14 @@ esemCfaOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 "showBrush",
                 showBrush,
                 default=FALSE)
+            private$..plotFit <- jmvcore::OptionList$new(
+                "plotFit",
+                plotFit,
+                options=list(
+                    "none",
+                    "below",
+                    "above"),
+                default="none")
 
             self$.addOption(private$..factors)
             self$.addOption(private$..run)
@@ -121,6 +130,7 @@ esemCfaOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$.addOption(private$..showCors)
             self$.addOption(private$..highlight)
             self$.addOption(private$..showBrush)
+            self$.addOption(private$..plotFit)
         }),
     active = list(
         factors = function() private$..factors$value,
@@ -133,7 +143,8 @@ esemCfaOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         showLoadings = function() private$..showLoadings$value,
         showCors = function() private$..showCors$value,
         highlight = function() private$..highlight$value,
-        showBrush = function() private$..showBrush$value),
+        showBrush = function() private$..showBrush$value,
+        plotFit = function() private$..plotFit$value),
     private = list(
         ..factors = NA,
         ..run = NA,
@@ -145,7 +156,8 @@ esemCfaOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         ..showLoadings = NA,
         ..showCors = NA,
         ..highlight = NA,
-        ..showBrush = NA)
+        ..showBrush = NA,
+        ..plotFit = NA)
 )
 
 esemCfaResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
@@ -157,7 +169,8 @@ esemCfaResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         comparison = function() private$.items[["comparison"]],
         loadings = function() private$.items[["loadings"]],
         cors = function() private$.items[["cors"]],
-        brush = function() private$.items[["brush"]]),
+        brush = function() private$.items[["brush"]],
+        brushDesc = function() private$.items[["brushDesc"]]),
     private = list(),
     public=list(
         initialize=function(options) {
@@ -373,7 +386,13 @@ esemCfaResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "type",
                     "estimator",
                     "missing",
-                    "rotation")))}))
+                    "rotation",
+                    "plotFit")))
+            self$add(jmvcore::Html$new(
+                options=options,
+                name="brushDesc",
+                title="How to Read the Brush Plot",
+                visible="(showBrush)"))}))
 
 esemCfaBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
     "esemCfaBase",
@@ -437,6 +456,8 @@ esemCfaBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #'   of 0.30 or more and own-factor loadings below 0.40 in red
 #' @param showBrush \code{TRUE} or \code{FALSE} (default), draw the ESEM
 #'   loadings of every item on every factor
+#' @param plotFit \code{'none'} (default), \code{'below'} or \code{'above'},
+#'   print the model fit measures and estimator on the figure
 #' @return A results object containing:
 #' \tabular{llllll}{
 #'   \code{results$todo} \tab \tab \tab \tab \tab a html \cr
@@ -445,6 +466,7 @@ esemCfaBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #'   \code{results$loadings} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$cors} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$brush} \tab \tab \tab \tab \tab an image \cr
+#'   \code{results$brushDesc} \tab \tab \tab \tab \tab a html \cr
 #' }
 #'
 #' Tables can be converted to data frames with \code{asDF} or \code{\link{as.data.frame}}. For example:
@@ -468,7 +490,8 @@ esemCfa <- function(
     showLoadings = TRUE,
     showCors = TRUE,
     highlight = FALSE,
-    showBrush = FALSE) {
+    showBrush = FALSE,
+    plotFit = "none") {
 
     if ( ! requireNamespace("jmvcore", quietly=TRUE))
         stop("esemCfa requires jmvcore to be installed (restart may be required)")
@@ -489,7 +512,8 @@ esemCfa <- function(
         showLoadings = showLoadings,
         showCors = showCors,
         highlight = highlight,
-        showBrush = showBrush)
+        showBrush = showBrush,
+        plotFit = plotFit)
 
     analysis <- esemCfaClass$new(
         options = options,

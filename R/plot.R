@@ -33,6 +33,93 @@
 psw_dg <- list(char = 0.066, px_x = 110, px_y = 30, max_factor = 22L, max_item = 18L,
                max_cor_factors = 4L, weak = 0.40)
 
+#' Format a single-line summary of model fit (internal)
+#'
+#' @param fit A data frame or list with fit measures (`chisq`, `df`, `pvalue`, `cfi`, `tli`, `rmsea`, `srmr`), or a character string.
+#' @param estimator Name of estimator (e.g. "MLR", "WLSMV").
+#' @return A character string, or NULL if no fit measures are available.
+#' @keywords internal
+#' @noRd
+psw_format_fit_line <- function(fit, estimator = NULL) {
+  if (is.null(fit)) return(NULL)
+  if (is.character(fit) && length(fit) == 1L) return(fit)
+  if (is.data.frame(fit)) {
+    if (nrow(fit) == 0L) return(NULL)
+    row <- fit[1L, , drop = FALSE]
+  } else if (is.list(fit)) {
+    row <- as.data.frame(fit)
+  } else {
+    return(NULL)
+  }
+
+  parts <- character()
+  if (!is.null(estimator) && is.character(estimator) && nzchar(estimator)) {
+    parts <- c(parts, paste0("Estimator: ", estimator))
+  }
+
+  fmt_num <- function(x, digits = 3, lead_zero = TRUE) {
+    if (is.null(x) || is.na(x) || !is.numeric(x)) return(NA_character_)
+    s <- sprintf(paste0("%.", digits, "f"), x)
+    if (!lead_zero) sub("^0\\.", ".", sub("^-0\\.", "-.", s)) else s
+  }
+
+  if ("chisq" %in% names(row) && !is.na(row$chisq)) {
+    ch_str <- fmt_num(row$chisq, 2)
+    df_str <- if ("df" %in% names(row) && !is.na(row$df)) paste0("(", round(row$df), ")") else ""
+    p_str <- if ("pvalue" %in% names(row) && !is.na(row$pvalue)) {
+      if (row$pvalue < .001) ", p < .001" else paste0(", p = ", fmt_num(row$pvalue, 3, FALSE))
+    } else ""
+    parts <- c(parts, paste0("\u03c7\u00b2", df_str, " = ", ch_str, p_str))
+  }
+
+  if ("cfi" %in% names(row) && !is.na(row$cfi)) {
+    parts <- c(parts, paste0("CFI = ", fmt_num(row$cfi, 3, FALSE)))
+  }
+  if ("tli" %in% names(row) && !is.na(row$tli)) {
+    parts <- c(parts, paste0("TLI = ", fmt_num(row$tli, 3, FALSE)))
+  }
+  if ("rmsea" %in% names(row) && !is.na(row$rmsea)) {
+    ci_str <- ""
+    if ("rmsea.lo" %in% names(row) && "rmsea.hi" %in% names(row) &&
+        !is.na(row$rmsea.lo) && !is.na(row$rmsea.hi)) {
+      ci_str <- paste0(" [", fmt_num(row$rmsea.lo, 3, FALSE), ", ", fmt_num(row$rmsea.hi, 3, FALSE), "]")
+    }
+    parts <- c(parts, paste0("RMSEA = ", fmt_num(row$rmsea, 3, FALSE), ci_str))
+  }
+  if ("srmr" %in% names(row) && !is.na(row$srmr)) {
+    parts <- c(parts, paste0("SRMR = ", fmt_num(row$srmr, 3, FALSE)))
+  }
+
+  if (!length(parts)) return(NULL)
+  paste(parts, collapse = " | ")
+}
+
+psw_attach_fit <- function(p, fit_text = NULL, fit_pos = c("none", "below", "above")) {
+  if (is.null(fit_pos)) fit_pos <- "none"
+  fit_pos <- match.arg(fit_pos, c("none", "below", "above"))
+  if (fit_pos == "none" || is.null(fit_text) || !nzchar(fit_text)) return(p)
+
+  sz <- attr(p, "psw_size")
+  if (fit_pos == "above") {
+    cur <- p$labels$subtitle
+    new_sub <- if (is.null(cur) || !nzchar(cur)) fit_text else paste0(cur, "\n", fit_text)
+    p <- p + ggplot2::labs(subtitle = new_sub) +
+      ggplot2::theme(plot.subtitle = ggplot2::element_text(size = 9.5, colour = "grey30", hjust = 0,
+                                                           margin = ggplot2::margin(2, 0, 8, 0)))
+  } else if (fit_pos == "below") {
+    cur <- p$labels$caption
+    new_cap <- if (is.null(cur) || !nzchar(cur)) fit_text else paste0(fit_text, "\n", cur)
+    p <- p + ggplot2::labs(caption = new_cap) +
+      ggplot2::theme(plot.caption = ggplot2::element_text(size = 9, colour = "grey40", hjust = 0,
+                                                          margin = ggplot2::margin(8, 0, 0, 0)))
+  }
+  if (!is.null(sz)) {
+    sz["height"] <- sz["height"] + 25
+    attr(p, "psw_size") <- sz
+  }
+  p
+}
+
 psw_dg_layout <- function(loadings, cors, panel_col) {
   items <- unique(loadings[c("factor", "item")])
   fnames <- unique(items$factor)
@@ -80,7 +167,7 @@ psw_fmt_loading <- function(x) sub("^(-?)0\\.", "\\1.", sprintf("%.2f", x))
 #' @keywords internal
 #' @noRd
 psw_diagram <- function(loadings, cors = NULL, panel_col = "group", caption = NULL, numbers = TRUE,
-                        width = TRUE) {
+                        width = TRUE, fit_text = NULL, fit_pos = c("none", "below", "above")) {
   lay <- psw_dg_layout(loadings, cors, panel_col)
   it <- lay$items
   panel <- function(d) factor(d[[panel_col]], levels = lay$panels)
@@ -111,14 +198,14 @@ psw_diagram <- function(loadings, cors = NULL, panel_col = "group", caption = NU
       lineend = "round", arrow = ggplot2::arrow(length = ggplot2::unit(0.07, "inches"), type = "closed"))
   if (numbers) p <- p + ggplot2::geom_label(
       data = arrows, ggplot2::aes(x = .data$lx, y = .data$ly, label = .data$lab, colour = .data$col),
-      size = 3.1, fill = "white", label.size = 0, label.padding = ggplot2::unit(0.08, "lines"))
+      size = 3.1, fill = "white", linewidth = 0, label.padding = ggplot2::unit(0.08, "lines"))
   p <- p + ggplot2::geom_label(
     data = inodes, ggplot2::aes(x = .data$x, y = .data$y, label = .data$lab),
-    hjust = 0, size = 3.5, colour = ink, fill = "white", label.size = 0.3,
+    hjust = 0, size = 3.5, colour = ink, fill = "white", linewidth = 0.3,
     label.r = ggplot2::unit(0, "lines"), label.padding = ggplot2::unit(0.3, "lines"))
   p <- p + ggplot2::geom_label(
     data = fnodes, ggplot2::aes(x = .data$x, y = .data$y, label = .data$lab),
-    hjust = 1, size = 3.7, fontface = "bold", colour = ink, fill = "grey93", label.size = 0.3,
+    hjust = 1, size = 3.7, fontface = "bold", colour = ink, fill = "grey93", linewidth = 0.3,
     label.r = ggplot2::unit(0.6, "lines"), label.padding = ggplot2::unit(0.45, "lines"))
 
   if (lay$show_cors) {
@@ -142,7 +229,7 @@ psw_diagram <- function(loadings, cors = NULL, panel_col = "group", caption = NU
                  if (width) "; line width is proportional to the loading." else ".")
   if (!lay$show_cors && !is.null(cors) && nrow(cors) > 0L)
     note <- paste(note, "Factor correlations are not drawn for more than four factors.")
-  p +
+  p <- p +
     ggplot2::scale_linewidth_identity() +
     ggplot2::scale_colour_identity() +
     ggplot2::facet_wrap(~panel, ncol = ncol) +
@@ -156,6 +243,7 @@ psw_diagram <- function(loadings, cors = NULL, panel_col = "group", caption = NU
                    panel.spacing = ggplot2::unit(14, "pt"),
                    plot.margin = ggplot2::margin(8, 10, 8, 10),
                    plot.background = ggplot2::element_rect(fill = "white", colour = NA))
+  psw_attach_fit(p, fit_text, fit_pos)
 }
 
 # ---- comb plot ---------------------------------------------------------------
@@ -231,7 +319,7 @@ psw_comb_size <- function(loadings, cors = NULL, panel_col = "group", resid = NU
 #' @keywords internal
 #' @noRd
 psw_comb <- function(loadings, cors = NULL, panel_col = "group", caption = NULL, thick = FALSE,
-                     resid = NULL, higher = NULL) {
+                     resid = NULL, higher = NULL, fit_text = NULL, fit_pos = c("none", "below", "above")) {
   lay <- psw_comb_layout(loadings, cors, panel_col, resid, higher)
   it <- lay$items
   lv <- lay$panels
@@ -332,7 +420,7 @@ psw_comb <- function(loadings, cors = NULL, panel_col = "group", caption = NULL,
   if (thick) note <- paste(note, "Tooth thickness: observed variance of the item.")
 
   ncol <- if (length(lv) <= 3L) length(lv) else 3L
-  p +
+  p <- p +
     ggplot2::geom_segment(data = spine, ggplot2::aes(x = 0, xend = 0, y = .data$y, yend = .data$yend),
                           colour = ink, linewidth = 3.4, lineend = "square") +
     ggplot2::scale_linewidth_identity() +
@@ -344,6 +432,7 @@ psw_comb <- function(loadings, cors = NULL, panel_col = "group", caption = NULL,
                                           width = floor((max(520, ncol * diff(lay$xlim) * psw_cb$px_x + 30) - 40) / 6.3)),
                                   collapse = "\n")) +
     psw_theme_bars()
+  psw_attach_fit(p, fit_text, fit_pos)
 }
 
 # Shared look of the figures made of horizontal bars.
@@ -362,16 +451,23 @@ psw_theme_bars <- function() {
 }
 
 # One entry point for the two figures of a simple-structure model. `opts` may
-# hold thick, resid, higher (comb) and numbers, width (path).
+# hold thick, resid, higher (comb) and numbers, width (path), fit_text, fit_pos.
 psw_figure <- function(loadings, cors, panel_col, type = c("comb", "path"), caption = NULL, opts = list()) {
   type <- match.arg(type)
+  fit_text <- opts$fit_text
+  fit_pos <- if (!is.null(opts$fit_pos)) opts$fit_pos else "none"
   if (type == "comb") {
-    p <- psw_comb(loadings, cors, panel_col, caption, thick = isTRUE(opts$thick), resid = opts$resid, higher = opts$higher)
-    attr(p, "psw_size") <- psw_comb_size(loadings, cors, panel_col, opts$resid, opts$higher)
+    p <- psw_comb(loadings, cors, panel_col, caption, thick = isTRUE(opts$thick), resid = opts$resid, higher = opts$higher,
+                  fit_text = fit_text, fit_pos = fit_pos)
+    sz <- psw_comb_size(loadings, cors, panel_col, opts$resid, opts$higher)
   } else {
-    p <- psw_diagram(loadings, cors, panel_col, caption, numbers = !isFALSE(opts$numbers), width = !isFALSE(opts$width))
-    attr(p, "psw_size") <- psw_diagram_size(loadings, cors, panel_col)
+    p <- psw_diagram(loadings, cors, panel_col, caption, numbers = !isFALSE(opts$numbers), width = !isFALSE(opts$width),
+                     fit_text = fit_text, fit_pos = fit_pos)
+    sz <- psw_diagram_size(loadings, cors, panel_col)
   }
+  if (fit_pos != "none" && !is.null(fit_text) && nzchar(fit_text))
+    sz["height"] <- sz["height"] + 25
+  attr(p, "psw_size") <- sz
   p
 }
 
@@ -445,7 +541,7 @@ psw_bf_rows <- function(L) {
 #' An item that leans left is mostly a measure of the general factor.
 #' @keywords internal
 #' @noRd
-psw_antenna <- function(L, general = "General") {
+psw_antenna <- function(L, general = "General", fit_text = NULL, fit_pos = c("none", "below", "above")) {
   r <- psw_bf_rows(L); L <- r$L
   ink <- "grey20"
   ytop <- max(L$y)
@@ -469,7 +565,7 @@ psw_antenna <- function(L, general = "General") {
       "factor (right); the numbers are the standardized loadings."), 95), collapse = "\n")) +
     psw_theme_bars()
   attr(p, "psw_size") <- c(width = round((2.56 + r$wl) * 190 + 30), height = round((ytop - min(L$y) + 2.5) * 24 + 90))
-  p
+  psw_attach_fit(p, fit_text, fit_pos)
 }
 
 #' Facing combs (internal): the bifactor model as two combs sharing their teeth
@@ -480,7 +576,7 @@ psw_antenna <- function(L, general = "General") {
 #' its name is written. Two combs that nearly touch mean a well explained item.
 #' @keywords internal
 #' @noRd
-psw_facing <- function(L, general = "General") {
+psw_facing <- function(L, general = "General", fit_text = NULL, fit_pos = c("none", "below", "above")) {
   r <- psw_bf_rows(L); L <- r$L
   ink <- "grey20"
   L$mid <- (L$g2 + 1 - L$s2) / 2
@@ -507,12 +603,13 @@ psw_facing <- function(L, general = "General") {
       "the standardized loadings."), 95), collapse = "\n")) +
     psw_theme_bars()
   attr(p, "psw_size") <- c(width = 620, height = round((max(L$y) - min(L$y) + 1.6) * 26 + 100))
-  p
+  psw_attach_fit(p, fit_text, fit_pos)
 }
 
 # Path diagram of a bifactor model: general factor on the left, items in the
 # middle, specific factors on the right.
-psw_bifactor_path <- function(L, general = "General", numbers = TRUE, width = TRUE) {
+psw_bifactor_path <- function(L, general = "General", numbers = TRUE, width = TRUE,
+                              fit_text = NULL, fit_pos = c("none", "below", "above")) {
   r <- psw_bf_rows(L); L <- r$L
   ink <- "grey25"
   wi <- max(nchar(psw_short(L$item, 18L))) * psw_dg$char + 0.1
@@ -528,13 +625,13 @@ psw_bifactor_path <- function(L, general = "General", numbers = TRUE, width = TR
     ggplot2::geom_segment(data = A, ggplot2::aes(x = .data$x, y = .data$y, xend = .data$xend, yend = .data$yend, linewidth = .data$lw),
                           colour = ink, lineend = "round", arrow = ggplot2::arrow(length = ggplot2::unit(0.07, "inches"), type = "closed"))
   if (numbers) p <- p + ggplot2::geom_label(data = A, ggplot2::aes(x = .data$lx, y = .data$ly, label = psw_fmt_loading(.data$std)),
-                                            size = 3, colour = ink, fill = "white", label.size = 0, label.padding = ggplot2::unit(0.08, "lines"))
+                                            size = 3, colour = ink, fill = "white", linewidth = 0, label.padding = ggplot2::unit(0.08, "lines"))
   wf <- max(nchar(fn$lab)) * psw_dg$char + 0.12
   p <- p +
     ggplot2::geom_label(data = L, ggplot2::aes(x = 1, y = .data$y, label = psw_short(.data$item, 18L)), size = 3.5, colour = ink,
-                        fill = "white", label.size = 0.3, label.r = ggplot2::unit(0, "lines"), label.padding = ggplot2::unit(0.3, "lines")) +
+                        fill = "white", linewidth = 0.3, label.r = ggplot2::unit(0, "lines"), label.padding = ggplot2::unit(0.3, "lines")) +
     ggplot2::geom_label(data = fn, ggplot2::aes(x = .data$x, y = .data$y, label = .data$lab, hjust = .data$hjust), size = 3.7,
-                        fontface = "bold", colour = ink, fill = "grey93", label.size = 0.3, label.r = ggplot2::unit(0.6, "lines"),
+                        fontface = "bold", colour = ink, fill = "grey93", linewidth = 0.3, label.r = ggplot2::unit(0.6, "lines"),
                         label.padding = ggplot2::unit(0.45, "lines")) +
     ggplot2::scale_linewidth_identity() +
     ggplot2::coord_cartesian(xlim = c(-wf, 2 + wf), ylim = c(min(L$y) - 0.7, max(L$y) + 0.7), expand = FALSE, clip = "off") +
@@ -545,7 +642,7 @@ psw_bifactor_path <- function(L, general = "General", numbers = TRUE, width = TR
     ggplot2::theme(plot.caption = ggplot2::element_text(size = 9, colour = "grey40", hjust = 0, margin = ggplot2::margin(8, 0, 0, 0)),
                    plot.margin = ggplot2::margin(8, 10, 8, 10), plot.background = ggplot2::element_rect(fill = "white", colour = NA))
   attr(p, "psw_size") <- c(width = round((2 + 2 * wf) * 150 + 30), height = round((max(L$y) - min(L$y) + 1.4) * psw_dg$px_y + 60))
-  p
+  psw_attach_fit(p, fit_text, fit_pos)
 }
 
 # ---- brush plot --------------------------------------------------------------
@@ -573,7 +670,7 @@ psw_bifactor_path <- function(L, general = "General", numbers = TRUE, width = TR
 #' @param unique Named numeric vector: unique variance (standardized) per item.
 #' @keywords internal
 #' @noRd
-psw_brush <- function(L, unique, value = "std") {
+psw_brush <- function(L, unique, value = "std", fit_text = NULL, fit_pos = c("none", "below", "above")) {
   fn <- unique(L$factor)
   m <- length(fn)
   items <- unique(L[c("item", "own")])
@@ -619,7 +716,7 @@ psw_brush <- function(L, unique, value = "std") {
       floor((width - 40) / 6.3)), collapse = "\n")) +
     psw_theme_bars()
   attr(p, "psw_size") <- c(width = width, height = round((ytop - ybot + 2.4) * 22 + 110))
-  p
+  psw_attach_fit(p, fit_text, fit_pos)
 }
 
 # ---- plot methods ------------------------------------------------------------
@@ -677,10 +774,14 @@ NULL
 
 #' @rdname plot.psyWiz
 #' @export
-plot.psw_cfa <- function(x, type = c("comb", "path"), thick = FALSE, numbers = TRUE, width = TRUE, ...) {
+plot.psw_cfa <- function(x, type = c("comb", "path"), thick = FALSE, numbers = TRUE, width = TRUE,
+                         fit = c("none", "below", "above"), ...) {
+  fit <- match.arg(fit)
   f <- psw_cfa_figure_data(x)
+  fit_text <- if (fit != "none") psw_format_fit_line(x$fit, x$info$estimator) else NULL
   psw_figure(f$loadings, f$cors, "group", match.arg(type),
-             opts = list(thick = thick, resid = f$resid, higher = x$higher, numbers = numbers, width = width))
+             opts = list(thick = thick, resid = f$resid, higher = x$higher, numbers = numbers, width = width,
+                         fit_text = fit_text, fit_pos = fit))
 }
 
 # A single-group CFA drawn as one panel titled with the sample size.
@@ -697,15 +798,85 @@ psw_cfa_figure_data <- function(x) {
 
 #' @rdname plot.psyWiz
 #' @export
-plot.psw_invariance <- function(x, type = c("path", "comb"), step = "configural", thick = FALSE,
-                                numbers = TRUE, width = TRUE, ...) {
+plot.psw_invariance <- function(x, type = c("path", "comb", "means"), step = "configural", thick = FALSE,
+                                numbers = TRUE, width = TRUE, fit = c("none", "below", "above"), ...) {
+  type <- match.arg(type)
+  fit <- match.arg(fit)
+  if (type == "means") {
+    m <- if (!is.null(x$means)) x$means else invarianceMeans(x, ...)
+    return(psw_plot_means(m, ...))
+  }
   l <- x$loadings[x$loadings$step == step, , drop = FALSE]
   if (is.null(l) || nrow(l) == 0L)
     stop("No estimates for step '", step, "'. Available: ",
          paste(unique(x$loadings$step), collapse = ", "), call. = FALSE)
   cc <- if (is.null(x$cors)) NULL else x$cors[x$cors$step == step, , drop = FALSE]
-  psw_figure(l, cc, "group", match.arg(type), caption = paste0(l$label[1L], " model."),
-             opts = list(thick = thick, numbers = numbers, width = width))
+  fit_row <- if (!is.null(x$fit)) x$fit[x$fit$step == step, , drop = FALSE] else NULL
+  fit_text <- if (fit != "none") psw_format_fit_line(fit_row, x$info$estimator) else NULL
+  psw_figure(l, cc, "group", type, caption = paste0(l$label[1L], " model."),
+             opts = list(thick = thick, numbers = numbers, width = width, fit_text = fit_text, fit_pos = fit))
+}
+
+#' @rdname plot.psyWiz
+#' @export
+plot.psw_means <- function(x, ...) {
+  psw_plot_means(x, ...)
+}
+
+#' Plot latent mean comparisons across groups (internal)
+#'
+#' @param means An object of class `psw_means` from `invarianceMeans()`.
+#' @param fit_text Character string with formatted fit indices.
+#' @param fit_pos Position of fit line (`"none"`, `"below"`, `"above"`).
+#' @param ... Ignored.
+#' @return A ggplot object with attribute `psw_size`.
+#' @keywords internal
+#' @noRd
+psw_plot_means <- function(means, fit_text = NULL, fit_pos = c("none", "below", "above"), ...) {
+  if (!isTRUE(attr(means, "supported"))) {
+    p <- ggplot2::ggplot() +
+      ggplot2::annotate("text", x = 0.5, y = 0.5,
+                        label = "Latent means cannot be compared:\nscalar invariance is not supported across groups.",
+                        size = 4, colour = "grey40", hjust = 0.5, vjust = 0.5) +
+      ggplot2::theme_void() +
+      ggplot2::labs(title = "Latent Mean Comparisons")
+    attr(p, "psw_size") <- c(width = 520, height = 240)
+    return(p)
+  }
+
+  df <- as.data.frame(means)
+  u_groups <- unique(df$group)
+  ref <- attr(means, "reference")
+  df$group <- factor(df$group, levels = rev(u_groups))
+
+  alpha_val <- attr(means, "alpha")
+  if (is.null(alpha_val)) alpha_val <- 0.05
+  ci_pct <- round((1 - alpha_val) * 100)
+
+  p <- ggplot2::ggplot(df, ggplot2::aes(x = .data$mean, y = .data$group)) +
+    ggplot2::geom_vline(xintercept = 0, linetype = "dashed", colour = "grey60", linewidth = 0.5) +
+    ggplot2::geom_errorbar(ggplot2::aes(xmin = .data$ci_lower, xmax = .data$ci_upper),
+                           width = 0.22, linewidth = 0.65, colour = "grey30") +
+    ggplot2::geom_point(ggplot2::aes(shape = .data$is_ref, fill = .data$is_ref), size = 3.2, colour = "grey20") +
+    ggplot2::scale_shape_manual(values = c("TRUE" = 22, "FALSE" = 21), guide = "none") +
+    ggplot2::scale_fill_manual(values = c("TRUE" = "grey80", "FALSE" = "grey20"), guide = "none") +
+    ggplot2::facet_wrap(~ factor, scales = "free_x") +
+    psw_theme_bars() +
+    ggplot2::theme(axis.text.y = ggplot2::element_text(size = 9.5, colour = "grey20", hjust = 1),
+                   axis.ticks.y = ggplot2::element_line(colour = "grey80"),
+                   plot.title = ggplot2::element_text(size = 12, face = "bold", hjust = 0),
+                   plot.subtitle = ggplot2::element_text(size = 9.5, colour = "grey40", hjust = 0)) +
+    ggplot2::labs(title = sprintf("Latent Mean Differences (%d%% CI)", ci_pct),
+                  subtitle = sprintf("Reference group: %s (baseline = 0.00)%s", ref,
+                                     if (identical(attr(means, "model_type"), "partial")) " [partial scalar]" else ""),
+                  x = "Difference in latent mean", y = NULL)
+
+  K <- length(unique(df$factor))
+  G <- length(u_groups)
+  w <- max(480, min(950, K * 260 + 60))
+  h <- max(240, min(700, G * 36 + 120))
+  attr(p, "psw_size") <- c(width = w, height = h)
+  psw_attach_fit(p, fit_text, fit_pos)
 }
 
 #' @rdname plot.psyWiz
@@ -729,18 +900,25 @@ plot.psw_scale <- function(x, type = c("comb", "path", "scalogram"), thick = FAL
 
 #' @rdname plot.psyWiz
 #' @export
-plot.psw_bifactor <- function(x, type = c("antenna", "facing", "path"), numbers = TRUE, width = TRUE, ...) {
+plot.psw_bifactor <- function(x, type = c("antenna", "facing", "path"), numbers = TRUE, width = TRUE,
+                              fit = c("none", "below", "above"), ...) {
+  fit <- match.arg(fit)
+  fit_text <- if (fit != "none") psw_format_fit_line(x$fit[1L, , drop = FALSE], x$info$estimator) else NULL
   switch(match.arg(type),
-         antenna = psw_antenna(x$loadings, x$info$general),
-         facing = psw_facing(x$loadings, x$info$general),
-         path = psw_bifactor_path(x$loadings, x$info$general, numbers, width))
+         antenna = psw_antenna(x$loadings, x$info$general, fit_text = fit_text, fit_pos = fit),
+         facing = psw_facing(x$loadings, x$info$general, fit_text = fit_text, fit_pos = fit),
+         path = psw_bifactor_path(x$loadings, x$info$general, numbers, width, fit_text = fit_text, fit_pos = fit))
 }
 
 #' @rdname plot.psyWiz
 #' @export
-plot.psw_esem <- function(x, type = "brush", ...) {
+plot.psw_esem <- function(x, type = "brush", fit = c("none", "below", "above"), ...) {
   if (all(is.na(x$loadings$esem))) stop("The ESEM did not converge, nothing to draw.", call. = FALSE)
-  psw_brush(x$loadings, x$uniqueness, value = "esem")
+  fit <- match.arg(fit)
+  fit_row <- if (!is.null(x$fit)) x$fit[grepl("ESEM", x$fit$label), , drop = FALSE] else NULL
+  if (is.null(fit_row) || nrow(fit_row) == 0L) fit_row <- x$fit[2L, , drop = FALSE]
+  fit_text <- if (fit != "none") psw_format_fit_line(fit_row, x$info$estimator) else NULL
+  psw_brush(x$loadings, x$uniqueness, value = "esem", fit_text = fit_text, fit_pos = fit)
 }
 
 #' @rdname plot.psyWiz

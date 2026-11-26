@@ -99,6 +99,8 @@ children:
               - type: CheckBox
                 name: pathWidth
                 enable: (showPath)
+          - type: ComboBox
+            name: plotFit
   - type: CollapseBox
     label: Second-Order Factor
     collapsed: true

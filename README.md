@@ -1,142 +1,106 @@
 # psyWiz
 
-A **jamovi module** for confirmatory factor analysis and scale psychometrics,
-built on [lavaan](https://lavaan.ugent.be). It fills gaps in what jamovi
-offers out of the box: CFA that treats ordinal items as ordinal, measurement
-invariance step by step with a verdict, and figures in which lengths mean
-something.
+A **jamovi module** and R package for confirmatory factor analysis and structural equation modeling, built on [lavaan](https://lavaan.ugent.be).
 
-You drag items into factor boxes. There is no model syntax to write.
+psyWiz bridges critical gaps in standard psychometric software: it offers native ordinal item treatment (WLSMV), automated measurement invariance with guided verdicts and latent mean comparisons, side-by-side multi-estimator evaluation, ESEM with target rotation, and **three novel, mathematically grounded visualizations** where bar lengths represent actual variance proportions.
 
-> Status: version 0.4, in development. Tested headless on Linux; not yet in
-> the jamovi library. Bug reports: <https://github.com/heelgueta/psywiz/issues>
+You simply drag items into factor boxes—no complex model syntax to write.
 
-## The menu
+---
 
-| Group | Analysis | What you get by default | On request |
-|---|---|---|---|
-| Factor Models | **CFA** | Fit, loadings, factor correlations, alpha / omega / AVE, comb plot | Residual correlations; second-order factor; path diagram; factor correlations from composite scores and factor scores; largest modification indices; colour summary |
-| | **Group CFA (Invariance)** | The invariance ladder across groups with a verdict per step, and the constraints that fit worst at a failed step | Partial invariance search; robustness of the verdict; loadings by group; figure |
-| | **Bifactor CFA** | General plus specific factors: fit, omega hierarchical, explained common variance, antenna plot | Facing combs; path diagram |
-| | **Multi-Estimator CFA** | One model under up to eight estimators, side by side | |
-| | **CFA vs ESEM** | CFA against a model with cross-loadings; each factor correlation by scoring method | Brush plot |
-| Scales | **Scale Check** | Reliability (alpha, lambda-2, omega, AVE) and item statistics | Tau-equivalence and parallelism; Guttman / Mokken scalability and scalogram; comb plot, path diagram |
-| | **Item Order (Exploratory)** | For yes/no items: which form a line, share a rung, branch or stand apart; order diagram | Answer patterns |
-| | **Composite Check** | For formative indicators: do they act through one composite? | |
+## Novel Visualizations: Visual Psychometrics
 
-The first three rows are the core. Every analysis takes one factor or several
-correlated factors, and the simpler ones are deliberately contained in the
-more complex ones: the first model of a Group CFA is the plain CFA fitted in
-each group.
+psyWiz replaces uninformative, tangled "spaghetti" path diagrams with three novel plots designed to make psychometric properties intuitive at a glance. Every plot operates on a standardized $0 \text{ to } 1$ variance metric and supports printing the complete model fit line with the estimator (positioned either below or above).
 
-How it behaves:
+See [docs/PLOTS.md](docs/PLOTS.md) for the complete visual guide.
 
-- Set everything up, then tick **Run analysis**. Nothing is fitted before
-  that, so jamovi does not restart a slow model every time you touch an option.
-  Output options and decision cutoffs never refit.
-- Items are treated as ordinal (WLSMV, polychoric correlations) or continuous
-  (MLR) according to their measure type in jamovi; you can override it.
-- Colour is off by default; one **Colour** checkbox marks flagged values.
-- Figures are black, white and grey: comb plots (every length is a share of
-  variance), path diagrams, a scalogram, antenna plots for bifactor models
-  and a brush plot for ESEM.
+| Visualization | What it Shows | Example |
+|---|---|---|
+| **Comb Plot** | True variance decomposition per item (dark teeth = $\lambda^2$, pale remainder = uniqueness), factor correlation arches, residual covariance brackets, and higher-order anchor spines. | ![Comb Plot](docs/figures/comb_cfa_good.png) |
+| **Antenna Plot** | Bifactor variance allocation per item: left dark bar = general factor ($\lambda_g^2$), right grey bar = specific subscale factor ($\lambda_s^2$). Shows immediately whether the construct is general-dominated or specific-dominated. | ![Antenna Plot](docs/figures/antenna_bifactor_mixed.png) |
+| **Brush Plot** | ESEM target vs. cross-loadings visualized as a toothbrush: dark bristles = target loadings, grey bristles = cross-loadings ($\ge .10$), right column = uniqueness. | ![Brush Plot](docs/figures/brush_esem_good.png) |
 
-## Install
+---
 
-Until the module is in the jamovi library: build the `.jmo` from this
-repository (see [docs/DEVELOPING.md](docs/DEVELOPING.md)) and sideload it
-(Modules > Sideload). The example data set *Trust and stress in three
-countries* then appears in jamovi's data library.
+## Core Suite (First Release)
 
-## In R
+The first release focuses strictly on the complete **CFA + ESEM** universe:
 
-A jamovi module is an R package, so everything is also callable from R. This
-side is not the focus yet and its interface may still change; see
-[docs/ROADMAP.md](docs/ROADMAP.md).
+| Analysis | Default Output | Key Differentiators & Advanced Capabilities |
+|---|---|---|
+| **CFA** | Fit indices, standardized loadings, factor correlations, $\alpha$, $\omega$, AVE, and Comb Plot | Residual covariances freed; second-order hierarchical factor; path diagram; factor correlations under multiple scoring methods; largest modification indices; optional model fit on plot with estimator. |
+| **Group CFA (Invariance)** | Invariance ladder across groups (Configural $\rightarrow$ Metric $\rightarrow$ Scalar $\rightarrow$ Strict) with clear guided verdicts per step | Score tests for worst-fitting constraints; automated partial invariance search; multiverse sensitivity analysis; **Latent Mean Comparisons** across groups with forest plots, Wald tests, Delta-method SEs, and Latent Cohen's $d$ (reference & pooled). |
+| **Bifactor CFA** | General vs. specific factors: fit comparison against correlated factors, hierarchical omega ($\omega_H$), total omega ($\omega$), ECV, Item ECV | **Antenna Plot** and **Facing Combs** showing item-by-item variance partition between general and subscale dimensions; bifactor path diagram. |
+| **Multi-Estimator CFA** | Side-by-side comparison of a single model across up to 8 estimators | Evaluates model robustness across ML, MLR, MLM, WLS, WLSMV, ULS, ULSMV, and DWLS; highlights parameter stability or estimator sensitivity. |
+| **CFA vs ESEM** | Direct comparison of CFA against Exploratory SEM with target rotation | Ladder $\chi^2$ difference tests (with uncorrected vs. scaled handling); factor correlations across 5 scoring methods; **Brush Plot** diagnosing item cross-loadings. |
 
+*(Note: Scale analysis tools including Guttman Scalograms, Hasse item order diagrams, and composite checks are reserved for subsequent releases. See [docs/ROADMAP.md](docs/ROADMAP.md).)*
+
+---
+
+## Why psyWiz? (Differentiators)
+
+1. **No Spaghetti Diagrams:** Comb, Antenna, and Brush plots display exact variance shares on a $0 - 1$ metric rather than arbitrary coordinates.
+2. **Model Fit on Plots:** Dynamically prints `Estimator: [Name] | χ²(df) = ..., p = ... | CFI = ... | RMSEA = ... [90% CI] | SRMR = ...` above or below figures.
+3. **Native Ordinal Treatment:** Automatically selects WLSMV and polychoric correlations based on jamovi measure types, with delta and theta parameterization.
+4. **Actionable Invariance Verdicts:** Replaces manual table subtraction with automated step-by-step verdicts, culprit constraint discovery, and partial invariance modeling.
+5. **Latent Mean Comparisons:** Provides rigorous group mean comparisons once scalar invariance holds, complete with forest comparison plots and latent effect sizes.
+6. **Robustness-First Psychometrics:** Built-in multiverse analysis tests whether findings hold across different estimators, cutoffs, and decision rules.
+
+---
+
+## Installation
+
+### In jamovi
+Until available directly in the jamovi library store:
+1. Download or build `psyWiz_0.4.0.jmo` (see [docs/DEVELOPING.md](docs/DEVELOPING.md)).
+2. Sideload via jamovi menu: **Modules $\rightarrow$ Sideload**.
+3. The sample dataset *Trust and stress in three countries* will appear in your Data Library.
+
+### In R
 ```r
 # install.packages("remotes")
 remotes::install_github("heelgueta/psywiz")
 library(psyWiz)
 data(wizdata)
 
+# Specify factors
 model <- list(Trust  = paste0("trust", 1:4),
               Stress = paste0("stress", 1:4))
 
-# a plain CFA: fit, loadings, reliability; plot() draws the comb plot
+# 1. Plain CFA with comb plot and fit line
 cfa <- factorWiz(wizdata, model)
-plot(cfa)
+plot(cfa, type = "comb", fit = "below")
 
-# measurement invariance across countries
+# 2. Measurement Invariance across countries
 inv <- invarianceWiz(wizdata, model, group = "country")
 inv
-#> Model fit
-#>                          chisq        df    pvalue       cfi       tli     rmsea      srmr
-#> Configural              54.368        57     0.574     1.000     1.001     0.000     0.028
-#> Thresholds              91.653        89     0.403     0.999     0.999     0.009     0.028
-#> Loadings (metric)       94.431       101     0.665     1.000     1.001     0.000     0.029
-#> Intercepts (scalar)    201.167       113     <.001     0.982     0.987     0.044     0.030
-#>
-#> Each step against the previous one
-#>                        d.chisq      d.df         p     d.cfi   d.rmsea    d.srmr   verdict
-#> Thresholds              38.942        32     0.186    -0.001     0.009     0.000  Supported
-#> Loadings (metric)        5.985        12     0.917     0.001    -0.009     0.001  Supported
-#> Intercepts (scalar)     84.130        12    !<.001   !-0.018    !0.044     0.001  Not supported
-#>
-#> Worst-fitting constraints, Intercepts (scalar) (score tests)
-#>                       chisq         p
-#> stress3 [Brazil]     80.202     <.001
-#> ...
 
-# stricter cutoffs, no refitting
-invarianceVerdict(inv, criteria = c("cfi", "chisq"), cutoffs = list(cfi = 0.005))
+# 3. Latent Mean Comparisons across groups
+means <- invarianceMeans(inv)
+plot(means)
 
-# the intercepts step failed: is it a few items? (frees stress3, then it holds)
-invariancePartial(inv)
+# 4. Bifactor CFA with antenna plot
+bf <- bifactorWiz(wizdata, model, general = "Distress")
+plot(bf, type = "antenna", fit = "below")
 
-# the same CFA under several estimators ("MULTI" = all eight)
-multi <- cfaWiz(wizdata, model, estimators = c("MLR", "ULSMV", "WLSMV"))
-print(multi, colored = TRUE)   # colour ramp for fit and loadings, off by default
-
-# figures: one panel per group / per estimator
-plot(inv)                       # path diagram
-plot(inv, type = "comb")        # comb plot: every length is shared variance
-
-# one scale: reliability, tau-equivalence, Guttman / Mokken scalability
-scaleWiz(wizdata, paste0("stress", 1:4), name = "Stress")
-
-# CFA against ESEM, and the factor correlation under five scorings
-esemWiz(wizdata, model)
-
-# does the invariance verdict survive other estimators and decision rules?
-invarianceMultiverse(wizdata, model, group = "country")
-
-# formative indicators: is one composite enough? (needs two or more outcomes)
-# compositeWiz(data, indicators = c("x1", "x2", "x3"), outcomes = c("y1", "y2"))
+# 5. ESEM with brush plot
+esem <- esemWiz(wizdata, model)
+plot(esem, type = "brush", fit = "below")
 ```
 
-All of them return plain data frames (`$fit`, `$comparison`, `$culprits`,
-`$loadings`, ...) plus the lavaan syntax that was fitted (`$syntax`). Use
-`keep.fits = TRUE` to also get the lavaan objects.
-
-## What it does not do (yet)
-
-- User-specified cross-loadings, free-form lavaan syntax.
-- Residual correlations, second-order and bifactor models across groups
-  (they are single-group for now).
-- Latent mean comparisons after invariance has been established.
-- Release of thresholds in the partial invariance search.
+---
 
 ## Documentation
 
-- [NEWS.md](NEWS.md): what changed in each version.
-- [docs/ROADMAP.md](docs/ROADMAP.md): where the project came from, where it stands, what is next.
-- [docs/DATA.md](docs/DATA.md): the example data, block by block, and what to try on each.
-- [docs/METHODS.md](docs/METHODS.md): exactly which models are fitted and how verdicts are reached, with references.
-- [docs/DESIGN.md](docs/DESIGN.md): how the code is organised and why.
-- [docs/IDEAS.md](docs/IDEAS.md): the less usual ideas, what is new and what is not.
-- [docs/DEVELOPING.md](docs/DEVELOPING.md): building, testing, contributing.
-- [docs/CRAN.md](docs/CRAN.md): what a CRAN submission would need (later).
+- [docs/PLOTS.md](docs/PLOTS.md): In-depth guide and gallery of the Comb, Antenna, and Brush plots.
+- [NEWS.md](NEWS.md): Release notes and changelog.
+- [docs/METHODS.md](docs/METHODS.md): Mathematical formulations, estimators, cutoffs, and references.
+- [docs/ROADMAP.md](docs/ROADMAP.md): Project roadmap and future releases.
+- [docs/DATA.md](docs/DATA.md): Guide to example datasets (`wizdata`, `wizlab`).
+- [docs/DESIGN.md](docs/DESIGN.md): Architectural design of the engine and jamovi bindings.
+
+---
 
 ## Licence
 

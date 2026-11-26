@@ -23,6 +23,7 @@ plainCfaOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             showPath = FALSE,
             pathNumbers = TRUE,
             pathWidth = TRUE,
+            plotFit = "none",
             highlight = FALSE,
             palette = "purpleorange",
             showMethods = FALSE,
@@ -136,6 +137,14 @@ plainCfaOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 "pathWidth",
                 pathWidth,
                 default=TRUE)
+            private$..plotFit <- jmvcore::OptionList$new(
+                "plotFit",
+                plotFit,
+                options=list(
+                    "none",
+                    "below",
+                    "above"),
+                default="none")
             private$..highlight <- jmvcore::OptionBool$new(
                 "highlight",
                 highlight,
@@ -180,6 +189,7 @@ plainCfaOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$.addOption(private$..showPath)
             self$.addOption(private$..pathNumbers)
             self$.addOption(private$..pathWidth)
+            self$.addOption(private$..plotFit)
             self$.addOption(private$..highlight)
             self$.addOption(private$..palette)
             self$.addOption(private$..showMethods)
@@ -203,6 +213,7 @@ plainCfaOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         showPath = function() private$..showPath$value,
         pathNumbers = function() private$..pathNumbers$value,
         pathWidth = function() private$..pathWidth$value,
+        plotFit = function() private$..plotFit$value,
         highlight = function() private$..highlight$value,
         palette = function() private$..palette$value,
         showMethods = function() private$..showMethods$value,
@@ -225,6 +236,7 @@ plainCfaOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         ..showPath = NA,
         ..pathNumbers = NA,
         ..pathWidth = NA,
+        ..plotFit = NA,
         ..highlight = NA,
         ..palette = NA,
         ..showMethods = NA,
@@ -246,6 +258,7 @@ plainCfaResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         higher = function() private$.items[["higher"]],
         resid = function() private$.items[["resid"]],
         comb = function() private$.items[["comb"]],
+        combDesc = function() private$.items[["combDesc"]],
         pathFig = function() private$.items[["pathFig"]],
         heat = function() private$.items[["heat"]]),
     private = list(),
@@ -623,7 +636,13 @@ plainCfaResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "resCov",
                     "secondOrder",
                     "higherName",
-                    "combThick")))
+                    "combThick",
+                    "plotFit")))
+            self$add(jmvcore::Html$new(
+                options=options,
+                name="combDesc",
+                title="How to Read the Comb Plot",
+                visible="(showComb)"))
             self$add(jmvcore::Image$new(
                 options=options,
                 name="pathFig",
@@ -641,7 +660,8 @@ plainCfaResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "secondOrder",
                     "higherName",
                     "pathNumbers",
-                    "pathWidth")))
+                    "pathWidth",
+                    "plotFit")))
             self$add(jmvcore::Html$new(
                 options=options,
                 name="heat",
@@ -722,6 +742,8 @@ plainCfaBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #'   standardized loadings on the arrows
 #' @param pathWidth \code{TRUE} (default) or \code{FALSE}, make the width of
 #'   an arrow proportional to its loading
+#' @param plotFit \code{'none'} (default), \code{'below'} or \code{'above'},
+#'   print the model fit measures and estimator on the figure
 #' @param highlight \code{TRUE} or \code{FALSE} (default), mark standardized
 #'   loadings below 0.40 in the table and add a summary of fit indices, loadings
 #'   and reliabilities on a colour ramp
@@ -746,6 +768,7 @@ plainCfaBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #'   \code{results$higher} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$resid} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$comb} \tab \tab \tab \tab \tab an image \cr
+#'   \code{results$combDesc} \tab \tab \tab \tab \tab a html \cr
 #'   \code{results$pathFig} \tab \tab \tab \tab \tab an image \cr
 #'   \code{results$heat} \tab \tab \tab \tab \tab a html \cr
 #' }
@@ -776,6 +799,7 @@ plainCfa <- function(
     showPath = FALSE,
     pathNumbers = TRUE,
     pathWidth = TRUE,
+    plotFit = "none",
     highlight = FALSE,
     palette = "purpleorange",
     showMethods = FALSE,
@@ -807,6 +831,7 @@ plainCfa <- function(
         showPath = showPath,
         pathNumbers = pathNumbers,
         pathWidth = pathWidth,
+        plotFit = plotFit,
         highlight = highlight,
         palette = palette,
         showMethods = showMethods,

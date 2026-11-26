@@ -30,6 +30,7 @@ scaleCheckOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             showPath = FALSE,
             pathNumbers = TRUE,
             pathWidth = TRUE,
+            plotFit = "none",
             highlight = FALSE,
             guttmanOrder = "entered",
             showScalogram = FALSE, ...) {
@@ -169,6 +170,14 @@ scaleCheckOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 "pathWidth",
                 pathWidth,
                 default=TRUE)
+            private$..plotFit <- jmvcore::OptionList$new(
+                "plotFit",
+                plotFit,
+                options=list(
+                    "none",
+                    "below",
+                    "above"),
+                default="none")
             private$..highlight <- jmvcore::OptionBool$new(
                 "highlight",
                 highlight,
@@ -209,6 +218,7 @@ scaleCheckOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$.addOption(private$..showPath)
             self$.addOption(private$..pathNumbers)
             self$.addOption(private$..pathWidth)
+            self$.addOption(private$..plotFit)
             self$.addOption(private$..highlight)
             self$.addOption(private$..guttmanOrder)
             self$.addOption(private$..showScalogram)
@@ -238,6 +248,7 @@ scaleCheckOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         showPath = function() private$..showPath$value,
         pathNumbers = function() private$..pathNumbers$value,
         pathWidth = function() private$..pathWidth$value,
+        plotFit = function() private$..plotFit$value,
         highlight = function() private$..highlight$value,
         guttmanOrder = function() private$..guttmanOrder$value,
         showScalogram = function() private$..showScalogram$value),
@@ -266,6 +277,7 @@ scaleCheckOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         ..showPath = NA,
         ..pathNumbers = NA,
         ..pathWidth = NA,
+        ..plotFit = NA,
         ..highlight = NA,
         ..guttmanOrder = NA,
         ..showScalogram = NA)
@@ -283,6 +295,7 @@ scaleCheckResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         scalability = function() private$.items[["scalability"]],
         scalogram = function() private$.items[["scalogram"]],
         comb = function() private$.items[["comb"]],
+        combDesc = function() private$.items[["combDesc"]],
         pathFig = function() private$.items[["pathFig"]]),
     private = list(),
     public=list(
@@ -563,7 +576,13 @@ scaleCheckResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "type",
                     "estimator",
                     "missing",
-                    "combThick")))
+                    "combThick",
+                    "plotFit")))
+            self$add(jmvcore::Html$new(
+                options=options,
+                name="combDesc",
+                title="How to Read the Comb Plot",
+                visible="(showComb)"))
             self$add(jmvcore::Image$new(
                 options=options,
                 name="pathFig",
@@ -579,7 +598,8 @@ scaleCheckResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "estimator",
                     "missing",
                     "pathNumbers",
-                    "pathWidth")))}))
+                    "pathWidth",
+                    "plotFit")))}))
 
 scaleCheckBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
     "scaleCheckBase",
@@ -664,6 +684,8 @@ scaleCheckBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #'   standardized loadings on the arrows
 #' @param pathWidth \code{TRUE} (default) or \code{FALSE}, make the width of
 #'   an arrow proportional to its loading
+#' @param plotFit \code{'none'} (default), \code{'below'} or \code{'above'},
+#'   print the model fit measures and estimator on the figure
 #' @param highlight \code{TRUE} or \code{FALSE} (default), show flagged
 #'   changes in fit, weak loadings (below 0.40) and unscalable items (H below
 #'   0.30) in red
@@ -682,6 +704,7 @@ scaleCheckBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #'   \code{results$scalability} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$scalogram} \tab \tab \tab \tab \tab an image \cr
 #'   \code{results$comb} \tab \tab \tab \tab \tab an image \cr
+#'   \code{results$combDesc} \tab \tab \tab \tab \tab a html \cr
 #'   \code{results$pathFig} \tab \tab \tab \tab \tab an image \cr
 #' }
 #'
@@ -718,6 +741,7 @@ scaleCheck <- function(
     showPath = FALSE,
     pathNumbers = TRUE,
     pathWidth = TRUE,
+    plotFit = "none",
     highlight = FALSE,
     guttmanOrder = "entered",
     showScalogram = FALSE) {
@@ -757,6 +781,7 @@ scaleCheck <- function(
         showPath = showPath,
         pathNumbers = pathNumbers,
         pathWidth = pathWidth,
+        plotFit = plotFit,
         highlight = highlight,
         guttmanOrder = guttmanOrder,
         showScalogram = showScalogram)

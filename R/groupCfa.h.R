@@ -29,11 +29,15 @@ groupCfaOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             showLoadings = FALSE,
             partial = FALSE,
             maxFree = 2,
+            latentMeans = FALSE,
+            latentMeansRef = "",
+            latentMeansPlot = FALSE,
             showComb = FALSE,
             combThick = FALSE,
             showPath = FALSE,
             pathNumbers = TRUE,
             pathWidth = TRUE,
+            plotFit = "none",
             highlight = FALSE,
             robust = FALSE, ...) {
 
@@ -187,6 +191,18 @@ groupCfaOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 default=2,
                 min=1,
                 max=20)
+            private$..latentMeans <- jmvcore::OptionBool$new(
+                "latentMeans",
+                latentMeans,
+                default=FALSE)
+            private$..latentMeansRef <- jmvcore::OptionString$new(
+                "latentMeansRef",
+                latentMeansRef,
+                default="")
+            private$..latentMeansPlot <- jmvcore::OptionBool$new(
+                "latentMeansPlot",
+                latentMeansPlot,
+                default=FALSE)
             private$..showComb <- jmvcore::OptionBool$new(
                 "showComb",
                 showComb,
@@ -207,6 +223,14 @@ groupCfaOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 "pathWidth",
                 pathWidth,
                 default=TRUE)
+            private$..plotFit <- jmvcore::OptionList$new(
+                "plotFit",
+                plotFit,
+                options=list(
+                    "none",
+                    "below",
+                    "above"),
+                default="none")
             private$..highlight <- jmvcore::OptionBool$new(
                 "highlight",
                 highlight,
@@ -238,11 +262,15 @@ groupCfaOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$.addOption(private$..showLoadings)
             self$.addOption(private$..partial)
             self$.addOption(private$..maxFree)
+            self$.addOption(private$..latentMeans)
+            self$.addOption(private$..latentMeansRef)
+            self$.addOption(private$..latentMeansPlot)
             self$.addOption(private$..showComb)
             self$.addOption(private$..combThick)
             self$.addOption(private$..showPath)
             self$.addOption(private$..pathNumbers)
             self$.addOption(private$..pathWidth)
+            self$.addOption(private$..plotFit)
             self$.addOption(private$..highlight)
             self$.addOption(private$..robust)
         }),
@@ -269,11 +297,15 @@ groupCfaOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         showLoadings = function() private$..showLoadings$value,
         partial = function() private$..partial$value,
         maxFree = function() private$..maxFree$value,
+        latentMeans = function() private$..latentMeans$value,
+        latentMeansRef = function() private$..latentMeansRef$value,
+        latentMeansPlot = function() private$..latentMeansPlot$value,
         showComb = function() private$..showComb$value,
         combThick = function() private$..combThick$value,
         showPath = function() private$..showPath$value,
         pathNumbers = function() private$..pathNumbers$value,
         pathWidth = function() private$..pathWidth$value,
+        plotFit = function() private$..plotFit$value,
         highlight = function() private$..highlight$value,
         robust = function() private$..robust$value),
     private = list(
@@ -299,11 +331,15 @@ groupCfaOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         ..showLoadings = NA,
         ..partial = NA,
         ..maxFree = NA,
+        ..latentMeans = NA,
+        ..latentMeansRef = NA,
+        ..latentMeansPlot = NA,
         ..showComb = NA,
         ..combThick = NA,
         ..showPath = NA,
         ..pathNumbers = NA,
         ..pathWidth = NA,
+        ..plotFit = NA,
         ..highlight = NA,
         ..robust = NA)
 )
@@ -319,10 +355,13 @@ groupCfaResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         culprits = function() private$.items[["culprits"]],
         partialLadder = function() private$.items[["partialLadder"]],
         partialReleased = function() private$.items[["partialReleased"]],
+        latentMeans = function() private$.items[["latentMeans"]],
+        latentMeansPlot = function() private$.items[["latentMeansPlot"]],
         robustSummary = function() private$.items[["robustSummary"]],
         robustGrid = function() private$.items[["robustGrid"]],
         loadings = function() private$.items[["loadings"]],
         comb = function() private$.items[["comb"]],
+        combDesc = function() private$.items[["combDesc"]],
         pathFig = function() private$.items[["pathFig"]]),
     private = list(),
     public=list(
@@ -680,6 +719,106 @@ groupCfaResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                         `type`="text"))))
             self$add(jmvcore::Table$new(
                 options=options,
+                name="latentMeans",
+                title="Latent Means Comparison",
+                rows=0,
+                visible="(latentMeans)",
+                refs=list(
+                    "hancock2001"),
+                clearWith=list(
+                    "factors",
+                    "group",
+                    "type",
+                    "estimator",
+                    "missing",
+                    "strict",
+                    "latentMeans",
+                    "latentMeansRef",
+                    "partial",
+                    "maxFree",
+                    "useCfi",
+                    "cutCfi",
+                    "useRmsea",
+                    "cutRmsea",
+                    "useSrmr",
+                    "cutSrmrLoad",
+                    "cutSrmr",
+                    "useChisq",
+                    "alpha"),
+                columns=list(
+                    list(
+                        `name`="factor", 
+                        `title`="Factor", 
+                        `type`="text", 
+                        `combineBelow`=TRUE),
+                    list(
+                        `name`="group", 
+                        `title`="Group", 
+                        `type`="text"),
+                    list(
+                        `name`="mean", 
+                        `title`="Difference", 
+                        `type`="number"),
+                    list(
+                        `name`="se", 
+                        `title`="SE", 
+                        `type`="number"),
+                    list(
+                        `name`="ci_lower", 
+                        `title`="95% CI Lower", 
+                        `type`="number"),
+                    list(
+                        `name`="ci_upper", 
+                        `title`="95% CI Upper", 
+                        `type`="number"),
+                    list(
+                        `name`="z", 
+                        `title`="z", 
+                        `type`="number"),
+                    list(
+                        `name`="p", 
+                        `title`="p", 
+                        `type`="number", 
+                        `format`="zto,pvalue"),
+                    list(
+                        `name`="d_ref", 
+                        `title`="Cohen's d (ref)", 
+                        `type`="number"),
+                    list(
+                        `name`="d_pool", 
+                        `title`="Cohen's d (pool)", 
+                        `type`="number"))))
+            self$add(jmvcore::Image$new(
+                options=options,
+                name="latentMeansPlot",
+                title="Latent Means Comparison Plot",
+                width=600,
+                height=400,
+                renderFun=".diagram",
+                visible="(latentMeansPlot)",
+                clearWith=list(
+                    "factors",
+                    "group",
+                    "type",
+                    "estimator",
+                    "missing",
+                    "strict",
+                    "latentMeans",
+                    "latentMeansRef",
+                    "partial",
+                    "maxFree",
+                    "useCfi",
+                    "cutCfi",
+                    "useRmsea",
+                    "cutRmsea",
+                    "useSrmr",
+                    "cutSrmrLoad",
+                    "cutSrmr",
+                    "useChisq",
+                    "alpha",
+                    "latentMeansPlot")))
+            self$add(jmvcore::Table$new(
+                options=options,
                 name="robustSummary",
                 title="Robustness of the Verdict",
                 rows=0,
@@ -784,7 +923,13 @@ groupCfaResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "estimator",
                     "missing",
                     "strict",
-                    "combThick")))
+                    "combThick",
+                    "plotFit")))
+            self$add(jmvcore::Html$new(
+                options=options,
+                name="combDesc",
+                title="How to Read the Comb Plot",
+                visible="(showComb)"))
             self$add(jmvcore::Image$new(
                 options=options,
                 name="pathFig",
@@ -801,7 +946,8 @@ groupCfaResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "missing",
                     "strict",
                     "pathNumbers",
-                    "pathWidth")))}))
+                    "pathWidth",
+                    "plotFit")))}))
 
 groupCfaBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
     "groupCfaBase",
@@ -887,6 +1033,13 @@ groupCfaBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #'   every step that is not supported
 #' @param maxFree an integer (default 2), the largest number of items released
 #'   per factor at one step
+#' @param latentMeans \code{TRUE} or \code{FALSE} (default), compare latent
+#'   factor means across groups once scalar or partial scalar invariance is
+#'   established
+#' @param latentMeansRef a string (default \code{''}), group to treat as
+#'   baseline (defaults to the first group)
+#' @param latentMeansPlot \code{TRUE} or \code{FALSE} (default), show a forest
+#'   plot of latent mean differences with 95\% confidence intervals
 #' @param showComb \code{TRUE} or \code{FALSE} (default), draw the comb plot:
 #'   one tooth per item, whose length is the variance the item shares with its
 #'   factor
@@ -898,6 +1051,8 @@ groupCfaBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #'   standardized loadings on the arrows
 #' @param pathWidth \code{TRUE} (default) or \code{FALSE}, make the width of
 #'   an arrow proportional to its loading
+#' @param plotFit \code{'none'} (default), \code{'below'} or \code{'above'},
+#'   print the model fit measures and estimator on the figure
 #' @param highlight \code{TRUE} or \code{FALSE} (default), show flagged
 #'   changes in fit in red
 #' @param robust \code{TRUE} or \code{FALSE} (default), refit the ladder under
@@ -913,10 +1068,13 @@ groupCfaBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #'   \code{results$culprits} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$partialLadder} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$partialReleased} \tab \tab \tab \tab \tab a table \cr
+#'   \code{results$latentMeans} \tab \tab \tab \tab \tab a table \cr
+#'   \code{results$latentMeansPlot} \tab \tab \tab \tab \tab an image \cr
 #'   \code{results$robustSummary} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$robustGrid} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$loadings} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$comb} \tab \tab \tab \tab \tab an image \cr
+#'   \code{results$combDesc} \tab \tab \tab \tab \tab a html \cr
 #'   \code{results$pathFig} \tab \tab \tab \tab \tab an image \cr
 #' }
 #'
@@ -952,11 +1110,15 @@ groupCfa <- function(
     showLoadings = FALSE,
     partial = FALSE,
     maxFree = 2,
+    latentMeans = FALSE,
+    latentMeansRef = "",
+    latentMeansPlot = FALSE,
     showComb = FALSE,
     combThick = FALSE,
     showPath = FALSE,
     pathNumbers = TRUE,
     pathWidth = TRUE,
+    plotFit = "none",
     highlight = FALSE,
     robust = FALSE) {
 
@@ -994,11 +1156,15 @@ groupCfa <- function(
         showLoadings = showLoadings,
         partial = partial,
         maxFree = maxFree,
+        latentMeans = latentMeans,
+        latentMeansRef = latentMeansRef,
+        latentMeansPlot = latentMeansPlot,
         showComb = showComb,
         combThick = combThick,
         showPath = showPath,
         pathNumbers = pathNumbers,
         pathWidth = pathWidth,
+        plotFit = plotFit,
         highlight = highlight,
         robust = robust)
 

@@ -298,6 +298,94 @@ items:
       - name: reason
         title: 'Why'
         type: text
+  - name: latentMeans
+    title: 'Latent Means Comparison'
+    type: Table
+    rows: 0
+    visible: (latentMeans)
+    refs:
+      - hancock2001
+    clearWith:
+      - factors
+      - group
+      - type
+      - estimator
+      - missing
+      - strict
+      - latentMeans
+      - latentMeansRef
+      - partial
+      - maxFree
+      - useCfi
+      - cutCfi
+      - useRmsea
+      - cutRmsea
+      - useSrmr
+      - cutSrmrLoad
+      - cutSrmr
+      - useChisq
+      - alpha
+    columns:
+      - name: factor
+        title: 'Factor'
+        type: text
+        combineBelow: true
+      - name: group
+        title: 'Group'
+        type: text
+      - name: mean
+        title: 'Difference'
+        type: number
+      - name: se
+        title: 'SE'
+        type: number
+      - name: ci_lower
+        title: '95% CI Lower'
+        type: number
+      - name: ci_upper
+        title: '95% CI Upper'
+        type: number
+      - name: z
+        title: 'z'
+        type: number
+      - name: p
+        title: 'p'
+        type: number
+        format: zto,pvalue
+      - name: d_ref
+        title: 'Cohen''s d (ref)'
+        type: number
+      - name: d_pool
+        title: 'Cohen''s d (pool)'
+        type: number
+  - name: latentMeansPlot
+    title: 'Latent Means Comparison Plot'
+    type: Image
+    width: 600
+    height: 400
+    renderFun: .diagram
+    visible: (latentMeansPlot)
+    clearWith:
+      - factors
+      - group
+      - type
+      - estimator
+      - missing
+      - strict
+      - latentMeans
+      - latentMeansRef
+      - partial
+      - maxFree
+      - useCfi
+      - cutCfi
+      - useRmsea
+      - cutRmsea
+      - useSrmr
+      - cutSrmrLoad
+      - cutSrmr
+      - useChisq
+      - alpha
+      - latentMeansPlot
   - name: robustSummary
     title: 'Robustness of the Verdict'
     type: Table
@@ -389,6 +477,11 @@ items:
       - missing
       - strict
       - combThick
+      - plotFit
+  - name: combDesc
+    title: 'How to Read the Comb Plot'
+    type: Html
+    visible: (showComb)
   - name: pathFig
     title: 'Path Diagram (Configural Model)'
     type: Image
@@ -405,4 +498,5 @@ items:
       - strict
       - pathNumbers
       - pathWidth
+      - plotFit
 ...

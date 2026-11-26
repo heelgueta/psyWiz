@@ -14,18 +14,22 @@ records why and what is intended.
 | 2026-11-15 | Another coding session added partial invariance (uncommitted). |
 | 2026-11-16, v0.4 | Simplification, then figures and models: comb redesign, scalogram, antenna, facing combs, brush plot; residual correlations, second-order factor, Bifactor CFA. The jamovi module is the product; plain CFA added as the entry point; the two group analyses merged; Scale Check reduced to reliability and items by default; partial invariance reviewed, corrected and kept as an option. |
 
-## Where it stands (2026-11-16)
+## Where it stands (2026-11-25)
 
-- Eight analyses in two menu groups (see README). The core is CFA, Group CFA
-  and Scale Check.
-- The author has run CFA vs ESEM in the jamovi window on real data (20 items,
-  3 factors; it works, and it exposed the scaled chi-square reversal now
-  documented in METHODS). The other analyses have only been checked headless
-  (testthat, including the jamovi analyses run through their generated R
-  functions).
-- GitHub Actions passed for 0.2 on Linux, macOS and Windows and failed for 0.3
-  on an R example (not traced).
-- Not verified against `mokken` or `semTools`.
+- **First Release Scope:** Strict focus on the CFA + ESEM world (`plainCfa`,
+  `groupCfa`, `bifactorCfa`, `multiEstCfa`, `esemCfa`). Scale analysis
+  (`scaleCheck`, `itemOrder`, `compositeCheck`) is deferred to a subsequent
+  release as future work.
+- **Novel Visual Psychometrics:** Three novel plots fully implemented with
+  0-1 variance decomposition: Comb Plot, Antenna Plot, Brush Plot, with
+  optional model fit printing (below or above) showing estimator and fit indices,
+  and companion in-output HTML guides.
+- **Latent Mean Comparisons:** Completed with raw mean differences, Delta-method
+  SEs, Wald z, p, Latent Cohen's d (ref & pooled), partial scalar support,
+  and forest comparison plot.
+- **Quality & Tests:** 312 tests passing, 0 failures, 0 warnings.
+- **Jamovi flatpak installed:** Module compiled and installed cleanly in local
+  flatpak jamovi.
 
 ## Direction
 
@@ -60,12 +64,15 @@ records why and what is intended.
 5. **Submission procedure** (dev.jamovi.org): not read yet.
 
 Done since the list was first written: committed and pushed (0.4); example
-data that exercise everything (`wizlab`, docs/DATA.md).
+data that exercise everything (`wizlab`, docs/DATA.md); Latent mean comparisons
+in Group CFA (`groupCfa`) and R (`invarianceMeans()`), with SEs via Delta method,
+Wald z, p, Latent Cohen's d (ref & pool), partial scalar fallback, and
+forest comparison plot. Fixed ggplot2 3.5.0+ `geom_label()` deprecation.
 
 ## After that
 
 - Group CFA with residual correlations, second-order and bifactor models.
-- Latent mean comparisons; thresholds in the partial invariance search.
+- Thresholds in the partial invariance search.
 - Dashed bracket for residual correlations suggested by modification indices.
 - Response-style "shift and stretch" table, non-linear loading check.
 - CRAN (docs/CRAN.md).

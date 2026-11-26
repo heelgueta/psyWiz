@@ -141,6 +141,11 @@ items:
       - type
       - estimator
       - missing
+      - plotFit
+  - name: antennaDesc
+    title: 'How to Read the Antenna Plot'
+    type: Html
+    visible: (showAntenna)
   - name: facing
     title: 'Facing Combs'
     type: Image
@@ -154,6 +159,11 @@ items:
       - type
       - estimator
       - missing
+      - plotFit
+  - name: facingDesc
+    title: 'How to Read the Facing Combs Plot'
+    type: Html
+    visible: (showFacing)
   - name: pathFig
     title: 'Path Diagram'
     type: Image
@@ -169,4 +179,5 @@ items:
       - missing
       - pathNumbers
       - pathWidth
+      - plotFit
 ...

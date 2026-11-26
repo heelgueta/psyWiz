@@ -20,7 +20,8 @@ bifactorCfaOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class
             showFacing = FALSE,
             showPath = FALSE,
             pathNumbers = TRUE,
-            pathWidth = TRUE, ...) {
+            pathWidth = TRUE,
+            plotFit = "none", ...) {
 
             super$initialize(
                 package="psyWiz",
@@ -116,6 +117,14 @@ bifactorCfaOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class
                 "pathWidth",
                 pathWidth,
                 default=TRUE)
+            private$..plotFit <- jmvcore::OptionList$new(
+                "plotFit",
+                plotFit,
+                options=list(
+                    "none",
+                    "below",
+                    "above"),
+                default="none")
 
             self$.addOption(private$..factors)
             self$.addOption(private$..generalName)
@@ -130,6 +139,7 @@ bifactorCfaOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class
             self$.addOption(private$..showPath)
             self$.addOption(private$..pathNumbers)
             self$.addOption(private$..pathWidth)
+            self$.addOption(private$..plotFit)
         }),
     active = list(
         factors = function() private$..factors$value,
@@ -144,7 +154,8 @@ bifactorCfaOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class
         showFacing = function() private$..showFacing$value,
         showPath = function() private$..showPath$value,
         pathNumbers = function() private$..pathNumbers$value,
-        pathWidth = function() private$..pathWidth$value),
+        pathWidth = function() private$..pathWidth$value,
+        plotFit = function() private$..plotFit$value),
     private = list(
         ..factors = NA,
         ..generalName = NA,
@@ -158,7 +169,8 @@ bifactorCfaOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class
         ..showFacing = NA,
         ..showPath = NA,
         ..pathNumbers = NA,
-        ..pathWidth = NA)
+        ..pathWidth = NA,
+        ..plotFit = NA)
 )
 
 bifactorCfaResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
@@ -170,7 +182,9 @@ bifactorCfaResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class
         indices = function() private$.items[["indices"]],
         loadings = function() private$.items[["loadings"]],
         antenna = function() private$.items[["antenna"]],
+        antennaDesc = function() private$.items[["antennaDesc"]],
         facing = function() private$.items[["facing"]],
+        facingDesc = function() private$.items[["facingDesc"]],
         pathFig = function() private$.items[["pathFig"]]),
     private = list(),
     public=list(
@@ -340,7 +354,13 @@ bifactorCfaResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class
                     "generalName",
                     "type",
                     "estimator",
-                    "missing")))
+                    "missing",
+                    "plotFit")))
+            self$add(jmvcore::Html$new(
+                options=options,
+                name="antennaDesc",
+                title="How to Read the Antenna Plot",
+                visible="(showAntenna)"))
             self$add(jmvcore::Image$new(
                 options=options,
                 name="facing",
@@ -354,7 +374,13 @@ bifactorCfaResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class
                     "generalName",
                     "type",
                     "estimator",
-                    "missing")))
+                    "missing",
+                    "plotFit")))
+            self$add(jmvcore::Html$new(
+                options=options,
+                name="facingDesc",
+                title="How to Read the Facing Combs Plot",
+                visible="(showFacing)"))
             self$add(jmvcore::Image$new(
                 options=options,
                 name="pathFig",
@@ -370,7 +396,8 @@ bifactorCfaResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class
                     "estimator",
                     "missing",
                     "pathNumbers",
-                    "pathWidth")))}))
+                    "pathWidth",
+                    "plotFit")))}))
 
 bifactorCfaBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
     "bifactorCfaBase",
@@ -439,6 +466,8 @@ bifactorCfaBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #'   standardized loadings on the arrows
 #' @param pathWidth \code{TRUE} (default) or \code{FALSE}, make the width of
 #'   an arrow proportional to its loading
+#' @param plotFit \code{'none'} (default), \code{'below'} or \code{'above'},
+#'   print the model fit measures and estimator on the figure
 #' @return A results object containing:
 #' \tabular{llllll}{
 #'   \code{results$todo} \tab \tab \tab \tab \tab a html \cr
@@ -446,7 +475,9 @@ bifactorCfaBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #'   \code{results$indices} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$loadings} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$antenna} \tab \tab \tab \tab \tab an image \cr
+#'   \code{results$antennaDesc} \tab \tab \tab \tab \tab a html \cr
 #'   \code{results$facing} \tab \tab \tab \tab \tab an image \cr
+#'   \code{results$facingDesc} \tab \tab \tab \tab \tab a html \cr
 #'   \code{results$pathFig} \tab \tab \tab \tab \tab an image \cr
 #' }
 #'
@@ -473,7 +504,8 @@ bifactorCfa <- function(
     showFacing = FALSE,
     showPath = FALSE,
     pathNumbers = TRUE,
-    pathWidth = TRUE) {
+    pathWidth = TRUE,
+    plotFit = "none") {
 
     if ( ! requireNamespace("jmvcore", quietly=TRUE))
         stop("bifactorCfa requires jmvcore to be installed (restart may be required)")
@@ -496,7 +528,8 @@ bifactorCfa <- function(
         showFacing = showFacing,
         showPath = showPath,
         pathNumbers = pathNumbers,
-        pathWidth = pathWidth)
+        pathWidth = pathWidth,
+        plotFit = plotFit)
 
     analysis <- bifactorCfaClass$new(
         options = options,

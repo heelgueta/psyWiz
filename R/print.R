@@ -183,7 +183,52 @@ print.psw_invariance <- function(x, colored = FALSE, culprits = 5L, ...) {
     cat("\n")
     print(x$partial, colored = colored)
   }
+  if (!is.null(x$means)) {
+    cat("\n")
+    print(x$means, colored = colored)
+  }
   psw_print_notes(x$notes)
+  invisible(x)
+}
+
+#' @rdname print.psyWiz
+#' @export
+print.psw_means <- function(x, ...) {
+  if (!isTRUE(attr(x, "supported"))) {
+    psw_header("psyWiz: latent mean comparisons across groups", FALSE)
+    cat("Scalar invariance is not supported across groups. Latent means cannot be compared.\n")
+    return(invisible(x))
+  }
+  ref <- attr(x, "reference")
+  mod_type <- attr(x, "model_type")
+  psw_header("psyWiz: latent mean comparisons across groups", FALSE)
+  cat(sprintf("Reference group: %s (baseline mean = 0.00)%s\n", ref,
+              if (identical(mod_type, "partial")) " [partial scalar invariance]" else " [full scalar invariance]"))
+  if (identical(mod_type, "partial") && length(attr(x, "freed_items")))
+    cat(sprintf("Freed items: %s\n", paste(unique(attr(x, "freed_items")), collapse = ", ")))
+
+  df <- as.data.frame(x)
+  fmt_num <- function(val, digits = 3L) {
+    ifelse(is.na(val), "      NA", formatC(val, digits = digits, format = "f", width = 8L))
+  }
+  fmt_p <- function(p) {
+    ifelse(is.na(p), "      NA", ifelse(p < 0.001, "   <.001", formatC(p, digits = 3L, format = "f", width = 8L)))
+  }
+  ci_txt <- sprintf("[%s, %s]", fmt_num(df$ci_lower), fmt_num(df$ci_upper))
+  out_df <- data.frame(
+    Factor = df$factor,
+    Group = df$group,
+    Diff = fmt_num(df$mean),
+    SE = fmt_num(df$se),
+    `95% CI` = ci_txt,
+    z = fmt_num(df$z, 2L),
+    p = fmt_p(df$p),
+    `d (ref)` = fmt_num(df$d_ref),
+    `d (pool)` = fmt_num(df$d_pool),
+    check.names = FALSE, stringsAsFactors = FALSE
+  )
+  print(out_df, row.names = FALSE)
+  psw_print_notes(attr(x, "notes"))
   invisible(x)
 }
 

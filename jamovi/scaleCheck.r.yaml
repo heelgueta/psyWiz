@@ -237,6 +237,11 @@ items:
       - estimator
       - missing
       - combThick
+      - plotFit
+  - name: combDesc
+    title: 'How to Read the Comb Plot'
+    type: Html
+    visible: (showComb)
   - name: pathFig
     title: 'Path Diagram'
     type: Image
@@ -252,4 +257,5 @@ items:
       - missing
       - pathNumbers
       - pathWidth
+      - plotFit
 ...

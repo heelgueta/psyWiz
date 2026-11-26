@@ -143,4 +143,14 @@
         `publisher`="Methods of Psychological Research Online", 
         `volume`=8, 
         `issue`=1, 
-        `pages`="43-79"))
+        `pages`="43-79"), 
+    `hancock2001`=list(
+        `type`="article", 
+        `author`="Hancock, G. R.", 
+        `year`=2001, 
+        `title`="Effect size, power, and sample size determination for structured means modeling and latent growth modeling", 
+        `publisher`="Journal of Educational and Behavioral Statistics", 
+        `volume`=26, 
+        `issue`=2, 
+        `pages`="149-169", 
+        `url`="https://doi.org/10.3102/10769986026002149"))

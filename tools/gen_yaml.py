@@ -140,14 +140,18 @@ def o_figures(comb=False, path=False):
             o_bool("combThick", "Tooth thickness by item variance", False,
                    "`TRUE` or `FALSE` (default), make each tooth as thick as the item's observed variance is large") +
             o_bool("showPath", "Path diagram", path, f"{d(path)}, draw the path diagram") +
-            O_PATH_TWEAKS)
+            O_PATH_TWEAKS +
+            O_PLOT_FIT)
 
 
 O_PATH_TWEAKS = (o_bool("pathNumbers", "Loadings on the arrows", True,
                         "`TRUE` (default) or `FALSE`, print the standardized loadings on the arrows") +
                  o_bool("pathWidth", "Arrow width by loading", True,
                         "`TRUE` (default) or `FALSE`, make the width of an arrow proportional to its loading"))
-FIG_KEYS = ["combThick", "pathNumbers", "pathWidth"]
+O_PLOT_FIT = o_list("plotFit", "Model fit on plot",
+                    [("none", "Do not show"), ("below", "Below plot"), ("above", "Above plot")],
+                    "none", "`'none'` (default), `'below'` or `'above'`, print the model fit measures and estimator on the figure")
+FIG_KEYS = ["combThick", "pathNumbers", "pathWidth", "plotFit"]
 
 
 # ------------------------------------------------------------------ results --
@@ -195,8 +199,9 @@ def image(name, title, clear_keys, visible):
 
 
 def figures(refit, comb_title="Comb Plot", path_title="Path Diagram"):
-    return (image("comb", comb_title, refit + ["combThick"], "(showComb)") +
-            image("pathFig", path_title, refit + ["pathNumbers", "pathWidth"], "(showPath)"))
+    return (image("comb", comb_title, refit + ["combThick", "plotFit"], "(showComb)") +
+            f"  - name: combDesc\n    title: 'How to Read the Comb Plot'\n    type: Html\n    visible: (showComb)\n" +
+            image("pathFig", path_title, refit + ["pathNumbers", "pathWidth", "plotFit"], "(showPath)"))
 
 
 # Colour is off by default everywhere. `highlight` switches it on, `palette` chooses the ramp
@@ -331,7 +336,8 @@ UI_PATH = ui_check_kids("showPath", ["pathNumbers", "pathWidth"])
 
 
 def ui_figures(extra=()):
-    return ui_collapse("Figures", [ui_box([ui_check_kids("showComb", ["combThick"]), UI_PATH] +
+    return ui_collapse("Figures", [ui_box([ui_check_kids("showComb", ["combThick"]), UI_PATH,
+                                          ui_ctl("ComboBox", "plotFit", 10)] +
                                           [c if isinstance(c, str) else ui_ctl(c[0], c[1], 10, c[2]) for c in extra], 6)])
 
 
@@ -512,6 +518,12 @@ def group_cfa():
                 "largest score tests at every step that is not supported")
     a += o_num("maxFree", "Items released per factor, at most", 2, 1, 20,
                "an integer (default 2), the largest number of items released per factor at one step", "Integer")
+    a += o_bool("latentMeans", "Compare latent means across groups", False,
+                "`TRUE` or `FALSE` (default), compare latent factor means across groups once scalar or partial scalar invariance is established")
+    a += o_str("latentMeansRef", "Reference group for latent means", "",
+               "a string (default `''`), group to treat as baseline (defaults to the first group)")
+    a += o_bool("latentMeansPlot", "Latent means comparison plot", False,
+                "`TRUE` or `FALSE` (default), show a forest plot of latent mean differences with 95% confidence intervals")
     a += o_figures()
     a += o_bool("highlight", "Colour", False, "`TRUE` or `FALSE` (default), show flagged changes in fit in red")
     a += o_bool("robust", "Robustness of the verdict", False,
@@ -541,6 +553,16 @@ def group_cfa():
                 col("df", "df", "integer"), col("p", "p", fmt="zto,pvalue"),
                 col("reason", "Why", "text")],
                refit + CRITERIA_KEYS + ["partial", "maxFree"], visible="(partial)")
+    means_keys = refit + ["latentMeans", "latentMeansRef", "partial", "maxFree"] + CRITERIA_KEYS
+    r += table("latentMeans", "Latent Means Comparison",
+               [col("factor", "Factor", "text", extra=COMBINE), col("group", "Group", "text"),
+                col("mean", "Difference", "number"), col("se", "SE", "number"),
+                col("ci_lower", "95% CI Lower", "number"), col("ci_upper", "95% CI Upper", "number"),
+                col("z", "z", "number"), col("p", "p", fmt="zto,pvalue"),
+                col("d_ref", "Cohen's d (ref)", "number"), col("d_pool", "Cohen's d (pool)", "number")],
+               means_keys, visible="(latentMeans)", refs=["hancock2001"])
+    r += image("latentMeansPlot", "Latent Means Comparison Plot",
+               means_keys + ["latentMeansPlot"], "(latentMeansPlot)")
     robust_keys = model_keys + ["group", "strict"]
     r += table("robustSummary", "Robustness of the Verdict",
                [col("model", "Step", "text"), col("supported", "Supported in", "text"),
@@ -559,6 +581,20 @@ def group_cfa():
     u = head_u(name, title) + ui_supplier([UI_FACTORS, ui_target("Grouping Variable", "group", True)])
     u += UI_RUN + ui_model([("CheckBox", "strict")]) + UI_CRITERIA
     u += ui_output([("CheckBox", "showLoadings", ""), ("CheckBox", "highlight", "")]) + ui_figures()
+    pad = " " * 10
+    u_means = (
+        f"{pad}- type: CheckBox\n"
+        f"{pad}  name: latentMeans\n"
+        f"{pad}  children:\n"
+        f"{pad}    - type: TextBox\n"
+        f"{pad}      name: latentMeansRef\n"
+        f"{pad}      format: string\n"
+        f"{pad}      enable: (latentMeans)\n"
+        f"{pad}    - type: CheckBox\n"
+        f"{pad}      name: latentMeansPlot\n"
+        f"{pad}      enable: (latentMeans)\n"
+    )
+    u += ui_output([u_means], "Latent Means")
     u += ui_output([("ComboBox", "culprits", ""), ("TextBox", "culpritsN", ""),
                     ui_check_with("partial", ["maxFree"]), ("CheckBox", "robust", "")], "When a Step Fails")
     write(name, a, r, u)
@@ -653,7 +689,7 @@ def esem_cfa():
                 "`TRUE` or `FALSE` (default), show cross-loadings of 0.30 or more and own-factor loadings below "
                 "0.40 in red")
     a += o_bool("showBrush", "Brush plot", False,
-                "`TRUE` or `FALSE` (default), draw the ESEM loadings of every item on every factor")
+                "`TRUE` or `FALSE` (default), draw the ESEM loadings of every item on every factor") + O_PLOT_FIT
 
     r = head_r(name, title, ["psyWiz", "lavaan", "marsh2014"]) + TODO
     r += table("fit", "Model Fit", [col("model", "Model", "text"), col("chisqStd", "Uncorrected χ²")] + FIT_COLS, refit)
@@ -671,11 +707,12 @@ def esem_cfa():
                 col("scores", "Regression", fmt="zto", extra=sup), col("bartlett", "Bartlett", fmt="zto", extra=sup),
                 col("esem", "ESEM", fmt="zto")], refit, visible="(showCors)")
 
-    r += image("brush", "Brush Plot (ESEM)", refit, "(showBrush)")
+    r += image("brush", "Brush Plot (ESEM)", refit + ["plotFit"], "(showBrush)")
+    r += f"  - name: brushDesc\n    title: 'How to Read the Brush Plot'\n    type: Html\n    visible: (showBrush)\n"
 
     u = head_u(name, title) + ui_supplier([UI_FACTORS]) + UI_RUN + ui_model([("ComboBox", "rotation")])
     u += ui_output([("CheckBox", "showLoadings", ""), ("CheckBox", "showCors", ""), ("CheckBox", "highlight", ""),
-                    ("CheckBox", "showBrush", "")])
+                    ("CheckBox", "showBrush", ""), ("ComboBox", "plotFit", "")])
     write(name, a, r, u)
 
 
@@ -707,6 +744,7 @@ def bifactor_cfa():
                 "`TRUE` or `FALSE` (default), draw the general and the specific combs growing towards each other, "
                 "with the unique variance of each item in between")
     a += o_bool("showPath", "Path diagram", False, "`TRUE` or `FALSE` (default), draw the path diagram") + O_PATH_TWEAKS
+    a += O_PLOT_FIT
 
     r = head_r(name, title, ["psyWiz", "lavaan", "rodriguez2016"]) + TODO
     r += table("fit", "Model Fit", [col("model", "Model", "text")] + FIT_COLS, refit)
@@ -719,15 +757,17 @@ def bifactor_cfa():
                 col("general", "General", fmt="zto"), col("own", "Specific", fmt="zto"),
                 col("unique", "Unique", fmt="zto"), col("iecv", "Item ECV", fmt="zto")], refit,
                visible="(showLoadings)")
-    r += image("antenna", "Antenna Plot", refit, "(showAntenna)")
-    r += image("facing", "Facing Combs", refit, "(showFacing)")
-    r += image("pathFig", "Path Diagram", refit + ["pathNumbers", "pathWidth"], "(showPath)")
+    r += image("antenna", "Antenna Plot", refit + ["plotFit"], "(showAntenna)")
+    r += f"  - name: antennaDesc\n    title: 'How to Read the Antenna Plot'\n    type: Html\n    visible: (showAntenna)\n"
+    r += image("facing", "Facing Combs", refit + ["plotFit"], "(showFacing)")
+    r += f"  - name: facingDesc\n    title: 'How to Read the Facing Combs Plot'\n    type: Html\n    visible: (showFacing)\n"
+    r += image("pathFig", "Path Diagram", refit + ["pathNumbers", "pathWidth", "plotFit"], "(showPath)")
 
     u = head_u(name, title) + ui_supplier([UI_FACTORS.replace("label: Factors", "label: Specific Factors")])
     u += ui_box([ui_ctl("TextBoxS", "generalName")]) + UI_RUN + ui_model(parallel=False)
     u += ui_output([("CheckBox", "showIndices", ""), ("CheckBox", "showLoadings", "")], collapsed=False)
     u += ui_collapse("Figures", [ui_box([ui_ctl("CheckBox", "showAntenna", 10), ui_ctl("CheckBox", "showFacing", 10),
-                                         UI_PATH], 6)], collapsed=False)
+                                         UI_PATH, ui_ctl("ComboBox", "plotFit", 10)], 6)], collapsed=False)
     write(name, a, r, u)
 
 

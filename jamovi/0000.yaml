@@ -9,11 +9,12 @@ maintainer: Herman Elgueta <herman.elgueta@umag.cl>
 date: '2026-11-16'
 type: R
 description: >-
-  Confirmatory factor analysis by drag and drop, with ordinal items handled as
-  ordinal: a plain CFA with comb plots, measurement invariance across groups
-  step by step (with a verdict for each step and the constraints that fit
-  worst), comparisons across estimators and against ESEM, and reliability and
-  scalability checks for single scales.
+  Confirmatory factor analysis (CFA) and exploratory structural equation
+  modeling (ESEM) with ordinal items handled as ordinal: plain CFA with comb
+  plots and 2nd-order structures, step-by-step measurement invariance across
+  groups (verdicts, score tests, partial invariance, and latent means), bifactor
+  models with antenna plots, multi-estimator comparisons side by side, and CFA
+  vs ESEM with brush plots.
 analyses:
   - title: CFA
     name: plainCfa
@@ -76,33 +77,10 @@ analyses:
       factor), and lists each factor correlation as obtained from composite
       scores, corrected composites, the CFA, factor scores and the ESEM.
     category: analyses
-  - title: Scale Check
-    name: scaleCheck
-    ns: psyWiz
-    menuGroup: psyWiz
-    menuSubgroup: Scales
-    menuTitle: Scale Check
-    description: >
-      Checks one scale: reliability (alpha, lambda-2, omega, AVE) and item
-      statistics. On request: whether the items are congeneric, tau-equivalent
-      or parallel (which decides whether alpha and unit-weighted sum scores are
-      justified), and Guttman / Mokken scalability.
-    category: analyses
-  - title: Item Order (Exploratory)
-    name: itemOrder
-    ns: psyWiz
-    menuGroup: psyWiz
-    menuSubgroup: Scales
-    menuTitle: Item Order (Exploratory)
-    description: >
-      Looks for order among yes/no items without a hypothesis: which items form
-      a cumulative line, which are interchangeable, which branch and which stand
-      apart. Combines Mokken-type scales, implications between items drawn as a
-      Hasse diagram, and the answer patterns.
-    category: analyses
   - title: Composite Check
     name: compositeCheck
     ns: psyWiz
+    category: analyses
     menuGroup: psyWiz
     menuSubgroup: Scales
     menuTitle: Composite Check
@@ -111,7 +89,30 @@ analyses:
       outcomes through one weighted composite (rank-one reduced-rank
       regression), and how much is lost by using a unit-weighted sum, in sample
       and in cross-validation.
+  - title: Item Order (Exploratory)
+    name: itemOrder
+    ns: psyWiz
     category: analyses
+    menuGroup: psyWiz
+    menuSubgroup: Scales
+    menuTitle: Item Order (Exploratory)
+    description: >
+      Looks for order among yes/no items without a hypothesis: which items form
+      a cumulative line, which are interchangeable, which branch and which stand
+      apart. Combines Mokken-type scales, implications between items drawn as a
+      Hasse diagram, and the answer patterns.
+  - title: Scale Check
+    name: scaleCheck
+    ns: psyWiz
+    category: analyses
+    menuGroup: psyWiz
+    menuSubgroup: Scales
+    menuTitle: Scale Check
+    description: >
+      Checks one scale: reliability (alpha, lambda-2, omega, AVE) and item
+      statistics. On request: whether the items are congeneric, tau-equivalent
+      or parallel (which decides whether alpha and unit-weighted sum scores are
+      justified), and Guttman / Mokken scalability.
 datasets:
   - name: Trust and stress in three countries
     path: wizdata.omv

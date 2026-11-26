@@ -3,6 +3,40 @@
 The module is now the focus; the R interface stays but is not advertised.
 The menu was reorganised around a simple core. See `docs/ROADMAP.md`.
 
+## Latent mean comparisons
+
+- New feature in **Group CFA (Invariance)** (`groupCfa`) and R API (`invarianceMeans()`):
+  compares factor means across groups relative to a baseline group (defaults to the
+  first group) once scalar or partial scalar invariance is supported.
+- Reports raw mean differences ($\Delta \kappa$), standard errors derived from the
+  parameter covariance matrix via the Delta method, Wald $z$ tests, $p$-values, 95%
+  confidence intervals, and standardized effect sizes: Latent Cohen's $d$ using the
+  reference group factor standard deviation and pooled factor standard deviation
+  (Hancock, 2001).
+- In R, `invarianceMeans(x, reference = NULL)` operates on `psw_invariance` and
+  `psw_partial` objects, or can be run directly inside `invarianceWiz(..., means = TRUE)`.
+- If scalar invariance is not supported across groups, an informative message explains
+  why means cannot be compared.
+- New **Latent Means Comparison Plot** (`plot(m)` or `plot(x, type = "means")` in R;
+  option `latentMeansPlot` in jamovi): an intuitive forest/comparison plot displaying
+  mean differences and confidence intervals by factor with reference group baseline.
+- Fixed `geom_label()` deprecation warning with `linewidth`.
+
+## Visual Psychometrics & Plot Features
+
+- **Model Fit on Plots:** All figures (Comb, Path, Antenna, Facing Combs, Brush, Latent Means)
+  support optional model fit printing positioned either `below` or `above`, including
+  the estimator (e.g. `Estimator: MLR | χ²(51) = 68.42, p = .052 | CFI = .991 | RMSEA = .023 [.000, .038] | SRMR = .028`).
+- **In-Output HTML Interpretation Guides:** Added informative, collapsible guides in jamovi
+  results below the Comb, Antenna, Facing Combs, and Brush plots explaining how to read
+  spines, teeth, variance allocations, and bristle cross-loadings.
+- **Visual Psychometrics Guide (`docs/PLOTS.md`):** Complete documentation of the three
+  novel plots with 9 high-resolution example figures illustrating good, poor, and mixed
+  psychometric conditions.
+- **First Release Scope:** First release focused exclusively on the CFA + ESEM universe
+  (`plainCfa`, `groupCfa`, `bifactorCfa`, `multiEstCfa`, `esemCfa`), deferring scale checks
+  to future releases.
+
 ## Menu
 
 - New **CFA** analysis (`plainCfa` in jamovi, `factorWiz()` in R): one factor

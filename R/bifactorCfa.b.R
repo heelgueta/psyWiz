@@ -68,11 +68,25 @@ bifactorCfaClass <- if (requireNamespace("jmvcore", quietly = TRUE)) R6::R6Class
           "explained variance that is general."), init = FALSE)
       }
 
-      if (opt$showAntenna) psw_jmv_plot(out$antenna, "antenna", list(L = res$loadings, general = info$general))
-      if (opt$showFacing) psw_jmv_plot(out$facing, "facing", list(L = res$loadings, general = info$general))
+      fit_text <- if (!is.null(opt$plotFit) && opt$plotFit != "none" && !is.null(res$fit)) {
+        psw_format_fit_line(res$fit[1L, , drop = FALSE], info$estimator)
+      } else NULL
+      fit_pos <- if (!is.null(opt$plotFit)) opt$plotFit else "none"
+
+      if (opt$showAntenna) {
+        psw_jmv_plot(out$antenna, "antenna", list(L = res$loadings, general = info$general,
+                                                  fit_text = fit_text, fit_pos = fit_pos))
+        if (!is.null(out$antennaDesc)) out$antennaDesc$setContent(psw_jmv_antenna_desc())
+      }
+      if (opt$showFacing) {
+        psw_jmv_plot(out$facing, "facing", list(L = res$loadings, general = info$general,
+                                                fit_text = fit_text, fit_pos = fit_pos))
+        if (!is.null(out$facingDesc)) out$facingDesc$setContent(psw_jmv_facing_desc())
+      }
       if (opt$showPath)
         psw_jmv_plot(out$pathFig, "bfpath", list(L = res$loadings, general = info$general,
-                                              numbers = opt$pathNumbers, width = opt$pathWidth))
+                                                 numbers = opt$pathNumbers, width = opt$pathWidth,
+                                                 fit_text = fit_text, fit_pos = fit_pos))
       invisible()
     },
     .diagram = function(image, ...) psw_jmv_diagram(image)

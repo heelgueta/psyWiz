@@ -1,19 +1,19 @@
 Package: psyWiz
 Type: Package
-Title: Psychometric Wizardry for Scales and Factor Models
+Title: Confirmatory Factor Analysis, Measurement Invariance, and Visual Psychometrics
 Version: 0.4.0
 Authors@R: person("Herman", "Elgueta", email = "herman.elgueta@umag.cl", role = c("aut", "cre"),
     comment = c(ORCID = "0000-0002-6764-5490"))
-Description: Tools for scale psychometrics built on 'lavaan', usable from R
-    and as a 'jamovi' module. Checks one scale (reliability, tests of
-    tau-equivalence and parallelism, Guttman and Mokken scalability); tests
-    measurement invariance across groups step by step for continuous and for
-    ordinal items (Wu & Estabrook, 2016), with verdicts, score tests for the
-    worst-fitting constraints and a multiverse check of the verdicts; compares
-    estimators, and confirmatory against exploratory structural equation
-    models, side by side; and checks whether formative indicators act through
-    a single composite. Independent models are fitted on several processor
-    cores when that saves time.
+Description: Tools for confirmatory factor analysis and structural equation
+    modeling built on 'lavaan', usable from R and as a 'jamovi' module. Features
+    native ordinal item handling (WLSMV), measurement invariance testing across
+    groups step by step with guided verdicts, score tests for worst-fitting
+    constraints, automated partial invariance, latent mean comparisons with
+    forest plots, bifactor modeling with hierarchical omega and explained common
+    variance, multi-estimator evaluations, exploratory structural equation
+    modeling (ESEM) with target rotation, and novel variance-proportional
+    visualizations (Comb, Antenna, and Brush plots) with optional model fit
+    printing.
 License: GPL-3
 URL: https://github.com/heelgueta/psywiz
 BugReports: https://github.com/heelgueta/psywiz/issues

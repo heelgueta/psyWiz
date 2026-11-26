@@ -180,4 +180,9 @@ items:
       - estimator
       - missing
       - rotation
+      - plotFit
+  - name: brushDesc
+    title: 'How to Read the Brush Plot'
+    type: Html
+    visible: (showBrush)
 ...

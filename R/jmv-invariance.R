@@ -196,11 +196,58 @@ psw_jmv_inv_run <- function(self, factors) {
     }
   }
 
+  # ---- latent mean comparisons ----
+  if (opt$latentMeans || opt$latentMeansPlot) {
+    ref_grp <- if (nzchar(opt$latentMeansRef)) trimws(opt$latentMeansRef) else NULL
+    if (isTRUE(opt$partial) && !is.null(out$partialLadder$state) && is.list(out$partialLadder$state)) {
+      res$partial <- out$partialLadder$state
+    }
+    means_obj <- tryCatch(
+      invarianceMeans(res, reference = ref_grp),
+      error = function(e) conditionMessage(e)
+    )
+
+    if (is.character(means_obj)) {
+      out$latentMeans$setNote("err", paste("Latent means could not be computed:", means_obj), init = FALSE)
+    } else if (isTRUE(opt$latentMeans)) {
+      if (!isTRUE(attr(means_obj, "supported"))) {
+        out$latentMeans$setNote("unsupported",
+          "Latent means cannot be compared: scalar invariance is not supported across groups. Scalar invariance requires equal loadings and intercepts (or thresholds), ensuring that group differences in factor means reflect true construct differences rather than item bias.",
+          init = FALSE)
+      } else {
+        psw_jmv_fill(out$latentMeans, lapply(seq_len(nrow(means_obj)), function(i) {
+          list(
+            factor = means_obj$factor[i],
+            group = means_obj$group[i],
+            mean = means_obj$mean[i],
+            se = means_obj$se[i],
+            ci_lower = means_obj$ci_lower[i],
+            ci_upper = means_obj$ci_upper[i],
+            z = means_obj$z[i],
+            p = means_obj$p[i],
+            d_ref = means_obj$d_ref[i],
+            d_pool = means_obj$d_pool[i]
+          )
+        }))
+        ref_text <- sprintf("Differences relative to reference group '%s' (mean = 0.00).", attr(means_obj, "reference"))
+        type_text <- if (identical(attr(means_obj, "model_type"), "partial"))
+          sprintf("Estimated under partial scalar invariance (freed items: %s).", paste(attr(means_obj, "freed_items"), collapse = ", "))
+        else "Estimated under full scalar invariance."
+        eff_text <- "Cohen's d (ref) standardizes by the reference group factor SD; Cohen's d (pool) standardizes by the pooled factor SD (Hancock, 2001)."
+        out$latentMeans$setNote("summary", paste(ref_text, type_text, eff_text), init = FALSE)
+      }
+    }
+    if (isTRUE(opt$latentMeansPlot) && !is.character(means_obj)) {
+      psw_jmv_plot(out$latentMeansPlot, "means", list(means = means_obj))
+    }
+  }
+
   # ---- figure: the render function (.diagram in the *.b.R files) draws from this state ----
   if ((opt$showComb || opt$showPath) && !is.null(res$loadings)) {
     l <- res$loadings[res$loadings$step == "configural", , drop = FALSE]
     cc <- if (is.null(res$cors)) NULL else res$cors[res$cors$step == "configural", , drop = FALSE]
-    if (nrow(l)) psw_jmv_figures(out, opt, l, cc, caption = "Configural model.")
+    f_conf <- if (!is.null(res$fit) && any(res$fit$step == "configural")) res$fit[res$fit$step == "configural", , drop = FALSE] else NULL
+    if (nrow(l)) psw_jmv_figures(out, opt, l, cc, caption = "Configural model.", fit = f_conf, estimator = info$estimator)
   }
 
   # ---- robustness of the verdict: its own cache, on the summary table ----

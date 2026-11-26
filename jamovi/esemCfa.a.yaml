@@ -159,4 +159,18 @@ options:
     description:
       R: >
         `TRUE` or `FALSE` (default), draw the ESEM loadings of every item on every factor
+  - name: plotFit
+    title: 'Model fit on plot'
+    type: List
+    options:
+      - name: none
+        title: 'Do not show'
+      - name: below
+        title: 'Below plot'
+      - name: above
+        title: 'Above plot'
+    default: none
+    description:
+      R: >
+        `'none'` (default), `'below'` or `'above'`, print the model fit measures and estimator on the figure
 ...

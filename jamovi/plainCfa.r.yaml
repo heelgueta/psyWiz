@@ -316,6 +316,11 @@ items:
       - secondOrder
       - higherName
       - combThick
+      - plotFit
+  - name: combDesc
+    title: 'How to Read the Comb Plot'
+    type: Html
+    visible: (showComb)
   - name: pathFig
     title: 'Path Diagram'
     type: Image
@@ -333,6 +338,7 @@ items:
       - higherName
       - pathNumbers
       - pathWidth
+      - plotFit
   - name: heat
     title: Colour Summary
     type: Html

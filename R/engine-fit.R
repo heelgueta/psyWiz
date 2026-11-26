@@ -164,7 +164,39 @@ psw_estimates <- function(fit, prep) {
     factor2 = unname(prep$fnames[pe$rhs[cc]]),
     r = pe$std.all[cc], p = pe$pvalue[cc],
     stringsAsFactors = FALSE)
-  list(loadings = loadings, cors = cors)
+
+  fids <- names(prep$fnames)
+  G <- length(prep$groups)
+  means <- NULL
+  if (G > 1L && any(pe$op == "~1" & pe$lhs %in% fids)) {
+    pt <- tryCatch(lavaan::parTable(fit), error = function(e) NULL)
+    V <- tryCatch(lavaan::vcov(fit), error = function(e) NULL)
+    cf_names <- if (!is.null(fit)) tryCatch(names(lavaan::coef(fit)), error = function(e) NULL) else NULL
+    mean_pars <- if (!is.null(pt) && !is.null(cf_names)) {
+      m_idx <- which(pt$lhs %in% fids & pt$op == "~1" & pt$free > 0)
+      cf_names[pt$free[m_idx]]
+    } else character()
+    V_sub <- if (!is.null(V) && length(mean_pars)) {
+      keep_pars <- intersect(mean_pars, colnames(V))
+      V[keep_pars, keep_pars, drop = FALSE]
+    } else NULL
+    pt_sub <- if (!is.null(pt)) {
+      sub_df <- pt[pt$lhs %in% fids & pt$op == "~1", c("lhs", "op", "group", "free"), drop = FALSE]
+      sub_df$name <- ifelse(sub_df$free > 0 & !is.null(cf_names), cf_names[sub_df$free], NA_character_)
+      sub_df
+    } else NULL
+    pe_sub <- pe[pe$lhs %in% fids & ((pe$op == "~1") | (pe$op == "~~" & pe$lhs == pe$rhs)), , drop = FALSE]
+    means <- list(
+      pe = pe_sub,
+      pt = pt_sub,
+      vcov = V_sub,
+      groups = prep$groups,
+      n = prep$n,
+      fnames = prep$fnames
+    )
+  }
+
+  list(loadings = loadings, cors = cors, means = means)
 }
 
 #' Composite reliability (omega) and AVE per factor from standardised loadings

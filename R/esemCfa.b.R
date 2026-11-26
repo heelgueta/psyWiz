@@ -94,8 +94,18 @@ esemCfaClass <- if (requireNamespace("jmvcore", quietly = TRUE)) R6::R6Class(
           "estimated from the CFA; regression scores of correlated factors are typically too strongly correlated, ",
           "Bartlett scores (continuous items only) too weakly."), init = FALSE)
       }
-      if (opt$showBrush && !is.null(res$uniqueness))
-        psw_jmv_plot(out$brush, "brush", list(L = res$loadings, unique = res$uniqueness, value = "esem"))
+      fit_text <- if (!is.null(opt$plotFit) && opt$plotFit != "none" && !is.null(res$fit)) {
+        fit_row <- res$fit[grepl("ESEM", res$fit$label), , drop = FALSE]
+        if (!nrow(fit_row)) fit_row <- res$fit[2L, , drop = FALSE]
+        psw_format_fit_line(fit_row, info$estimator)
+      } else NULL
+      fit_pos <- if (!is.null(opt$plotFit)) opt$plotFit else "none"
+
+      if (opt$showBrush && !is.null(res$uniqueness)) {
+        psw_jmv_plot(out$brush, "brush", list(L = res$loadings, unique = res$uniqueness, value = "esem",
+                                              fit_text = fit_text, fit_pos = fit_pos))
+        if (!is.null(out$brushDesc)) out$brushDesc$setContent(psw_jmv_brush_desc())
+      }
       invisible()
     },
     .diagram = function(image, ...) psw_jmv_diagram(image)

@@ -111,7 +111,8 @@ plainCfaClass <- if (requireNamespace("jmvcore", quietly = TRUE)) R6::R6Class(
       }
 
       fd <- psw_cfa_figure_data(res)
-      psw_jmv_figures(out, opt, fd$loadings, fd$cors, resid = fd$resid, higher = res$higher)
+      psw_jmv_figures(out, opt, fd$loadings, fd$cors, resid = fd$resid, higher = res$higher,
+                      fit = res$fit, estimator = info$estimator)
 
       # ---- additions to the model ----
       hi <- res$higher
