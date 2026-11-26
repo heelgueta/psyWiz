@@ -1,7 +1,7 @@
 cff-version: 1.2.0
 message: "If you use psyWiz in your research, please cite it using the metadata below."
 type: software
-title: "psyWiz: Confirmatory Factor Analysis, Measurement Invariance, and Visual Psychometrics"
+title: "psyWiz: Psychometric Wizardry — Tools for Psychometric Analysis and Visualization"
 version: "1.0.0"
 doi: "10.5281/zenodo.24564509"
 date-released: "2026-11-26"

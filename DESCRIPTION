@@ -1,6 +1,6 @@
 Package: psyWiz
 Type: Package
-Title: Confirmatory Factor Analysis, Measurement Invariance, and Visual Psychometrics
+Title: Psychometric Wizardry: Tools for Psychometric Analysis and Visualization
 Version: 1.0.0
 Authors@R: person("Herman", "Elgueta", email = "herman.elgueta@umag.cl", role = c("aut", "cre"),
     comment = c(ORCID = "0000-0002-6764-5490"))

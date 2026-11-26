@@ -6,7 +6,7 @@ refs:
         type: 'software'
         author: Elgueta, H.
         year: 2026
-        title: 'psyWiz: Confirmatory factor analysis, measurement invariance, and visual psychometrics'
+        title: 'psyWiz: Psychometric Wizardry — Tools for Psychometric Analysis and Visualization'
         publisher: '(Version 1.0.0) [jamovi module]. Zenodo'
         url: https://doi.org/10.5281/zenodo.24564509
 

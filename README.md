@@ -104,7 +104,7 @@ plot(esem, type = "brush", fit = "below")
 
 If you use psyWiz in your work, please cite:
 
-> Elgueta, H. (2026). *psyWiz: Confirmatory factor analysis, measurement invariance, and visual psychometrics* (Version 1.0.0) [jamovi module]. Zenodo. https://doi.org/10.5281/zenodo.24564509
+> Elgueta, H. (2026). *psyWiz: Psychometric Wizardry — Tools for Psychometric Analysis and Visualization* (Version 1.0.0) [jamovi module]. Zenodo. https://doi.org/10.5281/zenodo.24564509
 
 ---
 
