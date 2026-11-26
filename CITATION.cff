@@ -1,0 +1,30 @@
+cff-version: 1.2.0
+message: "If you use psyWiz in your research, please cite it using the metadata below."
+type: software
+title: "psyWiz: Confirmatory Factor Analysis, Measurement Invariance, and Visual Psychometrics"
+version: "1.0.0"
+date-released: "2026-11-26"
+license: GPL-3.0
+repository-code: "https://github.com/heelgueta/psywiz"
+url: "https://github.com/heelgueta/psywiz"
+authors:
+  - family-names: Elgueta
+    given-names: Herman
+    email: herman.elgueta@umag.cl
+    orcid: "https://orcid.org/0000-0002-6764-5490"
+abstract: >-
+  A jamovi module and R package built on lavaan for single-scale evaluation,
+  confirmatory factor analysis (CFA), step-by-step measurement invariance with
+  partial invariance and latent mean comparisons, orthogonal bifactor modeling,
+  exploratory structural equation modeling (ESEM) with target rotation,
+  multi-estimator sensitivity checks, and variance-proportional visual
+  psychometrics (Comb, Antenna, and Brush plots).
+keywords:
+  - psychometrics
+  - confirmatory factor analysis
+  - measurement invariance
+  - bifactor model
+  - ESEM
+  - jamovi
+  - lavaan
+  - data visualization
