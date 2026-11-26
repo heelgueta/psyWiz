@@ -1,5 +1,7 @@
 # psyWiz
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.24564509.svg)](https://doi.org/10.5281/zenodo.24564509)
+
 A **jamovi module** and R package for scale evaluation, confirmatory factor analysis, measurement invariance, and ESEM, built on [lavaan](https://lavaan.ugent.be).
 
 psyWiz fills practical gaps in standard psychometric software: native ordinal item handling (WLSMV), step-by-step measurement invariance with guided verdicts and latent mean comparisons, pure bifactor modeling, target-rotated ESEM, side-by-side multi-estimator sensitivity checks, and **three novel greyscale visualizations** where bar lengths represent exact variance proportions.
@@ -95,6 +97,14 @@ plot(esem, type = "brush", fit = "below")
 - [docs/DATA.md](docs/DATA.md): Guide to the built-in example datasets (`wizdata`, `wizlab`).
 - [docs/ROADMAP.md](docs/ROADMAP.md): Project status and future work.
 - [docs/DESIGN.md](docs/DESIGN.md): Architecture of the engine and jamovi layer.
+
+---
+
+## Citation
+
+If you use psyWiz in your work, please cite:
+
+> Elgueta, H. (2026). *psyWiz: Confirmatory factor analysis, measurement invariance, and visual psychometrics* (Version 1.0.0) [jamovi module]. Zenodo. https://doi.org/10.5281/zenodo.24564509
 
 ---
 

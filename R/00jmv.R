@@ -6,9 +6,9 @@
         `type`="software", 
         `author`="Elgueta, H.", 
         `year`=2026, 
-        `title`="psyWiz: Psychometric wizardry for confirmatory factor analysis", 
-        `publisher`="(Version 1.0.0) [jamovi module]. Retrieved from https://github.com/heelgueta/psywiz", 
-        `url`="https://github.com/heelgueta/psywiz"), 
+        `title`="psyWiz: Confirmatory factor analysis, measurement invariance, and visual psychometrics", 
+        `publisher`="(Version 1.0.0) [jamovi module]. Zenodo", 
+        `url`="https://doi.org/10.5281/zenodo.24564509"), 
     `lavaan`=list(
         `type`="article", 
         `author`="Rosseel, Y.", 

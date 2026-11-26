@@ -3,6 +3,7 @@ message: "If you use psyWiz in your research, please cite it using the metadata 
 type: software
 title: "psyWiz: Confirmatory Factor Analysis, Measurement Invariance, and Visual Psychometrics"
 version: "1.0.0"
+doi: "10.5281/zenodo.24564509"
 date-released: "2026-11-26"
 license: GPL-3.0
 repository-code: "https://github.com/heelgueta/psywiz"
