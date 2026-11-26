@@ -80,26 +80,6 @@ test_that("the verdict multiverse covers treatments, estimators and rules", {
   expect_equal(names(ns$psw_multiverse_wide(mv)), c("specification", "rule", "metric", "scalar"))
 })
 
-test_that("the composite check accepts one channel and rejects two", {
-  set.seed(3)
-  n <- 600
-  X <- matrix(rnorm(n * 4), n, dimnames = list(NULL, paste0("x", 1:4)))
-  comp <- X %*% c(0.6, 0.5, 0.3, 0.2)
-  one <- data.frame(X, y1 = 0.5 * comp + rnorm(n), y2 = 0.3 * comp + rnorm(n), y3 = -0.4 * comp + rnorm(n))
-  two_ch <- data.frame(X, y1 = 0.5 * X[, 1] + 0.4 * X[, 2] + rnorm(n), y2 = 0.5 * X[, 3] + 0.4 * X[, 4] + rnorm(n))
-  a <- compositeWiz(one, paste0("x", 1:4), paste0("y", 1:3))
-  b <- compositeWiz(two_ch, paste0("x", 1:4), c("y1", "y2"))
-  expect_gt(a$test$p, 0.05)
-  expect_lt(b$test$p, 0.001)
-  expect_equal(a$test$df, 6)
-  expect_true(all(a$r2$retained > 0.9))
-  expect_true(all(a$r2$free >= a$r2$composite - 1e-12))
-  # in-sample R2 of the free model is the usual regression R2
-  expect_equal(a$r2$free[1], summary(lm(y1 ~ x1 + x2 + x3 + x4, one))$r.squared)
-  expect_identical(compositeWiz(one, paste0("x", 1:4), paste0("y", 1:3))$r2, a$r2)   # seeded
-  expect_error(compositeWiz(one, paste0("x", 1:4), "y1"), "At least two outcomes")
-})
-
 test_that("factorWiz gives the same CFA as lavaan and the same correlations as esemWiz", {
   f <- list(Trust = paste0("trust", 1:4), Stress = paste0("stress", 1:4))
   x <- factorWiz(wizdata, f, keep.fits = TRUE)
@@ -152,11 +132,15 @@ test_that("CFA vs ESEM reports the uncorrected chi-square, which cannot favour t
   expect_false(e$info$reversed)
 })
 
-test_that("every palette has ten colours and cells get readable text", {
-  expect_true(all(lengths(ns$psw_palettes) == 10L))
-  expect_equal(ns$psw_value_colour("cfi", 0.995, "redblue"), "#053061")
-  expect_equal(ns$psw_text_on("#053061"), "#FFFFFF")
-  expect_true(is.na(ns$psw_value_colour("chisq", 10)))
+test_that("plots omit internal instructional captions and attach model fit cleanly", {
+  f <- list(Trust = paste0("trust", 1:4), Stress = paste0("stress", 1:4))
+  cfa <- factorWiz(wizdata, f)
+  p_plain <- plot(cfa, type = "comb")
+  expect_null(p_plain$labels$caption)
+  p_below <- plot(cfa, type = "comb", fit = "below")
+  expect_match(p_below$labels$caption, "Estimator: WLSMV", fixed = TRUE)
+  p_above <- plot(cfa, type = "comb", fit = "above")
+  expect_match(p_above$labels$subtitle, "Estimator: WLSMV", fixed = TRUE)
 })
 
 test_that("bifactorWiz recovers a known structure and its indices follow from the loadings", {

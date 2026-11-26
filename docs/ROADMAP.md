@@ -14,21 +14,21 @@ records why and what is intended.
 | 2026-11-15 | Another coding session added partial invariance (uncommitted). |
 | 2026-11-16, v0.4 | Simplification, then figures and models: comb redesign, scalogram, antenna, facing combs, brush plot; residual correlations, second-order factor, Bifactor CFA. The jamovi module is the product; plain CFA added as the entry point; the two group analyses merged; Scale Check reduced to reliability and items by default; partial invariance reviewed, corrected and kept as an option. |
 
-## Where it stands (2026-11-25)
+## Where it stands (2026-11-26)
 
-- **First Release Scope:** Strict focus on the CFA + ESEM world (`plainCfa`,
-  `groupCfa`, `bifactorCfa`, `multiEstCfa`, `esemCfa`). Scale analysis
-  (`scaleCheck`, `itemOrder`, `compositeCheck`) is deferred to a subsequent
-  release as future work.
-- **Novel Visual Psychometrics:** Three novel plots fully implemented with
-  0-1 variance decomposition: Comb Plot, Antenna Plot, Brush Plot, with
-  optional model fit printing (below or above) showing estimator and fit indices,
-  and companion in-output HTML guides.
-- **Latent Mean Comparisons:** Completed with raw mean differences, Delta-method
-  SEs, Wald z, p, Latent Cohen's d (ref & pooled), partial scalar support,
-  and forest comparison plot.
-- **Quality & Tests:** 312 tests passing, 0 failures, 0 warnings.
-- **Jamovi flatpak installed:** Module compiled and installed cleanly in local
+- **1.0.0 MVP Scope (6 Analyses):** `Scale Check`, `CFA`, `Measurement Invariance`,
+  `Bifactor CFA`, `CFA vs. ESEM`, and `Multi-Estimator CFA`. Exploratory `Item Order`
+  and `Composite Check` are archived outside the repository for a future release.
+- **Clean Visual Psychometrics:** Comb, Antenna, Facing Combs, and Brush plots carry no
+  baked-in instructional captions; toggleable reading guides appear above each plot in
+  jamovi (on by default), with optional auto-wrapped model fit lines (below or above)
+  displaying the estimator.
+- **Streamlined UI & Native Red Flagging:** Removed the HTML Colour Summary heatmap and
+  palette selector in favor of a single off-by-default **Flag weak / misfitting values**
+  toggle inside tables. Standardized all panels to `Estimation` / extensions / `Tables` / `Plots`.
+- **Latent Mean Comparisons:** Completed with raw mean differences, Delta-method SEs,
+  Wald z, p, Latent Cohen's d (ref & pooled), partial scalar support, and forest plot.
+- **Jamovi flatpak installed:** `psyWiz_1.0.0.jmo` compiled and installed cleanly in local
   flatpak jamovi.
 
 ## Direction

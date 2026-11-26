@@ -82,6 +82,7 @@ psw_jmv_inv_run <- function(self, factors) {
     list(model = f$label[i], chisq = f$chisq[i], df = round(f$df[i]), p = f$pvalue[i],
          cfi = f$cfi[i], tli = f$tli[i], rmsea = f$rmsea[i],
          rmseaLo = f$rmsea.lo[i], rmseaHi = f$rmsea.hi[i], srmr = f$srmr[i])))
+  if (isTRUE(opt$highlight)) psw_jmv_flag_fit(out$fit, f)
   info <- res$info
   out$fit$setNote("info", sprintf(
     "Estimator: %s. Items treated as %s. Missing values: %s. Each model keeps the constraints of the models above it. %s %s",
@@ -110,7 +111,7 @@ psw_jmv_inv_run <- function(self, factors) {
     paste(rule[criteria], collapse = "; "),
     ". Invariance is 'Supported' when nothing is flagged, 'Not supported' when every selected criterion is flagged, ",
     "and 'Ambiguous' when the criteria disagree. Default cutoffs follow Chen (2007).")
-    else "No decision criterion is selected (see Decision Criteria).", init = FALSE)
+    else "No decision criterion is selected (see Invariance Cutoffs).", init = FALSE)
   if (info$type == "ordinal")
     out$comparison$setNote("ladder", paste0(
       "Ordinal items: steps and identification constraints follow Wu & Estabrook (2016). ",
@@ -193,6 +194,13 @@ psw_jmv_inv_run <- function(self, factors) {
         c(list(factor = d$factor[1L], item = d$item[1L]), vals)
       })
       psw_jmv_fill(out$loadings, rows)
+      if (isTRUE(opt$highlight)) {
+        gcols <- paste0("g", seq_len(nrow(res$groups)))
+        for (i in seq_along(rows)) for (gc in gcols)
+          if (isTRUE(abs(rows[[i]][[gc]]) < 0.40))
+            out$loadings$addFormat(rowNo = i, col = gc, format = jmvcore::Cell.NEGATIVE)
+        out$loadings$setNote("hl", "In red: standardized loadings below .40.", init = FALSE)
+      }
     }
   }
 

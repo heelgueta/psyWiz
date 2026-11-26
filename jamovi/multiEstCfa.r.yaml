@@ -135,13 +135,21 @@ items:
     type: Table
     rows: 0
     visible: (showRel)
-    clearWith: *model
+    clearWith:
+      - factors
+      - type
+      - estML
+      - estMLR
+      - estMLM
+      - estULS
+      - estULSMV
+      - estDWLS
+      - estWLSMV
+      - estWLS
+      - missing
+      - highlight
     columns:
       - name: factor
         title: Factor
         type: text
-  - name: heat
-    title: Colour Summary
-    type: Html
-    visible: (highlight)
 ...

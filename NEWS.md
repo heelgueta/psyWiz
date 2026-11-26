@@ -22,20 +22,27 @@ The menu was reorganised around a simple core. See `docs/ROADMAP.md`.
   mean differences and confidence intervals by factor with reference group baseline.
 - Fixed `geom_label()` deprecation warning with `linewidth`.
 
-## Visual Psychometrics & Plot Features
+## Visual Psychometrics & UI Overhaul
 
-- **Model Fit on Plots:** All figures (Comb, Path, Antenna, Facing Combs, Brush, Latent Means)
-  support optional model fit printing positioned either `below` or `above`, including
-  the estimator (e.g. `Estimator: MLR | χ²(51) = 68.42, p = .052 | CFI = .991 | RMSEA = .023 [.000, .038] | SRMR = .028`).
-- **In-Output HTML Interpretation Guides:** Added informative, collapsible guides in jamovi
-  results below the Comb, Antenna, Facing Combs, and Brush plots explaining how to read
-  spines, teeth, variance allocations, and bristle cross-loadings.
-- **Visual Psychometrics Guide (`docs/PLOTS.md`):** Complete documentation of the three
-  novel plots with 9 high-resolution example figures illustrating good, poor, and mixed
-  psychometric conditions.
-- **First Release Scope:** First release focused exclusively on the CFA + ESEM universe
-  (`plainCfa`, `groupCfa`, `bifactorCfa`, `multiEstCfa`, `esemCfa`), deferring scale checks
-  to future releases.
+- **Clean Publication-Ready Figures:** Removed instructional captions baked inside the plots;
+  reading guides now appear cleanly *above* each novel plot in jamovi and can be toggled off
+  via **Show plot guide** (on by default).
+- **Model Fit on Plots:** All figures (Comb, Path, Antenna, Facing Combs, Brush) support
+  optional model fit printing (`below` or `above`), dynamically wrapping to plot width and
+  showing the estimator (e.g. `Estimator: MLR`, `WLSMV`), $\chi^2(df)$, $p$, CFI, TLI,
+  RMSEA [90% CI], and SRMR.
+- **Native Red Table Flagging (No Colour Heatmap):** Removed the separate HTML "Colour Summary"
+  table and palette selector; replaced with a single **Flag weak / misfitting values** toggle
+  (off by default) that highlights poor fit indices, weak loadings, and ESEM cross-loadings in red
+  directly inside the standard tables.
+- **Intuitive Menu & Consistent UI Layout:** Reordered the dropdown menu into a clean 6-analysis
+  progression (`Scale Check` $\rightarrow$ `CFA` $\rightarrow$ `Measurement Invariance` $\rightarrow$
+  `Bifactor CFA` $\rightarrow$ `CFA vs. ESEM` $\rightarrow$ `Multi-Estimator CFA`) with uniform
+  within-analysis sections (`Estimation`, `Tables`, `Plots`, analysis extensions, and cutoffs at the bottom).
+- **Visual Psychometrics Guide (`docs/PLOTS.md`):** 9 realistic fitted example figures illustrating
+  good, poor, and mixed empirical conditions across Comb, Antenna, and Brush plots.
+- **Deferred for Future Releases:** Exploratory `Item Order` and `Composite Check` archived out
+  of the initial 1.0.0 release.
 
 ## Menu
 

@@ -4,7 +4,6 @@
 name: multiEstCfa
 title: Multi-Estimator CFA
 menuGroup: psyWiz
-menuSubgroup: Factor Models
 version: '1.0.0'
 jas: '1.2'
 description:
@@ -178,29 +177,11 @@ options:
         `TRUE` (default) or `FALSE`, show composite reliability (omega) and
         average variance extracted for each factor
   - name: highlight
-    title: Colour
+    title: Flag weak / misfitting values
     type: Bool
     default: false
     description:
       R: >
-        `TRUE` or `FALSE` (default), show standardized loadings below 0.40
-        in red and add a summary of fit indices, loadings and reliabilities
-        on a colour ramp
-  - name: palette
-    title: Palette
-    type: List
-    options:
-      - name: purpleorange
-        title: Orange to purple (colour-blind safe)
-      - name: cividis
-        title: Yellow to blue (colour-blind safe)
-      - name: redblue
-        title: Red to blue (classic psyWiz)
-      - name: grey
-        title: Greys
-    default: purpleorange
-    description:
-      R: >
-        the colour ramp used when colour is on: `'purpleorange'` (default),
-        `'cividis'`, `'redblue'` or `'grey'`
+        `TRUE` or `FALSE` (default), highlight poor fit indices, standardized
+        loadings below 0.40, omega below 0.70, and AVE below 0.50 in red
 ...

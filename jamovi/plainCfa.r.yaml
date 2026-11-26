@@ -142,6 +142,7 @@ items:
       - resCov
       - secondOrder
       - higherName
+      - highlight
     columns:
       - name: factor
         title: 'Factor'
@@ -300,6 +301,20 @@ items:
         title: 'p'
         type: number
         format: zto,pvalue
+  - name: combDesc
+    title: ''
+    type: Html
+    visible: (showComb && showPlotGuide)
+    clearWith:
+      - factors
+      - type
+      - estimator
+      - missing
+      - resCov
+      - secondOrder
+      - higherName
+      - combThick
+      - showPlotGuide
   - name: comb
     title: 'Comb Plot'
     type: Image
@@ -317,10 +332,6 @@ items:
       - higherName
       - combThick
       - plotFit
-  - name: combDesc
-    title: 'How to Read the Comb Plot'
-    type: Html
-    visible: (showComb)
   - name: pathFig
     title: 'Path Diagram'
     type: Image
@@ -339,8 +350,4 @@ items:
       - pathNumbers
       - pathWidth
       - plotFit
-  - name: heat
-    title: Colour Summary
-    type: Html
-    visible: (highlight)
 ...

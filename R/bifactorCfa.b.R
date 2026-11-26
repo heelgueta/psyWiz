@@ -41,6 +41,7 @@ bifactorCfaClass <- if (requireNamespace("jmvcore", quietly = TRUE)) R6::R6Class
       info <- res$info
 
       psw_jmv_fill(out$fit, psw_jmv_fit_rows(res$fit))
+      if (isTRUE(opt$highlight)) psw_jmv_flag_fit(out$fit, res$fit)
       out$fit$setNote("info", sprintf(
         "Bifactor: every item loads on %s and on its specific factor; all factors uncorrelated. N = %d. Estimator: %s; items treated as %s; missing values: %s. %s lavaan %s.",
         info$general, info$n, info$estimator, info$type, info$missing, paste0(psw_jmv_variant_text(info$variant), ""),
@@ -63,25 +64,38 @@ bifactorCfaClass <- if (requireNamespace("jmvcore", quietly = TRUE)) R6::R6Class
       if (opt$showLoadings) {
         l <- res$loadings
         psw_jmv_fill(out$loadings, lapply(seq_len(nrow(l)), function(i) as.list(l[i, , drop = FALSE])))
+        if (isTRUE(opt$highlight)) {
+          for (i in seq_len(nrow(l))) {
+            if (isTRUE(l$unique[i] > 0.80 || l$unique[i] < 0))
+              out$loadings$addFormat(rowNo = i, col = "unique", format = jmvcore::Cell.NEGATIVE)
+            if (isTRUE(abs(l$general[i]) < 0.30 && abs(l$own[i]) < 0.30)) {
+              out$loadings$addFormat(rowNo = i, col = "general", format = jmvcore::Cell.NEGATIVE)
+              out$loadings$addFormat(rowNo = i, col = "own", format = jmvcore::Cell.NEGATIVE)
+            }
+          }
+        }
         out$loadings$setNote("what", paste0(
           "Standardized loadings. Unique: variance explained by neither factor. Item ECV: share of the item's ",
-          "explained variance that is general."), init = FALSE)
+          "explained variance that is general.",
+          if (isTRUE(opt$highlight)) " In red: high uniqueness (> .80) or negative uniqueness, and items weak (< .30) on both factors." else ""),
+          init = FALSE)
       }
 
       fit_text <- if (!is.null(opt$plotFit) && opt$plotFit != "none" && !is.null(res$fit)) {
         psw_format_fit_line(res$fit[1L, , drop = FALSE], info$estimator)
       } else NULL
       fit_pos <- if (!is.null(opt$plotFit)) opt$plotFit else "none"
+      show_guide <- !isFALSE(opt$showPlotGuide)
 
       if (opt$showAntenna) {
         psw_jmv_plot(out$antenna, "antenna", list(L = res$loadings, general = info$general,
                                                   fit_text = fit_text, fit_pos = fit_pos))
-        if (!is.null(out$antennaDesc)) out$antennaDesc$setContent(psw_jmv_antenna_desc())
+        if (!is.null(out$antennaDesc) && show_guide) out$antennaDesc$setContent(psw_jmv_antenna_desc())
       }
       if (opt$showFacing) {
         psw_jmv_plot(out$facing, "facing", list(L = res$loadings, general = info$general,
                                                 fit_text = fit_text, fit_pos = fit_pos))
-        if (!is.null(out$facingDesc)) out$facingDesc$setContent(psw_jmv_facing_desc())
+        if (!is.null(out$facingDesc) && show_guide) out$facingDesc$setContent(psw_jmv_facing_desc())
       }
       if (opt$showPath)
         psw_jmv_plot(out$pathFig, "bfpath", list(L = res$loadings, general = info$general,

@@ -25,12 +25,13 @@ scaleCheckOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             showItems = TRUE,
             tau = FALSE,
             showScal = FALSE,
-            showComb = FALSE,
+            showComb = TRUE,
             combThick = FALSE,
             showPath = FALSE,
             pathNumbers = TRUE,
             pathWidth = TRUE,
             plotFit = "none",
+            showPlotGuide = TRUE,
             highlight = FALSE,
             guttmanOrder = "entered",
             showScalogram = FALSE, ...) {
@@ -153,7 +154,7 @@ scaleCheckOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             private$..showComb <- jmvcore::OptionBool$new(
                 "showComb",
                 showComb,
-                default=FALSE)
+                default=TRUE)
             private$..combThick <- jmvcore::OptionBool$new(
                 "combThick",
                 combThick,
@@ -178,6 +179,10 @@ scaleCheckOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "below",
                     "above"),
                 default="none")
+            private$..showPlotGuide <- jmvcore::OptionBool$new(
+                "showPlotGuide",
+                showPlotGuide,
+                default=TRUE)
             private$..highlight <- jmvcore::OptionBool$new(
                 "highlight",
                 highlight,
@@ -219,6 +224,7 @@ scaleCheckOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$.addOption(private$..pathNumbers)
             self$.addOption(private$..pathWidth)
             self$.addOption(private$..plotFit)
+            self$.addOption(private$..showPlotGuide)
             self$.addOption(private$..highlight)
             self$.addOption(private$..guttmanOrder)
             self$.addOption(private$..showScalogram)
@@ -249,6 +255,7 @@ scaleCheckOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         pathNumbers = function() private$..pathNumbers$value,
         pathWidth = function() private$..pathWidth$value,
         plotFit = function() private$..plotFit$value,
+        showPlotGuide = function() private$..showPlotGuide$value,
         highlight = function() private$..highlight$value,
         guttmanOrder = function() private$..guttmanOrder$value,
         showScalogram = function() private$..showScalogram$value),
@@ -278,6 +285,7 @@ scaleCheckOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         ..pathNumbers = NA,
         ..pathWidth = NA,
         ..plotFit = NA,
+        ..showPlotGuide = NA,
         ..highlight = NA,
         ..guttmanOrder = NA,
         ..showScalogram = NA)
@@ -289,14 +297,15 @@ scaleCheckResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
     active = list(
         todo = function() private$.items[["todo"]],
         reliability = function() private$.items[["reliability"]],
+        itemStats = function() private$.items[["itemStats"]],
+        combDesc = function() private$.items[["combDesc"]],
+        comb = function() private$.items[["comb"]],
+        pathFig = function() private$.items[["pathFig"]],
         fit = function() private$.items[["fit"]],
         comparison = function() private$.items[["comparison"]],
-        itemStats = function() private$.items[["itemStats"]],
         scalability = function() private$.items[["scalability"]],
-        scalogram = function() private$.items[["scalogram"]],
-        comb = function() private$.items[["comb"]],
-        combDesc = function() private$.items[["combDesc"]],
-        pathFig = function() private$.items[["pathFig"]]),
+        scalogramDesc = function() private$.items[["scalogramDesc"]],
+        scalogram = function() private$.items[["scalogram"]]),
     private = list(),
     public=list(
         initialize=function(options) {
@@ -341,6 +350,104 @@ scaleCheckResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                         `type`="text"))))
             self$add(jmvcore::Table$new(
                 options=options,
+                name="itemStats",
+                title="Item Diagnostics",
+                rows=0,
+                visible="(showItems)",
+                clearWith=list(
+                    "vars",
+                    "scaleName",
+                    "type",
+                    "estimator",
+                    "missing",
+                    "highlight"),
+                columns=list(
+                    list(
+                        `name`="item", 
+                        `title`="Item", 
+                        `type`="text"),
+                    list(
+                        `name`="mean", 
+                        `title`="Mean", 
+                        `type`="number"),
+                    list(
+                        `name`="sd", 
+                        `title`="SD", 
+                        `type`="number"),
+                    list(
+                        `name`="loading", 
+                        `title`="Loading", 
+                        `type`="number", 
+                        `format`="zto"),
+                    list(
+                        `name`="r2", 
+                        `title`="R\u00B2", 
+                        `type`="number", 
+                        `format`="zto"),
+                    list(
+                        `name`="restR", 
+                        `title`="Item-rest r", 
+                        `type`="number", 
+                        `format`="zto"),
+                    list(
+                        `name`="alphaDrop", 
+                        `title`="\u03B1 if dropped", 
+                        `type`="number", 
+                        `format`="zto"),
+                    list(
+                        `name`="H", 
+                        `title`="H", 
+                        `type`="number", 
+                        `format`="zto", 
+                        `visible`="(showScal)"))))
+            self$add(jmvcore::Html$new(
+                options=options,
+                name="combDesc",
+                title="",
+                visible="(showComb && showPlotGuide)",
+                clearWith=list(
+                    "vars",
+                    "scaleName",
+                    "type",
+                    "estimator",
+                    "missing",
+                    "combThick",
+                    "showPlotGuide")))
+            self$add(jmvcore::Image$new(
+                options=options,
+                name="comb",
+                title="Comb Plot",
+                width=600,
+                height=400,
+                renderFun=".diagram",
+                visible="(showComb)",
+                clearWith=list(
+                    "vars",
+                    "scaleName",
+                    "type",
+                    "estimator",
+                    "missing",
+                    "combThick",
+                    "plotFit")))
+            self$add(jmvcore::Image$new(
+                options=options,
+                name="pathFig",
+                title="Path Diagram",
+                width=600,
+                height=400,
+                renderFun=".diagram",
+                visible="(showPath)",
+                clearWith=list(
+                    "vars",
+                    "scaleName",
+                    "type",
+                    "estimator",
+                    "missing",
+                    "pathNumbers",
+                    "pathWidth",
+                    "plotFit")))
+            self$add(jmvcore::Table$new(
+                options=options,
                 name="fit",
                 title="Measurement Models",
                 rows=0,
@@ -350,7 +457,8 @@ scaleCheckResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "scaleName",
                     "type",
                     "estimator",
-                    "missing"),
+                    "missing",
+                    "highlight"),
                 columns=list(
                     list(
                         `name`="model", 
@@ -468,58 +576,6 @@ scaleCheckResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                         `type`="text"))))
             self$add(jmvcore::Table$new(
                 options=options,
-                name="itemStats",
-                title="Items",
-                rows=0,
-                visible="(showItems)",
-                clearWith=list(
-                    "vars",
-                    "scaleName",
-                    "type",
-                    "estimator",
-                    "missing",
-                    "highlight"),
-                columns=list(
-                    list(
-                        `name`="item", 
-                        `title`="Item", 
-                        `type`="text"),
-                    list(
-                        `name`="mean", 
-                        `title`="Mean", 
-                        `type`="number"),
-                    list(
-                        `name`="sd", 
-                        `title`="SD", 
-                        `type`="number"),
-                    list(
-                        `name`="loading", 
-                        `title`="Loading", 
-                        `type`="number", 
-                        `format`="zto"),
-                    list(
-                        `name`="r2", 
-                        `title`="R\u00B2", 
-                        `type`="number", 
-                        `format`="zto"),
-                    list(
-                        `name`="restR", 
-                        `title`="Item-rest r", 
-                        `type`="number", 
-                        `format`="zto"),
-                    list(
-                        `name`="alphaDrop", 
-                        `title`="\u03B1 if dropped", 
-                        `type`="number", 
-                        `format`="zto"),
-                    list(
-                        `name`="H", 
-                        `title`="H", 
-                        `type`="number", 
-                        `format`="zto", 
-                        `visible`="(showScal)"))))
-            self$add(jmvcore::Table$new(
-                options=options,
                 name="scalability",
                 title="Scalability",
                 rows=0,
@@ -547,6 +603,19 @@ scaleCheckResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                         `name`="reading", 
                         `title`="Reading", 
                         `type`="text"))))
+            self$add(jmvcore::Html$new(
+                options=options,
+                name="scalogramDesc",
+                title="",
+                visible="(showScalogram && showPlotGuide)",
+                clearWith=list(
+                    "vars",
+                    "scaleName",
+                    "type",
+                    "estimator",
+                    "missing",
+                    "guttmanOrder",
+                    "showPlotGuide")))
             self$add(jmvcore::Image$new(
                 options=options,
                 name="scalogram",
@@ -561,45 +630,7 @@ scaleCheckResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "type",
                     "estimator",
                     "missing",
-                    "guttmanOrder")))
-            self$add(jmvcore::Image$new(
-                options=options,
-                name="comb",
-                title="Comb Plot",
-                width=600,
-                height=400,
-                renderFun=".diagram",
-                visible="(showComb)",
-                clearWith=list(
-                    "vars",
-                    "scaleName",
-                    "type",
-                    "estimator",
-                    "missing",
-                    "combThick",
-                    "plotFit")))
-            self$add(jmvcore::Html$new(
-                options=options,
-                name="combDesc",
-                title="How to Read the Comb Plot",
-                visible="(showComb)"))
-            self$add(jmvcore::Image$new(
-                options=options,
-                name="pathFig",
-                title="Path Diagram",
-                width=600,
-                height=400,
-                renderFun=".diagram",
-                visible="(showPath)",
-                clearWith=list(
-                    "vars",
-                    "scaleName",
-                    "type",
-                    "estimator",
-                    "missing",
-                    "pathNumbers",
-                    "pathWidth",
-                    "plotFit")))}))
+                    "guttmanOrder")))}))
 
 scaleCheckBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
     "scaleCheckBase",
@@ -624,10 +655,10 @@ scaleCheckBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 
 #' Scale Check
 #'
-#' Checks one scale: reliability (alpha, lambda-2, omega, AVE) and item 
-#' statistics. On request: whether the items are congeneric, tau-equivalent or 
-#' parallel (which decides whether alpha and unit-weighted sum scores are 
-#' justified), and Guttman / Mokken scalability.
+#' Evaluate a single scale before fitting larger factor models: reliability 
+#' (alpha, lambda-2, omega, AVE), item diagnostics, and a comb plot. 
+#' Optionally tests tau-equivalence and parallelism, plus Guttman / Mokken 
+#' scalability.
 #' 
 #'
 #' @examples
@@ -672,8 +703,8 @@ scaleCheckBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' @param tau \code{TRUE} or \code{FALSE} (default), compare the congeneric,
 #'   tau-equivalent and parallel models
 #' @param showScal \code{TRUE} or \code{FALSE} (default), show Loevinger's H
-#'   and the Guttman scalogram statistics
-#' @param showComb \code{TRUE} or \code{FALSE} (default), draw the comb plot:
+#'   and Guttman scalogram statistics
+#' @param showComb \code{TRUE} (default) or \code{FALSE}, draw the comb plot:
 #'   one tooth per item, whose length is the variance the item shares with its
 #'   factor
 #' @param combThick \code{TRUE} or \code{FALSE} (default), make each tooth as
@@ -686,9 +717,11 @@ scaleCheckBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #'   an arrow proportional to its loading
 #' @param plotFit \code{'none'} (default), \code{'below'} or \code{'above'},
 #'   print the model fit measures and estimator on the figure
-#' @param highlight \code{TRUE} or \code{FALSE} (default), show flagged
-#'   changes in fit, weak loadings (below 0.40) and unscalable items (H below
-#'   0.30) in red
+#' @param showPlotGuide \code{TRUE} (default) or \code{FALSE}, show a short
+#'   reading guide above each novel plot
+#' @param highlight \code{TRUE} or \code{FALSE} (default), highlight poor fit,
+#'   flagged steps, weak loadings (below 0.40), alpha-if-dropped gains, and low
+#'   H (below 0.30) in red
 #' @param guttmanOrder \code{'entered'} (default: the order of \code{vars} is
 #'   taken as the hypothesised order, easiest item first) or \code{'difficulty'}
 #'   (items sorted from the most to the least endorsed)
@@ -698,14 +731,15 @@ scaleCheckBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' \tabular{llllll}{
 #'   \code{results$todo} \tab \tab \tab \tab \tab a html \cr
 #'   \code{results$reliability} \tab \tab \tab \tab \tab a table \cr
+#'   \code{results$itemStats} \tab \tab \tab \tab \tab a table \cr
+#'   \code{results$combDesc} \tab \tab \tab \tab \tab a html \cr
+#'   \code{results$comb} \tab \tab \tab \tab \tab an image \cr
+#'   \code{results$pathFig} \tab \tab \tab \tab \tab an image \cr
 #'   \code{results$fit} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$comparison} \tab \tab \tab \tab \tab a table \cr
-#'   \code{results$itemStats} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$scalability} \tab \tab \tab \tab \tab a table \cr
+#'   \code{results$scalogramDesc} \tab \tab \tab \tab \tab a html \cr
 #'   \code{results$scalogram} \tab \tab \tab \tab \tab an image \cr
-#'   \code{results$comb} \tab \tab \tab \tab \tab an image \cr
-#'   \code{results$combDesc} \tab \tab \tab \tab \tab a html \cr
-#'   \code{results$pathFig} \tab \tab \tab \tab \tab an image \cr
 #' }
 #'
 #' Tables can be converted to data frames with \code{asDF} or \code{\link{as.data.frame}}. For example:
@@ -736,12 +770,13 @@ scaleCheck <- function(
     showItems = TRUE,
     tau = FALSE,
     showScal = FALSE,
-    showComb = FALSE,
+    showComb = TRUE,
     combThick = FALSE,
     showPath = FALSE,
     pathNumbers = TRUE,
     pathWidth = TRUE,
     plotFit = "none",
+    showPlotGuide = TRUE,
     highlight = FALSE,
     guttmanOrder = "entered",
     showScalogram = FALSE) {
@@ -782,6 +817,7 @@ scaleCheck <- function(
         pathNumbers = pathNumbers,
         pathWidth = pathWidth,
         plotFit = plotFit,
+        showPlotGuide = showPlotGuide,
         highlight = highlight,
         guttmanOrder = guttmanOrder,
         showScalogram = showScalogram)

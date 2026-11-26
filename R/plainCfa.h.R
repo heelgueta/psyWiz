@@ -18,17 +18,17 @@ plainCfaOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             showLoadings = TRUE,
             showRel = TRUE,
             showCors = TRUE,
+            showMethods = FALSE,
+            showMi = FALSE,
+            miN = 10,
+            highlight = FALSE,
             showComb = TRUE,
             combThick = FALSE,
             showPath = FALSE,
             pathNumbers = TRUE,
             pathWidth = TRUE,
             plotFit = "none",
-            highlight = FALSE,
-            palette = "purpleorange",
-            showMethods = FALSE,
-            showMi = FALSE,
-            miN = 10, ...) {
+            showPlotGuide = TRUE, ...) {
 
             super$initialize(
                 package="psyWiz",
@@ -117,6 +117,24 @@ plainCfaOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 "showCors",
                 showCors,
                 default=TRUE)
+            private$..showMethods <- jmvcore::OptionBool$new(
+                "showMethods",
+                showMethods,
+                default=FALSE)
+            private$..showMi <- jmvcore::OptionBool$new(
+                "showMi",
+                showMi,
+                default=FALSE)
+            private$..miN <- jmvcore::OptionInteger$new(
+                "miN",
+                miN,
+                default=10,
+                min=1,
+                max=200)
+            private$..highlight <- jmvcore::OptionBool$new(
+                "highlight",
+                highlight,
+                default=FALSE)
             private$..showComb <- jmvcore::OptionBool$new(
                 "showComb",
                 showComb,
@@ -145,33 +163,10 @@ plainCfaOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "below",
                     "above"),
                 default="none")
-            private$..highlight <- jmvcore::OptionBool$new(
-                "highlight",
-                highlight,
-                default=FALSE)
-            private$..palette <- jmvcore::OptionList$new(
-                "palette",
-                palette,
-                options=list(
-                    "purpleorange",
-                    "cividis",
-                    "redblue",
-                    "grey"),
-                default="purpleorange")
-            private$..showMethods <- jmvcore::OptionBool$new(
-                "showMethods",
-                showMethods,
-                default=FALSE)
-            private$..showMi <- jmvcore::OptionBool$new(
-                "showMi",
-                showMi,
-                default=FALSE)
-            private$..miN <- jmvcore::OptionInteger$new(
-                "miN",
-                miN,
-                default=10,
-                min=1,
-                max=200)
+            private$..showPlotGuide <- jmvcore::OptionBool$new(
+                "showPlotGuide",
+                showPlotGuide,
+                default=TRUE)
 
             self$.addOption(private$..factors)
             self$.addOption(private$..run)
@@ -184,17 +179,17 @@ plainCfaOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$.addOption(private$..showLoadings)
             self$.addOption(private$..showRel)
             self$.addOption(private$..showCors)
+            self$.addOption(private$..showMethods)
+            self$.addOption(private$..showMi)
+            self$.addOption(private$..miN)
+            self$.addOption(private$..highlight)
             self$.addOption(private$..showComb)
             self$.addOption(private$..combThick)
             self$.addOption(private$..showPath)
             self$.addOption(private$..pathNumbers)
             self$.addOption(private$..pathWidth)
             self$.addOption(private$..plotFit)
-            self$.addOption(private$..highlight)
-            self$.addOption(private$..palette)
-            self$.addOption(private$..showMethods)
-            self$.addOption(private$..showMi)
-            self$.addOption(private$..miN)
+            self$.addOption(private$..showPlotGuide)
         }),
     active = list(
         factors = function() private$..factors$value,
@@ -208,17 +203,17 @@ plainCfaOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         showLoadings = function() private$..showLoadings$value,
         showRel = function() private$..showRel$value,
         showCors = function() private$..showCors$value,
+        showMethods = function() private$..showMethods$value,
+        showMi = function() private$..showMi$value,
+        miN = function() private$..miN$value,
+        highlight = function() private$..highlight$value,
         showComb = function() private$..showComb$value,
         combThick = function() private$..combThick$value,
         showPath = function() private$..showPath$value,
         pathNumbers = function() private$..pathNumbers$value,
         pathWidth = function() private$..pathWidth$value,
         plotFit = function() private$..plotFit$value,
-        highlight = function() private$..highlight$value,
-        palette = function() private$..palette$value,
-        showMethods = function() private$..showMethods$value,
-        showMi = function() private$..showMi$value,
-        miN = function() private$..miN$value),
+        showPlotGuide = function() private$..showPlotGuide$value),
     private = list(
         ..factors = NA,
         ..run = NA,
@@ -231,17 +226,17 @@ plainCfaOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         ..showLoadings = NA,
         ..showRel = NA,
         ..showCors = NA,
+        ..showMethods = NA,
+        ..showMi = NA,
+        ..miN = NA,
+        ..highlight = NA,
         ..showComb = NA,
         ..combThick = NA,
         ..showPath = NA,
         ..pathNumbers = NA,
         ..pathWidth = NA,
         ..plotFit = NA,
-        ..highlight = NA,
-        ..palette = NA,
-        ..showMethods = NA,
-        ..showMi = NA,
-        ..miN = NA)
+        ..showPlotGuide = NA)
 )
 
 plainCfaResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
@@ -257,10 +252,9 @@ plainCfaResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         mi = function() private$.items[["mi"]],
         higher = function() private$.items[["higher"]],
         resid = function() private$.items[["resid"]],
-        comb = function() private$.items[["comb"]],
         combDesc = function() private$.items[["combDesc"]],
-        pathFig = function() private$.items[["pathFig"]],
-        heat = function() private$.items[["heat"]]),
+        comb = function() private$.items[["comb"]],
+        pathFig = function() private$.items[["pathFig"]]),
     private = list(),
     public=list(
         initialize=function(options) {
@@ -429,7 +423,8 @@ plainCfaResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "missing",
                     "resCov",
                     "secondOrder",
-                    "higherName"),
+                    "higherName",
+                    "highlight"),
                 columns=list(
                     list(
                         `name`="factor", 
@@ -620,6 +615,21 @@ plainCfaResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                         `title`="p", 
                         `type`="number", 
                         `format`="zto,pvalue"))))
+            self$add(jmvcore::Html$new(
+                options=options,
+                name="combDesc",
+                title="",
+                visible="(showComb && showPlotGuide)",
+                clearWith=list(
+                    "factors",
+                    "type",
+                    "estimator",
+                    "missing",
+                    "resCov",
+                    "secondOrder",
+                    "higherName",
+                    "combThick",
+                    "showPlotGuide")))
             self$add(jmvcore::Image$new(
                 options=options,
                 name="comb",
@@ -638,11 +648,6 @@ plainCfaResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "higherName",
                     "combThick",
                     "plotFit")))
-            self$add(jmvcore::Html$new(
-                options=options,
-                name="combDesc",
-                title="How to Read the Comb Plot",
-                visible="(showComb)"))
             self$add(jmvcore::Image$new(
                 options=options,
                 name="pathFig",
@@ -661,12 +666,7 @@ plainCfaResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "higherName",
                     "pathNumbers",
                     "pathWidth",
-                    "plotFit")))
-            self$add(jmvcore::Html$new(
-                options=options,
-                name="heat",
-                title="Colour Summary",
-                visible="(highlight)"))}))
+                    "plotFit")))}))
 
 plainCfaBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
     "plainCfaBase",
@@ -691,11 +691,10 @@ plainCfaBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 
 #' CFA
 #'
-#' Confirmatory factor analysis of one factor or several correlated factors: 
-#' fit, standardized loadings, factor correlations and reliability, with 
-#' ordinal items handled as ordinal. Optionally the largest modification 
-#' indices and the factor correlations obtained from composite scores and 
-#' factor scores.
+#' Confirmatory factor analysis of one factor, several correlated factors, or 
+#' a second-order structure: fit indices, standardized loadings, factor 
+#' correlations, reliability (alpha, omega, AVE), and a comb plot. Handles 
+#' ordinal items natively via WLSMV.
 #' 
 #'
 #' @examples
@@ -731,6 +730,14 @@ plainCfaBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #'   AVE per factor
 #' @param showCors \code{TRUE} (default) or \code{FALSE}, show the
 #'   correlations between the factors
+#' @param showMethods \code{TRUE} or \code{FALSE} (default), show each factor
+#'   correlation as obtained from composite scores, corrected composites, the
+#'   CFA and factor scores
+#' @param showMi \code{TRUE} or \code{FALSE} (default), list the residual
+#'   correlations and cross-loadings with the largest modification indices
+#' @param miN an integer (default 10), how many to list
+#' @param highlight \code{TRUE} or \code{FALSE} (default), highlight poor fit
+#'   indices, weak loadings (below 0.40), and low reliability in red
 #' @param showComb \code{TRUE} (default) or \code{FALSE}, draw the comb plot:
 #'   one tooth per item, whose length is the variance the item shares with its
 #'   factor
@@ -744,18 +751,8 @@ plainCfaBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #'   an arrow proportional to its loading
 #' @param plotFit \code{'none'} (default), \code{'below'} or \code{'above'},
 #'   print the model fit measures and estimator on the figure
-#' @param highlight \code{TRUE} or \code{FALSE} (default), mark standardized
-#'   loadings below 0.40 in the table and add a summary of fit indices, loadings
-#'   and reliabilities on a colour ramp
-#' @param palette the colour ramp used when colour is on:
-#'   \code{'purpleorange'} (default), \code{'cividis'}, \code{'redblue'} or
-#'   \code{'grey'}
-#' @param showMethods \code{TRUE} or \code{FALSE} (default), show each factor
-#'   correlation as obtained from composite scores, corrected composites, the
-#'   CFA and factor scores
-#' @param showMi \code{TRUE} or \code{FALSE} (default), list the residual
-#'   correlations and cross-loadings with the largest modification indices
-#' @param miN an integer (default 10), how many to list
+#' @param showPlotGuide \code{TRUE} (default) or \code{FALSE}, show a short
+#'   reading guide above each novel plot
 #' @return A results object containing:
 #' \tabular{llllll}{
 #'   \code{results$todo} \tab \tab \tab \tab \tab a html \cr
@@ -767,10 +764,9 @@ plainCfaBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #'   \code{results$mi} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$higher} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$resid} \tab \tab \tab \tab \tab a table \cr
-#'   \code{results$comb} \tab \tab \tab \tab \tab an image \cr
 #'   \code{results$combDesc} \tab \tab \tab \tab \tab a html \cr
+#'   \code{results$comb} \tab \tab \tab \tab \tab an image \cr
 #'   \code{results$pathFig} \tab \tab \tab \tab \tab an image \cr
-#'   \code{results$heat} \tab \tab \tab \tab \tab a html \cr
 #' }
 #'
 #' Tables can be converted to data frames with \code{asDF} or \code{\link{as.data.frame}}. For example:
@@ -794,17 +790,17 @@ plainCfa <- function(
     showLoadings = TRUE,
     showRel = TRUE,
     showCors = TRUE,
+    showMethods = FALSE,
+    showMi = FALSE,
+    miN = 10,
+    highlight = FALSE,
     showComb = TRUE,
     combThick = FALSE,
     showPath = FALSE,
     pathNumbers = TRUE,
     pathWidth = TRUE,
     plotFit = "none",
-    highlight = FALSE,
-    palette = "purpleorange",
-    showMethods = FALSE,
-    showMi = FALSE,
-    miN = 10) {
+    showPlotGuide = TRUE) {
 
     if ( ! requireNamespace("jmvcore", quietly=TRUE))
         stop("plainCfa requires jmvcore to be installed (restart may be required)")
@@ -826,17 +822,17 @@ plainCfa <- function(
         showLoadings = showLoadings,
         showRel = showRel,
         showCors = showCors,
+        showMethods = showMethods,
+        showMi = showMi,
+        miN = miN,
+        highlight = highlight,
         showComb = showComb,
         combThick = combThick,
         showPath = showPath,
         pathNumbers = pathNumbers,
         pathWidth = pathWidth,
         plotFit = plotFit,
-        highlight = highlight,
-        palette = palette,
-        showMethods = showMethods,
-        showMi = showMi,
-        miN = miN)
+        showPlotGuide = showPlotGuide)
 
     analysis <- plainCfaClass$new(
         options = options,

@@ -5,8 +5,9 @@
 # weak loadings and poor fit stand out. Colours are off by default; ask for
 # them with `print(x, colored = TRUE)` (used only if the terminal supports them).
 
-# the ramps are in R/colour.R; the console keeps the original red-to-blue one
-psw_palette <- psw_palettes$redblue
+# console colour ramp (used only when print(..., colored = TRUE) in R)
+psw_palette <- c("#67001F", "#B2182B", "#D6604D", "#F4A582", "#FDDBC7",
+                 "#D1E5F0", "#92C5DE", "#4393C3", "#2166AC", "#053061")
 
 psw_use_color <- function(colored = TRUE) {
   if (!isTRUE(colored) || nzchar(Sys.getenv("NO_COLOR"))) return(FALSE)
@@ -331,19 +332,6 @@ print.psw_multiverse <- function(x, colored = FALSE, ...) {
 
 #' @rdname print.psyWiz
 #' @export
-print.psw_composite <- function(x, colored = FALSE, ...) {
-  psw_header("psyWiz: is one composite enough?", psw_use_color(colored))
-  cat(sprintf("%d indicators, %d outcomes, N = %d\n\n", length(x$info$indicators), length(x$info$outcomes), x$info$n))
-  cat(strwrap(x$summary, width = 0.9 * getOption("width"), prefix = "  "), sep = "\n")
-  psw_print_df("Rank-one test (Bartlett)", x$test)
-  psw_print_df(sprintf("R-squared per outcome (cv: %d folds x %d)", x$info$folds, x$info$repeats), x$r2)
-  psw_print_df("Composite weights", x$weights)
-  psw_print_notes(x$notes)
-  invisible(x)
-}
-
-#' @rdname print.psyWiz
-#' @export
 print.psw_cfa <- function(x, colored = FALSE, suggestions = 5L, ...) {
   psw_header("psyWiz: confirmatory factor analysis", psw_use_color(colored))
   cat(sprintf("%d factor(s), %d items, items are %s, estimator %s, N = %d\n", length(x$info$factors),
@@ -370,22 +358,6 @@ print.psw_bifactor <- function(x, colored = FALSE, ...) {
   psw_print_df("Model fit", x$fit[c("label", "chisq", "df", "pvalue", "cfi", "tli", "rmsea", "srmr")])
   psw_print_df("Omega, omega hierarchical and explained common variance", x$indices)
   psw_print_df("Standardized loadings", x$loadings)
-  psw_print_notes(x$notes)
-  invisible(x)
-}
-
-#' @rdname print.psyWiz
-#' @export
-print.psw_order <- function(x, colored = FALSE, patterns = 8L, ...) {
-  psw_header("psyWiz: order among items (exploratory)", psw_use_color(colored))
-  cat(sprintf("%d items, N = %d, exceptions tolerated %.0f%%, H at least %.2f\n\n", x$info$k, x$info$n,
-              100 * x$info$tolerance, x$info$h.min))
-  cat(paste0("  ", x$reading), sep = "\n")
-  psw_print_df("How well does an order fit?", x$fit)
-  psw_print_df("Items", x$items)
-  if (!is.null(x$implications)) psw_print_df("Direct implications (from implies to)", x$implications)
-  if (!is.null(x$scales)) psw_print_df("Cumulative scales", x$scales)
-  if (patterns > 0L) psw_print_df("Most frequent answer patterns", utils::head(x$patterns, patterns))
   psw_print_notes(x$notes)
   invisible(x)
 }

@@ -35,6 +35,92 @@ items:
       - name: basis
         title: 'Refers to'
         type: text
+  - name: itemStats
+    title: 'Item Diagnostics'
+    type: Table
+    rows: 0
+    visible: (showItems)
+    clearWith:
+      - vars
+      - scaleName
+      - type
+      - estimator
+      - missing
+      - highlight
+    columns:
+      - name: item
+        title: 'Item'
+        type: text
+      - name: mean
+        title: 'Mean'
+        type: number
+      - name: sd
+        title: 'SD'
+        type: number
+      - name: loading
+        title: 'Loading'
+        type: number
+        format: zto
+      - name: r2
+        title: 'R²'
+        type: number
+        format: zto
+      - name: restR
+        title: 'Item-rest r'
+        type: number
+        format: zto
+      - name: alphaDrop
+        title: 'α if dropped'
+        type: number
+        format: zto
+      - name: H
+        title: 'H'
+        type: number
+        format: zto
+        visible: (showScal)
+  - name: combDesc
+    title: ''
+    type: Html
+    visible: (showComb && showPlotGuide)
+    clearWith:
+      - vars
+      - scaleName
+      - type
+      - estimator
+      - missing
+      - combThick
+      - showPlotGuide
+  - name: comb
+    title: 'Comb Plot'
+    type: Image
+    width: 600
+    height: 400
+    renderFun: .diagram
+    visible: (showComb)
+    clearWith:
+      - vars
+      - scaleName
+      - type
+      - estimator
+      - missing
+      - combThick
+      - plotFit
+  - name: pathFig
+    title: 'Path Diagram'
+    type: Image
+    width: 600
+    height: 400
+    renderFun: .diagram
+    visible: (showPath)
+    clearWith:
+      - vars
+      - scaleName
+      - type
+      - estimator
+      - missing
+      - pathNumbers
+      - pathWidth
+      - plotFit
   - name: fit
     title: 'Measurement Models'
     type: Table
@@ -46,6 +132,7 @@ items:
       - type
       - estimator
       - missing
+      - highlight
     columns:
       - name: model
         title: 'Model'
@@ -141,49 +228,6 @@ items:
       - name: verdict
         title: 'Tenable'
         type: text
-  - name: itemStats
-    title: 'Items'
-    type: Table
-    rows: 0
-    visible: (showItems)
-    clearWith:
-      - vars
-      - scaleName
-      - type
-      - estimator
-      - missing
-      - highlight
-    columns:
-      - name: item
-        title: 'Item'
-        type: text
-      - name: mean
-        title: 'Mean'
-        type: number
-      - name: sd
-        title: 'SD'
-        type: number
-      - name: loading
-        title: 'Loading'
-        type: number
-        format: zto
-      - name: r2
-        title: 'R²'
-        type: number
-        format: zto
-      - name: restR
-        title: 'Item-rest r'
-        type: number
-        format: zto
-      - name: alphaDrop
-        title: 'α if dropped'
-        type: number
-        format: zto
-      - name: H
-        title: 'H'
-        type: number
-        format: zto
-        visible: (showScal)
   - name: scalability
     title: 'Scalability'
     type: Table
@@ -209,6 +253,18 @@ items:
       - name: reading
         title: 'Reading'
         type: text
+  - name: scalogramDesc
+    title: ''
+    type: Html
+    visible: (showScalogram && showPlotGuide)
+    clearWith:
+      - vars
+      - scaleName
+      - type
+      - estimator
+      - missing
+      - guttmanOrder
+      - showPlotGuide
   - name: scalogram
     title: 'Scalogram'
     type: Image
@@ -223,39 +279,4 @@ items:
       - estimator
       - missing
       - guttmanOrder
-  - name: comb
-    title: 'Comb Plot'
-    type: Image
-    width: 600
-    height: 400
-    renderFun: .diagram
-    visible: (showComb)
-    clearWith:
-      - vars
-      - scaleName
-      - type
-      - estimator
-      - missing
-      - combThick
-      - plotFit
-  - name: combDesc
-    title: 'How to Read the Comb Plot'
-    type: Html
-    visible: (showComb)
-  - name: pathFig
-    title: 'Path Diagram'
-    type: Image
-    width: 600
-    height: 400
-    renderFun: .diagram
-    visible: (showPath)
-    clearWith:
-      - vars
-      - scaleName
-      - type
-      - estimator
-      - missing
-      - pathNumbers
-      - pathWidth
-      - plotFit
 ...

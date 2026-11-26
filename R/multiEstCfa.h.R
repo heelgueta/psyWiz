@@ -25,8 +25,7 @@ multiEstCfaOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class
             sortLoadings = FALSE,
             showCors = TRUE,
             showRel = TRUE,
-            highlight = FALSE,
-            palette = "purpleorange", ...) {
+            highlight = FALSE, ...) {
 
             super$initialize(
                 package="psyWiz",
@@ -134,15 +133,6 @@ multiEstCfaOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class
                 "highlight",
                 highlight,
                 default=FALSE)
-            private$..palette <- jmvcore::OptionList$new(
-                "palette",
-                palette,
-                options=list(
-                    "purpleorange",
-                    "cividis",
-                    "redblue",
-                    "grey"),
-                default="purpleorange")
 
             self$.addOption(private$..factors)
             self$.addOption(private$..run)
@@ -163,7 +153,6 @@ multiEstCfaOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class
             self$.addOption(private$..showCors)
             self$.addOption(private$..showRel)
             self$.addOption(private$..highlight)
-            self$.addOption(private$..palette)
         }),
     active = list(
         factors = function() private$..factors$value,
@@ -184,8 +173,7 @@ multiEstCfaOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class
         sortLoadings = function() private$..sortLoadings$value,
         showCors = function() private$..showCors$value,
         showRel = function() private$..showRel$value,
-        highlight = function() private$..highlight$value,
-        palette = function() private$..palette$value),
+        highlight = function() private$..highlight$value),
     private = list(
         ..factors = NA,
         ..run = NA,
@@ -205,8 +193,7 @@ multiEstCfaOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class
         ..sortLoadings = NA,
         ..showCors = NA,
         ..showRel = NA,
-        ..highlight = NA,
-        ..palette = NA)
+        ..highlight = NA)
 )
 
 multiEstCfaResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
@@ -218,8 +205,7 @@ multiEstCfaResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class
         std = function() private$.items[["std"]],
         unstd = function() private$.items[["unstd"]],
         cors = function() private$.items[["cors"]],
-        rel = function() private$.items[["rel"]],
-        heat = function() private$.items[["heat"]]),
+        rel = function() private$.items[["rel"]]),
     private = list(),
     public=list(
         initialize=function(options) {
@@ -414,17 +400,13 @@ multiEstCfaResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class
                     "estDWLS",
                     "estWLSMV",
                     "estWLS",
-                    "missing"),
+                    "missing",
+                    "highlight"),
                 columns=list(
                     list(
                         `name`="factor", 
                         `title`="Factor", 
-                        `type`="text"))))
-            self$add(jmvcore::Html$new(
-                options=options,
-                name="heat",
-                title="Colour Summary",
-                visible="(highlight)"))}))
+                        `type`="text"))))}))
 
 multiEstCfaBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
     "multiEstCfaBase",
@@ -498,12 +480,9 @@ multiEstCfaBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #'   correlations
 #' @param showRel \code{TRUE} (default) or \code{FALSE}, show composite
 #'   reliability (omega) and average variance extracted for each factor
-#' @param highlight \code{TRUE} or \code{FALSE} (default), show standardized
-#'   loadings below 0.40 in red and add a summary of fit indices, loadings and
-#'   reliabilities on a colour ramp
-#' @param palette the colour ramp used when colour is on:
-#'   \code{'purpleorange'} (default), \code{'cividis'}, \code{'redblue'} or
-#'   \code{'grey'}
+#' @param highlight \code{TRUE} or \code{FALSE} (default), highlight poor fit
+#'   indices, standardized loadings below 0.40, omega below 0.70, and AVE below
+#'   0.50 in red
 #' @return A results object containing:
 #' \tabular{llllll}{
 #'   \code{results$todo} \tab \tab \tab \tab \tab a html \cr
@@ -512,7 +491,6 @@ multiEstCfaBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #'   \code{results$unstd} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$cors} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$rel} \tab \tab \tab \tab \tab a table \cr
-#'   \code{results$heat} \tab \tab \tab \tab \tab a html \cr
 #' }
 #'
 #' Tables can be converted to data frames with \code{asDF} or \code{\link{as.data.frame}}. For example:
@@ -543,8 +521,7 @@ multiEstCfa <- function(
     sortLoadings = FALSE,
     showCors = TRUE,
     showRel = TRUE,
-    highlight = FALSE,
-    palette = "purpleorange") {
+    highlight = FALSE) {
 
     if ( ! requireNamespace("jmvcore", quietly=TRUE))
         stop("multiEstCfa requires jmvcore to be installed (restart may be required)")
@@ -573,8 +550,7 @@ multiEstCfa <- function(
         sortLoadings = sortLoadings,
         showCors = showCors,
         showRel = showRel,
-        highlight = highlight,
-        palette = palette)
+        highlight = highlight)
 
     analysis <- multiEstCfaClass$new(
         options = options,

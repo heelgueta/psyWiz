@@ -5,12 +5,11 @@
 name: bifactorCfa
 title: Bifactor CFA
 menuGroup: psyWiz
-menuSubgroup: Factor Models
 version: '1.0.0'
 jas: '1.2'
 description:
   main: >
-    Bifactor model: every item loads on a general factor and on one specific factor, all uncorrelated. Shows how much of the total score and of each subscale score is general (omega hierarchical, explained common variance), with an antenna plot.
+    Orthogonal bifactor model: every item loads on a general factor and on one specific factor. Reports omega hierarchical, explained common variance (ECV), Item ECV, and visual diagnostics (antenna plot and facing combs).
   R:
     dontrun: true
     usage: |
@@ -50,7 +49,7 @@ options:
       R: >
         a list of lists, each with a `label` (the factor name) and `vars` (the names of its items)
   - name: generalName
-    title: 'Name of the general factor'
+    title: 'General factor name'
     type: String
     default: 'General'
     description:
@@ -119,21 +118,28 @@ options:
     description:
       R: >
         `'auto'` (default; FIML for ML and MLR, pairwise deletion for ordinal items), `'listwise'`, `'fiml'` or `'pairwise'`
-  # OUTPUT
+  # TABLES & PLOTS
   - name: showIndices
-    title: 'Omega and explained common variance'
+    title: 'Omega hierarchical & ECV'
     type: Bool
     default: true
     description:
       R: >
         `TRUE` (default) or `FALSE`, show omega, omega hierarchical and ECV
   - name: showLoadings
-    title: 'Loadings'
+    title: 'Standardized loadings'
     type: Bool
     default: true
     description:
       R: >
         `TRUE` (default) or `FALSE`, show the standardized loadings
+  - name: highlight
+    title: 'Flag weak / misfitting values'
+    type: Bool
+    default: false
+    description:
+      R: >
+        `TRUE` or `FALSE` (default), highlight poor fit indices, high uniqueness (> 0.80), and items weak (< 0.30) on both factors in red
   - name: showAntenna
     title: 'Antenna plot'
     type: Bool
@@ -156,7 +162,7 @@ options:
       R: >
         `TRUE` or `FALSE` (default), draw the path diagram
   - name: pathNumbers
-    title: 'Loadings on the arrows'
+    title: 'Loadings on arrows'
     type: Bool
     default: true
     description:
@@ -183,4 +189,11 @@ options:
     description:
       R: >
         `'none'` (default), `'below'` or `'above'`, print the model fit measures and estimator on the figure
+  - name: showPlotGuide
+    title: 'Show plot guide'
+    type: Bool
+    default: true
+    description:
+      R: >
+        `TRUE` (default) or `FALSE`, show a short reading guide above each novel plot
 ...

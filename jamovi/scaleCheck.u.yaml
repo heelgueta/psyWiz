@@ -29,7 +29,7 @@ children:
       - type: CheckBox
         name: run
   - type: CollapseBox
-    label: Model
+    label: Estimation
     collapsed: false
     stretchFactor: 1
     children:
@@ -45,7 +45,7 @@ children:
           - type: CheckBox
             name: parallel
   - type: CollapseBox
-    label: Output
+    label: Tables
     collapsed: false
     stretchFactor: 1
     children:
@@ -57,8 +57,8 @@ children:
           - type: CheckBox
             name: highlight
   - type: CollapseBox
-    label: Figures
-    collapsed: true
+    label: Plots
+    collapsed: false
     stretchFactor: 1
     children:
       - type: LayoutBox
@@ -81,8 +81,10 @@ children:
                 enable: (showPath)
           - type: ComboBox
             name: plotFit
+          - type: CheckBox
+            name: showPlotGuide
   - type: CollapseBox
-    label: More
+    label: Scale Structure Tests
     collapsed: true
     stretchFactor: 1
     children:
@@ -92,7 +94,7 @@ children:
           - type: CheckBox
             name: tau
   - type: CollapseBox
-    label: Guttman Scale
+    label: Scalability (Guttman / Mokken)
     collapsed: true
     stretchFactor: 1
     children:
@@ -106,12 +108,12 @@ children:
           - type: ComboBox
             name: guttmanOrder
   - type: CollapseBox
-    label: Decision Criteria (tau-equivalence)
+    label: Cutoffs (Tau-Equivalence)
     collapsed: true
     stretchFactor: 1
     children:
       - type: Label
-        label: A step is flagged when
+        label: Flag a step when
         children:
           - type: CheckBox
             name: useCfi

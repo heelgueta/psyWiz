@@ -5,12 +5,11 @@
 name: scaleCheck
 title: Scale Check
 menuGroup: psyWiz
-menuSubgroup: Scales
 version: '1.0.0'
 jas: '1.2'
 description:
   main: >
-    Checks one scale: reliability (alpha, lambda-2, omega, AVE) and item statistics. On request: whether the items are congeneric, tau-equivalent or parallel (which decides whether alpha and unit-weighted sum scores are justified), and Guttman / Mokken scalability.
+    Evaluate a single scale before fitting larger factor models: reliability (alpha, lambda-2, omega, AVE), item diagnostics, and a comb plot. Optionally tests tau-equivalence and parallelism, plus Guttman / Mokken scalability.
   R:
     dontrun: true
     usage: |
@@ -105,13 +104,13 @@ options:
       R: >
         `'auto'` (default; FIML for ML and MLR, pairwise deletion for ordinal items), `'listwise'`, `'fiml'` or `'pairwise'`
   - name: parallel
-    title: 'Use several processor cores for slow models'
+    title: 'Use multiple CPU cores for slow models'
     type: Bool
     default: true
     description:
       R: >
         `TRUE` (default) or `FALSE`, fit the models concurrently when one takes more than a second
-  # DECISION CRITERIA: which changes in fit flag a step, and from what size.
+  # INVARIANCE CUTOFFS: which changes in fit flag a step, and from what size.
   - name: useCfi
     title: 'CFI drops by more than'
     type: Bool
@@ -187,33 +186,33 @@ options:
         a number (default 0.05), the significance level of the difference test
   # OUTPUT
   - name: showItems
-    title: 'Item statistics'
+    title: 'Item diagnostics'
     type: Bool
     default: true
     description:
       R: >
         `TRUE` (default) or `FALSE`, show the item table
   - name: tau
-    title: 'Tau-equivalence and parallelism'
+    title: 'Test tau-equivalence and parallelism'
     type: Bool
     default: false
     description:
       R: >
         `TRUE` or `FALSE` (default), compare the congeneric, tau-equivalent and parallel models
   - name: showScal
-    title: 'Scalability (Guttman and Mokken)'
+    title: 'Scalability indices (Guttman & Mokken)'
     type: Bool
     default: false
     description:
       R: >
-        `TRUE` or `FALSE` (default), show Loevinger's H and the Guttman scalogram statistics
+        `TRUE` or `FALSE` (default), show Loevinger's H and Guttman scalogram statistics
   - name: showComb
     title: 'Comb plot'
     type: Bool
-    default: false
+    default: true
     description:
       R: >
-        `TRUE` or `FALSE` (default), draw the comb plot: one tooth per item, whose length is the variance the item shares with its factor
+        `TRUE` (default) or `FALSE`, draw the comb plot: one tooth per item, whose length is the variance the item shares with its factor
   - name: combThick
     title: 'Tooth thickness by item variance'
     type: Bool
@@ -229,7 +228,7 @@ options:
       R: >
         `TRUE` or `FALSE` (default), draw the path diagram
   - name: pathNumbers
-    title: 'Loadings on the arrows'
+    title: 'Loadings on arrows'
     type: Bool
     default: true
     description:
@@ -256,19 +255,26 @@ options:
     description:
       R: >
         `'none'` (default), `'below'` or `'above'`, print the model fit measures and estimator on the figure
+  - name: showPlotGuide
+    title: 'Show plot guide'
+    type: Bool
+    default: true
+    description:
+      R: >
+        `TRUE` (default) or `FALSE`, show a short reading guide above each novel plot
   - name: highlight
-    title: 'Colour'
+    title: 'Flag weak / misfitting values'
     type: Bool
     default: false
     description:
       R: >
-        `TRUE` or `FALSE` (default), show flagged changes in fit, weak loadings (below 0.40) and unscalable items (H below 0.30) in red
+        `TRUE` or `FALSE` (default), highlight poor fit, flagged steps, weak loadings (below 0.40), alpha-if-dropped gains, and low H (below 0.30) in red
   - name: guttmanOrder
-    title: 'Guttman: test the items'
+    title: 'Guttman item order'
     type: List
     options:
       - name: entered
-        title: 'In the order entered (easiest first)'
+        title: 'As entered (easiest first)'
       - name: difficulty
         title: 'Sorted by endorsement'
     default: entered
@@ -276,7 +282,7 @@ options:
       R: >
         `'entered'` (default: the order of `vars` is taken as the hypothesised order, easiest item first) or `'difficulty'` (items sorted from the most to the least endorsed)
   - name: showScalogram
-    title: 'Scalogram'
+    title: 'Scalogram plot'
     type: Bool
     default: false
     description:

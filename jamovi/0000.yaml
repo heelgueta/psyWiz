@@ -6,113 +6,81 @@ jms: '1.0'
 authors:
   - Herman Elgueta
 maintainer: Herman Elgueta <herman.elgueta@umag.cl>
-date: '2026-11-16'
+date: '2026-11-26'
 type: R
 description: >-
-  Confirmatory factor analysis (CFA) and exploratory structural equation
-  modeling (ESEM) with ordinal items handled as ordinal: plain CFA with comb
-  plots and 2nd-order structures, step-by-step measurement invariance across
-  groups (verdicts, score tests, partial invariance, and latent means), bifactor
-  models with antenna plots, multi-estimator comparisons side by side, and CFA
-  vs ESEM with brush plots.
+  Confirmatory factor analysis (CFA), measurement invariance, bifactor models,
+  and exploratory structural equation modeling (ESEM) with native ordinal item
+  handling: single-scale diagnostics, plain and second-order CFA with comb
+  plots, step-by-step measurement invariance with verdicts, partial invariance
+  and latent mean comparisons, bifactor models with antenna plots, CFA vs. ESEM
+  with brush plots, and side-by-side multi-estimator comparisons.
 analyses:
+  - title: Scale Check
+    name: scaleCheck
+    ns: psyWiz
+    menuGroup: psyWiz
+    menuTitle: Scale Check
+    description: >
+      Evaluate a single scale before fitting larger factor models: reliability
+      (alpha, lambda-2, omega, AVE), item diagnostics, and a comb plot.
+      Optionally tests tau-equivalence and parallelism, plus Guttman / Mokken
+      scalability.
+    category: analyses
   - title: CFA
     name: plainCfa
     ns: psyWiz
     menuGroup: psyWiz
-    menuSubgroup: Factor Models
     menuTitle: CFA
     description: >
-      Confirmatory factor analysis of one factor or several correlated factors:
-      fit, standardized loadings, factor correlations and reliability, with
-      ordinal items handled as ordinal. Optionally the largest modification
-      indices and the factor correlations obtained from composite scores and
-      factor scores.
+      Confirmatory factor analysis of one factor, several correlated factors, or
+      a second-order structure: fit indices, standardized loadings, factor
+      correlations, reliability (alpha, omega, AVE), and a comb plot. Handles
+      ordinal items natively via WLSMV.
     category: analyses
-  - title: Group CFA (Invariance)
+  - title: Measurement Invariance
     name: groupCfa
     ns: psyWiz
     menuGroup: psyWiz
-    menuSubgroup: Factor Models
-    menuTitle: Group CFA (Invariance)
+    menuTitle: Measurement Invariance
     description: >
-      Tests the measurement invariance of a one-factor or correlated-factors
-      model across groups. Fits the model under increasingly strict equality
-      constraints (configural, [thresholds,] loadings, intercepts and optionally
-      residual variances), compares each step with the previous one and points
-      at the constraints that fit worst.
+      Tests measurement invariance of a one-factor or correlated-factors CFA
+      across groups: configural, [thresholds,] metric, scalar, and optional
+      strict models with step-by-step verdicts, score tests for worst-fitting
+      constraints, automated partial invariance, multiverse robustness, and
+      latent mean comparisons.
     category: analyses
   - title: Bifactor CFA
     name: bifactorCfa
     ns: psyWiz
     menuGroup: psyWiz
-    menuSubgroup: Factor Models
     menuTitle: Bifactor CFA
     description: >
-      Bifactor model: every item loads on a general factor and on one specific
-      factor, all uncorrelated. Shows how much of the total score and of each
-      subscale score is general (omega hierarchical, explained common variance),
-      with an antenna plot.
+      Orthogonal bifactor model: every item loads on a general factor and on one
+      specific factor. Reports omega hierarchical, explained common variance
+      (ECV), Item ECV, and visual diagnostics (antenna plot and facing combs).
+    category: analyses
+  - title: CFA vs. ESEM
+    name: esemCfa
+    ns: psyWiz
+    menuGroup: psyWiz
+    menuTitle: CFA vs. ESEM
+    description: >
+      Compares the hypothesised correlated-factors CFA against an exploratory
+      structural equation model (ESEM with target or geomin rotation), showing
+      factor correlations across scoring methods and a brush plot of
+      cross-loadings.
     category: analyses
   - title: Multi-Estimator CFA
     name: multiEstCfa
     ns: psyWiz
     menuGroup: psyWiz
-    menuSubgroup: Factor Models
     menuTitle: Multi-Estimator CFA
     description: >
       Fits one confirmatory factor model (one factor or several correlated
       factors) under several estimators and shows fit indices, loadings, factor
       correlations and reliabilities side by side.
     category: analyses
-  - title: CFA vs ESEM
-    name: esemCfa
-    ns: psyWiz
-    menuGroup: psyWiz
-    menuSubgroup: Factor Models
-    menuTitle: CFA vs ESEM
-    description: >
-      Fits the hypothesised correlated-factors model as a CFA and as an
-      exploratory structural equation model (every item may load on every
-      factor), and lists each factor correlation as obtained from composite
-      scores, corrected composites, the CFA, factor scores and the ESEM.
-    category: analyses
-  - title: Composite Check
-    name: compositeCheck
-    ns: psyWiz
-    category: analyses
-    menuGroup: psyWiz
-    menuSubgroup: Scales
-    menuTitle: Composite Check
-    description: >
-      Checks whether a set of formative indicators relates to two or more
-      outcomes through one weighted composite (rank-one reduced-rank
-      regression), and how much is lost by using a unit-weighted sum, in sample
-      and in cross-validation.
-  - title: Item Order (Exploratory)
-    name: itemOrder
-    ns: psyWiz
-    category: analyses
-    menuGroup: psyWiz
-    menuSubgroup: Scales
-    menuTitle: Item Order (Exploratory)
-    description: >
-      Looks for order among yes/no items without a hypothesis: which items form
-      a cumulative line, which are interchangeable, which branch and which stand
-      apart. Combines Mokken-type scales, implications between items drawn as a
-      Hasse diagram, and the answer patterns.
-  - title: Scale Check
-    name: scaleCheck
-    ns: psyWiz
-    category: analyses
-    menuGroup: psyWiz
-    menuSubgroup: Scales
-    menuTitle: Scale Check
-    description: >
-      Checks one scale: reliability (alpha, lambda-2, omega, AVE) and item
-      statistics. On request: whether the items are congeneric, tau-equivalent
-      or parallel (which decides whether alpha and unit-weighted sum scores are
-      justified), and Guttman / Mokken scalability.
 datasets:
   - name: Trust and stress in three countries
     path: wizdata.omv
@@ -126,8 +94,7 @@ datasets:
       Simulated: several short instruments of different item types (ordinal,
       numeric, binary) and qualities: clean scales, a scale with a dud item, a
       cross-loading, a residual pair and a non-invariant item, a bifactor
-      questionnaire, a Guttman scale, a non-scale, and debt sources that form a
-      partial order. n = 1500, three regions.
+      questionnaire, a Guttman scale, and a non-scale. n = 1500, three regions.
 usesNative: true
 minApp: 2.4.0
 

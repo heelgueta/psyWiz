@@ -50,7 +50,7 @@ children:
       - type: CheckBox
         name: run
   - type: CollapseBox
-    label: Model
+    label: Estimation
     collapsed: false
     stretchFactor: 1
     children:
@@ -64,7 +64,7 @@ children:
           - type: ComboBox
             name: missing
   - type: CollapseBox
-    label: Output
+    label: Tables
     collapsed: false
     stretchFactor: 1
     children:
@@ -75,8 +75,10 @@ children:
             name: showIndices
           - type: CheckBox
             name: showLoadings
+          - type: CheckBox
+            name: highlight
   - type: CollapseBox
-    label: Figures
+    label: Plots
     collapsed: false
     stretchFactor: 1
     children:
@@ -98,3 +100,5 @@ children:
                 enable: (showPath)
           - type: ComboBox
             name: plotFit
+          - type: CheckBox
+            name: showPlotGuide

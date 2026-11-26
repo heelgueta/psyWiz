@@ -16,12 +16,14 @@ bifactorCfaOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class
             missing = "auto",
             showIndices = TRUE,
             showLoadings = TRUE,
+            highlight = FALSE,
             showAntenna = TRUE,
             showFacing = FALSE,
             showPath = FALSE,
             pathNumbers = TRUE,
             pathWidth = TRUE,
-            plotFit = "none", ...) {
+            plotFit = "none",
+            showPlotGuide = TRUE, ...) {
 
             super$initialize(
                 package="psyWiz",
@@ -97,6 +99,10 @@ bifactorCfaOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class
                 "showLoadings",
                 showLoadings,
                 default=TRUE)
+            private$..highlight <- jmvcore::OptionBool$new(
+                "highlight",
+                highlight,
+                default=FALSE)
             private$..showAntenna <- jmvcore::OptionBool$new(
                 "showAntenna",
                 showAntenna,
@@ -125,6 +131,10 @@ bifactorCfaOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class
                     "below",
                     "above"),
                 default="none")
+            private$..showPlotGuide <- jmvcore::OptionBool$new(
+                "showPlotGuide",
+                showPlotGuide,
+                default=TRUE)
 
             self$.addOption(private$..factors)
             self$.addOption(private$..generalName)
@@ -134,12 +144,14 @@ bifactorCfaOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class
             self$.addOption(private$..missing)
             self$.addOption(private$..showIndices)
             self$.addOption(private$..showLoadings)
+            self$.addOption(private$..highlight)
             self$.addOption(private$..showAntenna)
             self$.addOption(private$..showFacing)
             self$.addOption(private$..showPath)
             self$.addOption(private$..pathNumbers)
             self$.addOption(private$..pathWidth)
             self$.addOption(private$..plotFit)
+            self$.addOption(private$..showPlotGuide)
         }),
     active = list(
         factors = function() private$..factors$value,
@@ -150,12 +162,14 @@ bifactorCfaOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class
         missing = function() private$..missing$value,
         showIndices = function() private$..showIndices$value,
         showLoadings = function() private$..showLoadings$value,
+        highlight = function() private$..highlight$value,
         showAntenna = function() private$..showAntenna$value,
         showFacing = function() private$..showFacing$value,
         showPath = function() private$..showPath$value,
         pathNumbers = function() private$..pathNumbers$value,
         pathWidth = function() private$..pathWidth$value,
-        plotFit = function() private$..plotFit$value),
+        plotFit = function() private$..plotFit$value,
+        showPlotGuide = function() private$..showPlotGuide$value),
     private = list(
         ..factors = NA,
         ..generalName = NA,
@@ -165,12 +179,14 @@ bifactorCfaOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class
         ..missing = NA,
         ..showIndices = NA,
         ..showLoadings = NA,
+        ..highlight = NA,
         ..showAntenna = NA,
         ..showFacing = NA,
         ..showPath = NA,
         ..pathNumbers = NA,
         ..pathWidth = NA,
-        ..plotFit = NA)
+        ..plotFit = NA,
+        ..showPlotGuide = NA)
 )
 
 bifactorCfaResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
@@ -181,10 +197,10 @@ bifactorCfaResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class
         fit = function() private$.items[["fit"]],
         indices = function() private$.items[["indices"]],
         loadings = function() private$.items[["loadings"]],
-        antenna = function() private$.items[["antenna"]],
         antennaDesc = function() private$.items[["antennaDesc"]],
-        facing = function() private$.items[["facing"]],
+        antenna = function() private$.items[["antenna"]],
         facingDesc = function() private$.items[["facingDesc"]],
+        facing = function() private$.items[["facing"]],
         pathFig = function() private$.items[["pathFig"]]),
     private = list(),
     public=list(
@@ -310,7 +326,8 @@ bifactorCfaResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class
                     "generalName",
                     "type",
                     "estimator",
-                    "missing"),
+                    "missing",
+                    "highlight"),
                 columns=list(
                     list(
                         `name`="specific", 
@@ -341,6 +358,18 @@ bifactorCfaResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class
                         `title`="Item ECV", 
                         `type`="number", 
                         `format`="zto"))))
+            self$add(jmvcore::Html$new(
+                options=options,
+                name="antennaDesc",
+                title="",
+                visible="(showAntenna && showPlotGuide)",
+                clearWith=list(
+                    "factors",
+                    "generalName",
+                    "type",
+                    "estimator",
+                    "missing",
+                    "showPlotGuide")))
             self$add(jmvcore::Image$new(
                 options=options,
                 name="antenna",
@@ -358,9 +387,16 @@ bifactorCfaResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class
                     "plotFit")))
             self$add(jmvcore::Html$new(
                 options=options,
-                name="antennaDesc",
-                title="How to Read the Antenna Plot",
-                visible="(showAntenna)"))
+                name="facingDesc",
+                title="",
+                visible="(showFacing && showPlotGuide)",
+                clearWith=list(
+                    "factors",
+                    "generalName",
+                    "type",
+                    "estimator",
+                    "missing",
+                    "showPlotGuide")))
             self$add(jmvcore::Image$new(
                 options=options,
                 name="facing",
@@ -376,11 +412,6 @@ bifactorCfaResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class
                     "estimator",
                     "missing",
                     "plotFit")))
-            self$add(jmvcore::Html$new(
-                options=options,
-                name="facingDesc",
-                title="How to Read the Facing Combs Plot",
-                visible="(showFacing)"))
             self$add(jmvcore::Image$new(
                 options=options,
                 name="pathFig",
@@ -422,10 +453,9 @@ bifactorCfaBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 
 #' Bifactor CFA
 #'
-#' Bifactor model: every item loads on a general factor and on one specific 
-#' factor, all uncorrelated. Shows how much of the total score and of each 
-#' subscale score is general (omega hierarchical, explained common variance), 
-#' with an antenna plot.
+#' Orthogonal bifactor model: every item loads on a general factor and on one 
+#' specific factor. Reports omega hierarchical, explained common variance 
+#' (ECV), Item ECV, and visual diagnostics (antenna plot and facing combs).
 #' 
 #'
 #' @examples
@@ -455,6 +485,9 @@ bifactorCfaBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #'   hierarchical and ECV
 #' @param showLoadings \code{TRUE} (default) or \code{FALSE}, show the
 #'   standardized loadings
+#' @param highlight \code{TRUE} or \code{FALSE} (default), highlight poor fit
+#'   indices, high uniqueness (> 0.80), and items weak (< 0.30) on both factors
+#'   in red
 #' @param showAntenna \code{TRUE} (default) or \code{FALSE}, draw the antenna
 #'   plot: general factor to the left, specific to the right
 #' @param showFacing \code{TRUE} or \code{FALSE} (default), draw the general
@@ -468,16 +501,18 @@ bifactorCfaBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #'   an arrow proportional to its loading
 #' @param plotFit \code{'none'} (default), \code{'below'} or \code{'above'},
 #'   print the model fit measures and estimator on the figure
+#' @param showPlotGuide \code{TRUE} (default) or \code{FALSE}, show a short
+#'   reading guide above each novel plot
 #' @return A results object containing:
 #' \tabular{llllll}{
 #'   \code{results$todo} \tab \tab \tab \tab \tab a html \cr
 #'   \code{results$fit} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$indices} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$loadings} \tab \tab \tab \tab \tab a table \cr
-#'   \code{results$antenna} \tab \tab \tab \tab \tab an image \cr
 #'   \code{results$antennaDesc} \tab \tab \tab \tab \tab a html \cr
-#'   \code{results$facing} \tab \tab \tab \tab \tab an image \cr
+#'   \code{results$antenna} \tab \tab \tab \tab \tab an image \cr
 #'   \code{results$facingDesc} \tab \tab \tab \tab \tab a html \cr
+#'   \code{results$facing} \tab \tab \tab \tab \tab an image \cr
 #'   \code{results$pathFig} \tab \tab \tab \tab \tab an image \cr
 #' }
 #'
@@ -500,12 +535,14 @@ bifactorCfa <- function(
     missing = "auto",
     showIndices = TRUE,
     showLoadings = TRUE,
+    highlight = FALSE,
     showAntenna = TRUE,
     showFacing = FALSE,
     showPath = FALSE,
     pathNumbers = TRUE,
     pathWidth = TRUE,
-    plotFit = "none") {
+    plotFit = "none",
+    showPlotGuide = TRUE) {
 
     if ( ! requireNamespace("jmvcore", quietly=TRUE))
         stop("bifactorCfa requires jmvcore to be installed (restart may be required)")
@@ -524,12 +561,14 @@ bifactorCfa <- function(
         missing = missing,
         showIndices = showIndices,
         showLoadings = showLoadings,
+        highlight = highlight,
         showAntenna = showAntenna,
         showFacing = showFacing,
         showPath = showPath,
         pathNumbers = pathNumbers,
         pathWidth = pathWidth,
-        plotFit = plotFit)
+        plotFit = plotFit,
+        showPlotGuide = showPlotGuide)
 
     analysis <- bifactorCfaClass$new(
         options = options,

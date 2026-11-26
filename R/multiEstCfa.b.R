@@ -67,6 +67,7 @@ multiEstCfaClass <- if (requireNamespace("jmvcore", quietly = TRUE)) R6::R6Class
         list(estimator = f$estimator[i], treated = f$treated[i], n = f$n[i],
              chisq = f$chisq[i], df = round(f$df[i]), p = f$pvalue[i], cfi = f$cfi[i], tli = f$tli[i],
              rmsea = f$rmsea[i], rmseaLo = f$rmsea.lo[i], rmseaHi = f$rmsea.hi[i], srmr = f$srmr[i])))
+      if (isTRUE(opt$highlight)) psw_jmv_flag_fit(out$fit, f)
       for (i in seq_len(nrow(f))) {
         v <- c(chisq = f$v.chisq[i], cfi = f$v.cfi[i], rmsea = f$v.rmsea[i])
         if (!anyNA(v) && any(v != "standard"))
@@ -111,15 +112,18 @@ multiEstCfaClass <- if (requireNamespace("jmvcore", quietly = TRUE)) R6::R6Class
           c(list(factor = om$factor[i]),
             stats::setNames(as.list(om[i, est, drop = FALSE]), paste0("omega_", est)),
             stats::setNames(as.list(av[i, est, drop = FALSE]), paste0("ave_", est)))))
+        if (isTRUE(opt$highlight)) {
+          for (i in seq_len(nrow(om))) for (e in est) {
+            if (isTRUE(om[[e]][i] < 0.70))
+              out$rel$addFormat(rowNo = i, col = paste0("omega_", e), format = jmvcore::Cell.NEGATIVE)
+            if (isTRUE(av[[e]][i] < 0.50))
+              out$rel$addFormat(rowNo = i, col = paste0("ave_", e), format = jmvcore::Cell.NEGATIVE)
+          }
+        }
         out$rel$setNote("what", paste0(
           "Computed from the standardized loadings. For estimators that treat the items as ordinal, ",
-          "the values refer to the latent response variables, not to the observed sum score."), init = FALSE)
-      }
-
-      # ---- colour summary: one column per estimator, as cfawiz() printed it ----
-      if (opt$highlight) {
-        ok <- res$fit[match(est, res$fit$estimator), , drop = FALSE]
-        out$heat$setContent(psw_heat_summary(ok, est, res$loadings, res$reliability, "estimator", opt$palette))
+          "the values refer to the latent response variables, not to the observed sum score.",
+          if (isTRUE(opt$highlight)) " In red: \u03C9 below .70 or AVE below .50." else ""), init = FALSE)
       }
 
       invisible()

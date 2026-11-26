@@ -96,8 +96,8 @@ children:
           - type: CheckBox
             name: parallel
   - type: CollapseBox
-    label: Output
-    collapsed: true
+    label: Tables
+    collapsed: false
     stretchFactor: 1
     children:
       - type: LayoutBox
@@ -115,6 +115,3 @@ children:
             name: showRel
           - type: CheckBox
             name: highlight
-          - type: ComboBox
-            name: palette
-            enable: (highlight)

@@ -46,6 +46,7 @@ plainCfaClass <- if (requireNamespace("jmvcore", quietly = TRUE)) R6::R6Class(
       f <- res$fit
       psw_jmv_fill(out$fit, list(list(chisq = f$chisq, df = round(f$df), p = f$pvalue, cfi = f$cfi, tli = f$tli,
                                       rmsea = f$rmsea, rmseaLo = f$rmsea.lo, rmseaHi = f$rmsea.hi, srmr = f$srmr)))
+      if (isTRUE(opt$highlight)) psw_jmv_flag_fit(out$fit, f)
       out$fit$setNote("info", sprintf(
         "N = %d. Estimator: %s. Items treated as %s. Missing values: %s. %s lavaan %s.",
         info$n, info$estimator, info$type, info$missing, paste0(psw_jmv_variant_text(info$variant), ""),
@@ -77,12 +78,20 @@ plainCfaClass <- if (requireNamespace("jmvcore", quietly = TRUE)) R6::R6Class(
       if (opt$showRel) {
         rl <- res$reliability
         psw_jmv_fill(out$rel, lapply(seq_len(nrow(rl)), function(i) as.list(rl[i, , drop = FALSE])))
+        if (isTRUE(opt$highlight)) {
+          for (i in seq_len(nrow(rl))) {
+            if (isTRUE(rl$alpha[i] < 0.70)) out$rel$addFormat(rowNo = i, col = "alpha", format = jmvcore::Cell.NEGATIVE)
+            if (isTRUE(rl$omega[i] < 0.70)) out$rel$addFormat(rowNo = i, col = "omega", format = jmvcore::Cell.NEGATIVE)
+            if (isTRUE(rl$ave[i] < 0.50)) out$rel$addFormat(rowNo = i, col = "ave", format = jmvcore::Cell.NEGATIVE)
+          }
+        }
         out$rel$setNote("what", paste0(
           "\u03B1: Cronbach's alpha of the items as scored. \u03C9: composite reliability implied by the model",
           if (info$type == "ordinal")
             "; with ordinal items it describes the latent responses, so it is usually higher than what the sum score achieves"
           else " for the sum score",
-          ". AVE: mean squared standardized loading. Scale Check has more for a single scale."), init = FALSE)
+          ". AVE: mean squared standardized loading. Scale Check has more for a single scale.",
+          if (isTRUE(opt$highlight)) " In red: \u03B1 or \u03C9 below .70, AVE below .50." else ""), init = FALSE)
       }
 
       out$methods$setVisible(opt$showMethods && length(info$factors) >= 2L)
@@ -130,15 +139,6 @@ plainCfaClass <- if (requireNamespace("jmvcore", quietly = TRUE)) R6::R6Class(
       out$resid$setVisible(!is.null(rs))
       if (!is.null(rs))
         psw_jmv_fill(out$resid, lapply(seq_len(nrow(rs)), function(i) as.list(rs[i, , drop = FALSE])))
-
-      # ---- colour summary: the ramp of the old cfawiz(), as an Html table ----
-      if (opt$highlight) {
-        l <- res$loadings
-        l$by <- "CFA"
-        rl <- res$reliability
-        rl$by <- "CFA"
-        out$heat$setContent(psw_heat_summary(res$fit, "CFA", l, rl, "by", opt$palette))
-      }
       invisible()
     },
     .diagram = function(image, ...) psw_jmv_diagram(image)

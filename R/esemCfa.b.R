@@ -46,6 +46,7 @@ esemCfaClass <- if (requireNamespace("jmvcore", quietly = TRUE)) R6::R6Class(
       rows <- psw_jmv_fit_rows(res$fit)
       for (i in seq_along(rows)) rows[[i]]$chisqStd <- res$fit$chisq.std[i]
       psw_jmv_fill(out$fit, rows)
+      if (isTRUE(opt$highlight)) psw_jmv_flag_fit(out$fit, res$fit)
       out$fit$setNote("info", sprintf(
         "CFA: each item loads on its own factor only. ESEM: every item may load on every factor. Estimator: %s; items treated as %s; missing values: %s. %s %s",
         info$estimator, info$type, info$missing, paste0(psw_jmv_variant_text(info$variant), ""),
@@ -104,7 +105,7 @@ esemCfaClass <- if (requireNamespace("jmvcore", quietly = TRUE)) R6::R6Class(
       if (opt$showBrush && !is.null(res$uniqueness)) {
         psw_jmv_plot(out$brush, "brush", list(L = res$loadings, unique = res$uniqueness, value = "esem",
                                               fit_text = fit_text, fit_pos = fit_pos))
-        if (!is.null(out$brushDesc)) out$brushDesc$setContent(psw_jmv_brush_desc())
+        if (!is.null(out$brushDesc) && !isFALSE(opt$showPlotGuide)) out$brushDesc$setContent(psw_jmv_brush_desc())
       }
       invisible()
     },

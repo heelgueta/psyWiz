@@ -33,8 +33,9 @@ test_that("multi-estimator analysis fills one column per estimator", {
   expect_equal(names(r$std$asDF), c("factor", "item", "ML", "MLR", "WLSMV"))
   expect_equal(nrow(r$cors$asDF), 1)
   expect_equal(ncol(r$rel$asDF), 7)
-  h <- multiEstCfa(wizdata, factors = fl, run = TRUE, parallel = FALSE, highlight = TRUE, palette = "redblue")
-  expect_match(h$heat$content, "WLSMV", fixed = TRUE)
+  h <- multiEstCfa(wizdata, factors = fl, run = TRUE, parallel = FALSE, highlight = TRUE)
+  expect_equal(nrow(h$fit$asDF), 3)
+  expect_false("heat" %in% h$itemNames)
 })
 
 test_that("engine errors are shown as jamovi errors", {
@@ -42,35 +43,38 @@ test_that("engine errors are shown as jamovi errors", {
   expect_error(groupCfa(wizdata, factors = bad, group = "country", run = TRUE), "one factor only")
 })
 
-test_that("scale check, CFA vs ESEM and composite check fill their tables", {
+test_that("scale check and CFA vs ESEM fill their tables and plot guides", {
   expect_equal(scaleCheck(wizdata, vars = paste0("trust", 1:4))$reliability$rowCount, 0)
-  # defaults: reliability and items only
+  # defaults: reliability, items, and comb plot + guide
   s0 <- scaleCheck(wizdata, vars = paste0("trust", 1:4), run = TRUE, parallel = FALSE)
   expect_gte(nrow(s0$reliability$asDF), 4)
   expect_equal(nrow(s0$itemStats$asDF), 4)
   expect_equal(s0$fit$rowCount, 0)
   expect_equal(s0$scalability$rowCount, 0)
+  expect_equal(s0$comb$state$kind, "figure")
+  expect_match(s0$combDesc$content, "Reading the Comb Plot", fixed = TRUE)
+  expect_lt(match("combDesc", s0$itemNames), match("comb", s0$itemNames))
   s <- scaleCheck(wizdata, vars = paste0("trust", 1:4), scaleName = "Trust", run = TRUE, parallel = FALSE,
-                  tau = TRUE, showScal = TRUE, showComb = TRUE, combThick = TRUE, highlight = TRUE)
+                  tau = TRUE, showScal = TRUE, showComb = TRUE, combThick = TRUE, highlight = TRUE, showPlotGuide = FALSE)
   expect_equal(s$fit$asDF$model, c("Congeneric", "Tau-equivalent"))
   expect_equal(nrow(s$itemStats$asDF), 4)
   expect_equal(nrow(s$scalability$asDF), 8)   # 7 statistics + agreement of the entered order
+  expect_false(s$combDesc$visible)
   s2 <- scaleCheck(wizdata, vars = paste0("trust", 1:4), run = TRUE, parallel = FALSE, showScal = TRUE,
                    guttmanOrder = "difficulty", showScalogram = TRUE)
   expect_equal(nrow(s2$scalability$asDF), 7)
   expect_equal(dim(s2$scalogram$state$args$sc$z), c(150L, 4L))
+  expect_match(s2$scalogramDesc$content, "Reading the Scalogram", fixed = TRUE)
+  expect_lt(match("scalogramDesc", s2$itemNames), match("scalogram", s2$itemNames))
   expect_true(s$comb$state$args$opts$thick)
 
   e <- esemCfa(wizdata, factors = fl, run = TRUE, parallel = FALSE, showBrush = TRUE)
   expect_equal(e$brush$state$kind, "brush")
+  expect_match(e$brushDesc$content, "Reading the Brush Plot", fixed = TRUE)
+  expect_lt(match("brushDesc", e$itemNames), match("brush", e$itemNames))
   expect_equal(nrow(e$fit$asDF), 2)
   expect_equal(names(e$loadings$asDF), c("own", "item", "cfa", "e1", "e2"))
   expect_equal(nrow(e$cors$asDF), 1)
-
-  d <- data.frame(matrix(rnorm(300 * 5), 300))
-  cc <- compositeCheck(d, indicators = c("X1", "X2", "X3"), outcomes = c("X4", "X5"))
-  expect_equal(nrow(cc$r2$asDF), 2)
-  expect_equal(nrow(cc$weights$asDF), 3)
 })
 
 test_that("the robustness tables are filled on request", {
@@ -95,8 +99,9 @@ test_that("plain CFA fills its tables, for one factor and for several", {
   expect_equal(nrow(r$methods$asDF), 1)
   expect_equal(nrow(r$mi$asDF), 3)
   expect_equal(r$comb$state$kind, "figure")   # the comb plot is on by default
-  expect_match(r$heat$content, "Standardized loadings", fixed = TRUE)
-  expect_match(r$heat$content, "background:#", fixed = TRUE)
+  expect_match(r$combDesc$content, "Reading the Comb Plot", fixed = TRUE)
+  expect_lt(match("combDesc", r$itemNames), match("comb", r$itemNames))
+  expect_false("heat" %in% r$itemNames)
 
   one <- plainCfa(wizdata, factors = fl[1], resCov = list(), run = TRUE, type = "continuous", showMethods = TRUE)
   expect_equal(nrow(one$loadings$asDF), 4)
@@ -137,21 +142,23 @@ test_that("plain CFA takes residual correlations and a second-order factor", {
 test_that("bifactor CFA fills its tables and figures", {
   d <- bf_data()
   expect_equal(bifactorCfa(d, factors = bfl)$fit$rowCount, 0)
-  b <- bifactorCfa(d, factors = bfl, run = TRUE, showFacing = TRUE, showPath = TRUE)
+  b <- bifactorCfa(d, factors = bfl, run = TRUE, showFacing = TRUE, showPath = TRUE, highlight = TRUE)
   expect_equal(b$fit$asDF$model, c("Bifactor", "Correlated factors"))
   expect_equal(b$indices$asDF$scale, c("Total score", "A", "B", "C"))
   expect_equal(nrow(b$loadings$asDF), 12)
   expect_equal(c(b$antenna$state$kind, b$facing$state$kind, b$pathFig$state$kind), c("antenna", "facing", "bfpath"))
+  expect_match(b$antennaDesc$content, "Reading the Antenna Plot", fixed = TRUE)
+  expect_lt(match("antennaDesc", b$itemNames), match("antenna", b$itemNames))
+  expect_match(b$facingDesc$content, "Reading Facing Combs", fixed = TRUE)
+  expect_lt(match("facingDesc", b$itemNames), match("facing", b$itemNames))
 })
 
 test_that("no result is named like a member of jamovi's results classes", {
   # such a name replaces jamovi's own member and breaks the analysis in the jamovi window only
   reserved <- c(names(jmvcore::Group$active), names(jmvcore::Group$public_methods),
                 names(jmvcore::Group$get_inherit()$active), names(jmvcore::Group$get_inherit()$public_methods))
-  for (r in list(plainCfa(wizdata, factors = fl, resCov = list()), groupCfa(wizdata, factors = fl, group = "country"),
-                 bifactorCfa(wizdata, factors = fl), multiEstCfa(wizdata, factors = fl), esemCfa(wizdata, factors = fl),
-                 scaleCheck(wizdata, vars = paste0("trust", 1:4)),
-                 compositeCheck(data.frame(matrix(rnorm(500), 100)), indicators = c("X1", "X2", "X3"),
-                                outcomes = c("X4", "X5"))))
+  for (r in list(scaleCheck(wizdata, vars = paste0("trust", 1:4)),
+                 plainCfa(wizdata, factors = fl, resCov = list()), groupCfa(wizdata, factors = fl, group = "country"),
+                 bifactorCfa(wizdata, factors = fl), esemCfa(wizdata, factors = fl), multiEstCfa(wizdata, factors = fl)))
     expect_length(intersect(r$itemNames, reserved), 0)
 })

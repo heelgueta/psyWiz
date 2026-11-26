@@ -18,8 +18,9 @@ esemCfaOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             showLoadings = TRUE,
             showCors = TRUE,
             highlight = FALSE,
-            showBrush = FALSE,
-            plotFit = "none", ...) {
+            showBrush = TRUE,
+            plotFit = "none",
+            showPlotGuide = TRUE, ...) {
 
             super$initialize(
                 package="psyWiz",
@@ -109,7 +110,7 @@ esemCfaOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             private$..showBrush <- jmvcore::OptionBool$new(
                 "showBrush",
                 showBrush,
-                default=FALSE)
+                default=TRUE)
             private$..plotFit <- jmvcore::OptionList$new(
                 "plotFit",
                 plotFit,
@@ -118,6 +119,10 @@ esemCfaOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "below",
                     "above"),
                 default="none")
+            private$..showPlotGuide <- jmvcore::OptionBool$new(
+                "showPlotGuide",
+                showPlotGuide,
+                default=TRUE)
 
             self$.addOption(private$..factors)
             self$.addOption(private$..run)
@@ -131,6 +136,7 @@ esemCfaOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$.addOption(private$..highlight)
             self$.addOption(private$..showBrush)
             self$.addOption(private$..plotFit)
+            self$.addOption(private$..showPlotGuide)
         }),
     active = list(
         factors = function() private$..factors$value,
@@ -144,7 +150,8 @@ esemCfaOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         showCors = function() private$..showCors$value,
         highlight = function() private$..highlight$value,
         showBrush = function() private$..showBrush$value,
-        plotFit = function() private$..plotFit$value),
+        plotFit = function() private$..plotFit$value,
+        showPlotGuide = function() private$..showPlotGuide$value),
     private = list(
         ..factors = NA,
         ..run = NA,
@@ -157,7 +164,8 @@ esemCfaOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         ..showCors = NA,
         ..highlight = NA,
         ..showBrush = NA,
-        ..plotFit = NA)
+        ..plotFit = NA,
+        ..showPlotGuide = NA)
 )
 
 esemCfaResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
@@ -169,15 +177,15 @@ esemCfaResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         comparison = function() private$.items[["comparison"]],
         loadings = function() private$.items[["loadings"]],
         cors = function() private$.items[["cors"]],
-        brush = function() private$.items[["brush"]],
-        brushDesc = function() private$.items[["brushDesc"]]),
+        brushDesc = function() private$.items[["brushDesc"]],
+        brush = function() private$.items[["brush"]]),
     private = list(),
     public=list(
         initialize=function(options) {
             super$initialize(
                 options=options,
                 name="",
-                title="CFA vs ESEM",
+                title="CFA vs. ESEM",
                 refs=list(
                     "psyWiz",
                     "lavaan",
@@ -255,7 +263,7 @@ esemCfaResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$add(jmvcore::Table$new(
                 options=options,
                 name="comparison",
-                title="CFA against ESEM",
+                title="CFA vs. ESEM",
                 rows=0,
                 clearWith=list(
                     "factors",
@@ -373,6 +381,18 @@ esemCfaResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                         `title`="ESEM", 
                         `type`="number", 
                         `format`="zto"))))
+            self$add(jmvcore::Html$new(
+                options=options,
+                name="brushDesc",
+                title="",
+                visible="(showBrush && showPlotGuide)",
+                clearWith=list(
+                    "factors",
+                    "type",
+                    "estimator",
+                    "missing",
+                    "rotation",
+                    "showPlotGuide")))
             self$add(jmvcore::Image$new(
                 options=options,
                 name="brush",
@@ -387,12 +407,7 @@ esemCfaResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "estimator",
                     "missing",
                     "rotation",
-                    "plotFit")))
-            self$add(jmvcore::Html$new(
-                options=options,
-                name="brushDesc",
-                title="How to Read the Brush Plot",
-                visible="(showBrush)"))}))
+                    "plotFit")))}))
 
 esemCfaBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
     "esemCfaBase",
@@ -415,12 +430,12 @@ esemCfaBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 weightsSupport = 'auto')
         }))
 
-#' CFA vs ESEM
+#' CFA vs. ESEM
 #'
-#' Fits the hypothesised correlated-factors model as a CFA and as an 
-#' exploratory structural equation model (every item may load on every 
-#' factor), and lists each factor correlation as obtained from composite 
-#' scores, corrected composites, the CFA, factor scores and the ESEM.
+#' Compares the hypothesised correlated-factors CFA against an exploratory 
+#' structural equation model (ESEM with target or geomin rotation), showing 
+#' factor correlations across scoring methods and a brush plot of 
+#' cross-loadings.
 #' 
 #'
 #' @examples
@@ -452,12 +467,15 @@ esemCfaBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #'   standardized loadings of both models
 #' @param showCors \code{TRUE} (default) or \code{FALSE}, show each factor
 #'   correlation under the different scoring methods
-#' @param highlight \code{TRUE} or \code{FALSE} (default), show cross-loadings
-#'   of 0.30 or more and own-factor loadings below 0.40 in red
-#' @param showBrush \code{TRUE} or \code{FALSE} (default), draw the ESEM
+#' @param highlight \code{TRUE} or \code{FALSE} (default), highlight poor fit
+#'   indices, cross-loadings of 0.30 or more, and own-factor loadings below 0.40
+#'   in red
+#' @param showBrush \code{TRUE} (default) or \code{FALSE}, draw the ESEM
 #'   loadings of every item on every factor
 #' @param plotFit \code{'none'} (default), \code{'below'} or \code{'above'},
 #'   print the model fit measures and estimator on the figure
+#' @param showPlotGuide \code{TRUE} (default) or \code{FALSE}, show a short
+#'   reading guide above each novel plot
 #' @return A results object containing:
 #' \tabular{llllll}{
 #'   \code{results$todo} \tab \tab \tab \tab \tab a html \cr
@@ -465,8 +483,8 @@ esemCfaBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #'   \code{results$comparison} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$loadings} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$cors} \tab \tab \tab \tab \tab a table \cr
-#'   \code{results$brush} \tab \tab \tab \tab \tab an image \cr
 #'   \code{results$brushDesc} \tab \tab \tab \tab \tab a html \cr
+#'   \code{results$brush} \tab \tab \tab \tab \tab an image \cr
 #' }
 #'
 #' Tables can be converted to data frames with \code{asDF} or \code{\link{as.data.frame}}. For example:
@@ -490,8 +508,9 @@ esemCfa <- function(
     showLoadings = TRUE,
     showCors = TRUE,
     highlight = FALSE,
-    showBrush = FALSE,
-    plotFit = "none") {
+    showBrush = TRUE,
+    plotFit = "none",
+    showPlotGuide = TRUE) {
 
     if ( ! requireNamespace("jmvcore", quietly=TRUE))
         stop("esemCfa requires jmvcore to be installed (restart may be required)")
@@ -513,7 +532,8 @@ esemCfa <- function(
         showCors = showCors,
         highlight = highlight,
         showBrush = showBrush,
-        plotFit = plotFit)
+        plotFit = plotFit,
+        showPlotGuide = showPlotGuide)
 
     analysis <- esemCfaClass$new(
         options = options,

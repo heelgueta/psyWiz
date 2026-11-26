@@ -50,7 +50,7 @@ scaleCheckClass <- if (requireNamespace("jmvcore", quietly = TRUE)) R6::R6Class(
       psw_jmv_fill(out$reliability, lapply(seq_len(nrow(rl)), function(i)
         list(coefficient = rl$coefficient[i], value = rl$value[i], basis = rl$basis[i])))
       out$reliability$setNote("what", paste0(
-        "Alpha equals reliability only if the items are tau-equivalent (see More); lambda-2 is never lower than ",
+        "Alpha equals reliability only if the items are tau-equivalent (see Scale Structure Tests); lambda-2 is never lower than ",
         "alpha and is still a lower bound; omega comes from the congeneric model and does not need equal loadings. ",
         if (info$type == "ordinal")
           "The ordinal coefficients describe the latent response variables, not the sum score people actually compute. "
@@ -61,6 +61,7 @@ scaleCheckClass <- if (requireNamespace("jmvcore", quietly = TRUE)) R6::R6Class(
       if (opt$tau) {
         # ---- models and their comparison ----
         psw_jmv_fill(out$fit, psw_jmv_fit_rows(res$fit))
+        if (isTRUE(opt$highlight)) psw_jmv_flag_fit(out$fit, res$fit)
         out$fit$setNote("info", sprintf(
           "Congeneric: every item has its own loading. Tau-equivalent: equal loadings. %sEstimator: %s; items treated as %s; missing values: %s. %s %s",
           if (info$type == "ordinal") "" else "Parallel: equal loadings and equal residual variances. ",
@@ -120,13 +121,17 @@ scaleCheckClass <- if (requireNamespace("jmvcore", quietly = TRUE)) R6::R6Class(
       }
 
       if (opt$showScalogram) {
-        psw_jmv_plot(out$scalogram, "scalogram", list(sc = res$guttman[[opt$guttmanOrder]]$scalogram))
+        sc_obj <- res$guttman[[opt$guttmanOrder]]$scalogram
+        psw_jmv_plot(out$scalogram, "scalogram", list(sc = sc_obj))
+        if (!is.null(out$scalogramDesc) && !isFALSE(opt$showPlotGuide))
+          out$scalogramDesc$setContent(psw_jmv_scalogram_desc(isTRUE(sc_obj$binary)))
       }
 
       if (!is.null(res$loadings)) {
         l <- res$loadings
         l$group <- sprintf("N = %d", info$n)
-        psw_jmv_figures(out, opt, l, NULL)
+        f_cong <- if (!is.null(res$fit) && nrow(res$fit) > 0L) res$fit[1L, , drop = FALSE] else NULL
+        psw_jmv_figures(out, opt, l, NULL, fit = f_cong, estimator = info$estimator)
       }
       invisible()
     },

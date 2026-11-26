@@ -5,12 +5,11 @@
 name: plainCfa
 title: CFA
 menuGroup: psyWiz
-menuSubgroup: Factor Models
 version: '1.0.0'
 jas: '1.2'
 description:
   main: >
-    Confirmatory factor analysis of one factor or several correlated factors: fit, standardized loadings, factor correlations and reliability, with ordinal items handled as ordinal. Optionally the largest modification indices and the factor correlations obtained from composite scores and factor scores.
+    Confirmatory factor analysis of one factor, several correlated factors, or a second-order structure: fit indices, standardized loadings, factor correlations, reliability (alpha, omega, AVE), and a comb plot. Handles ordinal items natively via WLSMV.
   R:
     dontrun: true
     usage: |
@@ -110,7 +109,7 @@ options:
     description:
       R: >
         `'auto'` (default; FIML for ML and MLR, pairwise deletion for ordinal items), `'listwise'`, `'fiml'` or `'pairwise'`
-  # ADDITIONS TO THE MODEL
+  # MODEL EXTENSIONS
   - name: resCov
     title: Residual correlations
     type: Pairs
@@ -121,29 +120,29 @@ options:
       R: >
         a list of lists, each with `i1` and `i2`: pairs of items whose residuals may correlate
   - name: secondOrder
-    title: 'Second-order factor instead of factor correlations'
+    title: 'Second-order factor (replaces factor correlations)'
     type: Bool
     default: false
     description:
       R: >
         `TRUE` or `FALSE` (default), let the factors (three or more) load on one second-order factor
   - name: higherName
-    title: 'Its name'
+    title: 'Second-order factor name'
     type: String
     default: 'General'
     description:
       R: >
         a string, the name of the second-order factor
-  # OUTPUT
+  # TABLES & PLOTS
   - name: showLoadings
-    title: 'Loadings'
+    title: 'Factor loadings'
     type: Bool
     default: true
     description:
       R: >
         `TRUE` (default) or `FALSE`, show the loadings
   - name: showRel
-    title: 'Reliability'
+    title: 'Reliability (α, ω, AVE)'
     type: Bool
     default: true
     description:
@@ -156,6 +155,36 @@ options:
     description:
       R: >
         `TRUE` (default) or `FALSE`, show the correlations between the factors
+  - name: showMethods
+    title: 'Factor correlations by scoring method'
+    type: Bool
+    default: false
+    description:
+      R: >
+        `TRUE` or `FALSE` (default), show each factor correlation as obtained from composite scores, corrected composites, the CFA and factor scores
+  - name: showMi
+    title: 'Modification indices'
+    type: Bool
+    default: false
+    description:
+      R: >
+        `TRUE` or `FALSE` (default), list the residual correlations and cross-loadings with the largest modification indices
+  - name: miN
+    title: 'Number listed'
+    type: Integer
+    default: 10
+    min: 1
+    max: 200
+    description:
+      R: >
+        an integer (default 10), how many to list
+  - name: highlight
+    title: 'Flag weak / misfitting values'
+    type: Bool
+    default: false
+    description:
+      R: >
+        `TRUE` or `FALSE` (default), highlight poor fit indices, weak loadings (below 0.40), and low reliability in red
   - name: showComb
     title: 'Comb plot'
     type: Bool
@@ -178,7 +207,7 @@ options:
       R: >
         `TRUE` or `FALSE` (default), draw the path diagram
   - name: pathNumbers
-    title: 'Loadings on the arrows'
+    title: 'Loadings on arrows'
     type: Bool
     default: true
     description:
@@ -205,50 +234,11 @@ options:
     description:
       R: >
         `'none'` (default), `'below'` or `'above'`, print the model fit measures and estimator on the figure
-  - name: highlight
-    title: 'Colour'
+  - name: showPlotGuide
+    title: 'Show plot guide'
     type: Bool
-    default: false
+    default: true
     description:
       R: >
-        `TRUE` or `FALSE` (default), mark standardized loadings below 0.40 in the table and add a summary of fit indices, loadings and reliabilities on a colour ramp
-  - name: palette
-    title: 'Palette'
-    type: List
-    options:
-      - name: purpleorange
-        title: 'Orange to purple (colour-blind safe)'
-      - name: cividis
-        title: 'Yellow to blue (colour-blind safe)'
-      - name: redblue
-        title: 'Red to blue (classic psyWiz)'
-      - name: grey
-        title: 'Greys'
-    default: purpleorange
-    description:
-      R: >
-        the colour ramp used when colour is on: `'purpleorange'` (default), `'cividis'`, `'redblue'` or `'grey'`
-  - name: showMethods
-    title: 'Factor correlations by scoring method'
-    type: Bool
-    default: false
-    description:
-      R: >
-        `TRUE` or `FALSE` (default), show each factor correlation as obtained from composite scores, corrected composites, the CFA and factor scores
-  - name: showMi
-    title: 'Largest modification indices'
-    type: Bool
-    default: false
-    description:
-      R: >
-        `TRUE` or `FALSE` (default), list the residual correlations and cross-loadings with the largest modification indices
-  - name: miN
-    title: 'Number listed'
-    type: Integer
-    default: 10
-    min: 1
-    max: 200
-    description:
-      R: >
-        an integer (default 10), how many to list
+        `TRUE` (default) or `FALSE`, show a short reading guide above each novel plot
 ...
