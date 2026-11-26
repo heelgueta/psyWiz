@@ -1,4 +1,4 @@
-# psyWiz 0.4.0 (in development)
+# psyWiz 1.0.0
 
 The module is now the focus; the R interface stays but is not advertised.
 The menu was reorganised around a simple core. See `docs/ROADMAP.md`.

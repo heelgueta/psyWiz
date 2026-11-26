@@ -7,7 +7,7 @@
         `author`="Elgueta, H.", 
         `year`=2026, 
         `title`="psyWiz: Psychometric wizardry for confirmatory factor analysis", 
-        `publisher`="(Version 0.4) [jamovi module]. Retrieved from https://github.com/heelgueta/psywiz", 
+        `publisher`="(Version 1.0.0) [jamovi module]. Retrieved from https://github.com/heelgueta/psywiz", 
         `url`="https://github.com/heelgueta/psywiz"), 
     `lavaan`=list(
         `type`="article", 

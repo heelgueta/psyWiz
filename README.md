@@ -53,7 +53,7 @@ The first release focuses strictly on the complete **CFA + ESEM** universe:
 
 ### In jamovi
 Until available directly in the jamovi library store:
-1. Download or build `psyWiz_0.4.0.jmo` (see [docs/DEVELOPING.md](docs/DEVELOPING.md)).
+1. Download or build `psyWiz_1.0.0.jmo` (see [docs/DEVELOPING.md](docs/DEVELOPING.md)).
 2. Sideload via jamovi menu: **Modules $\rightarrow$ Sideload**.
 3. The sample dataset *Trust and stress in three countries* will appear in your Data Library.
 
